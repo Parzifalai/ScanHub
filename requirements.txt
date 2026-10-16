@@ -1,3 +1,4 @@
 # ScanHub: Python 3.14+ для Windows 10/11 (x64)
 psutil>=7.0
 yara-x>=1.0
+anthropic>=1.0

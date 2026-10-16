@@ -1,0 +1,79 @@
+ChatGPT не завершил ответ — проверь вход, лимиты подписки и выбранную модель.	ChatGPT didn't finish the answer — check the sign-in, subscription limits and the selected model.
+ChatGPT по ключу API (OpenAI)	ChatGPT with an API key (OpenAI)
+ChatGPT по подписке (Codex)	ChatGPT with your subscription (Codex)
+Claude Code вошёл по API-ключу: запросы оплачиваются по тарифу API, а не подпиской.	Claude Code is signed in with an API key: requests are billed at API rates, not through the subscription.
+Claude Code не вошёл в аккаунт — войди в настройках помощника.	Claude Code isn't signed in — sign in in the assistant settings.
+Claude вернул пустой ответ — повтори вопрос.	Claude returned an empty answer — ask again.
+Claude не вернул ответ — повтори вопрос.	Claude didn't return an answer — ask again.
+Claude не закончил ответ	Claude didn't finish the answer
+Claude не знает такую модель — выбери другую в настройках помощника	Claude doesn't know this model — pick another one in the assistant settings
+Claude не принял запрос:	Claude rejected the request:
+Claude отказался отвечать на этот запрос — переформулируй вопрос или выбери другую модель	Claude declined this request — rephrase the question or pick another model
+Claude по ключу API	Claude with an API key
+Claude по подписке (Claude Code)	Claude with your subscription (Claude Code)
+Claude сейчас перегружен	Claude is overloaded right now
+Codex вошёл по API-ключу — войди через аккаунт ChatGPT кнопкой «Войти».	Codex is signed in with an API key — sign in with your ChatGPT account using "Sign in".
+OpenRouter — много моделей по одному ключу	OpenRouter — many models with one key
+ScanHub не ответил:	ScanHub didn't respond:
+if (!await modal({title: "Сделать это самому помощнику?", icon: "✦", ok: "Сделай сам", cancel: "Отмена	-
+if (AI.cli[id]?.connected) { AI.cliWait = null; toast("Аккаунт подключён", aiProviderName(id)); aiRender(); break	-
+Сделать это самому помощнику?	Let the assistant do it?
+Сделай сам	Do it for me
+Аккаунт подключён	Account connected
+Агент сделал слишком много шагов и не закончил — спроси точнее.	The agent took too many steps and didn't finish — ask more specifically.
+Аккаунт ChatGPT подключён — запросы идут в лимиты твоей подписки.	ChatGPT account connected — requests use your subscription limits.
+Аккаунт Claude подключён — запросы идут в лимиты твоей подписки.	Claude account connected — requests use your subscription limits.
+Войди в аккаунт ChatGPT — кнопка «Войти».	Sign in to your ChatGPT account — the "Sign in" button.
+Войди в аккаунт Claude — кнопка «Войти».	Sign in to your Claude account — the "Sign in" button.
+Войти	Sign in
+Для тех, у кого есть подписка ChatGPT Plus или Pro. ScanHub запускает официальную программу Codex, в которую ты вошёл аккаунтом ChatGPT, — ответы идут в лимиты подписки. Работает как агент, как и Claude Code; командной строки и файлов у него нет.	For those with a ChatGPT Plus or Pro subscription. ScanHub runs the official Codex program you signed in to with your ChatGPT account — answers use your subscription limits. Works as an agent, like Claude Code; it has no command line and no file access.
+Для тех, у кого есть подписка Claude Pro или Max. ScanHub запускает официальную программу Claude Code, в которую ты вошёл своим аккаунтом, — ответы идут в лимиты подписки, отдельно платить не нужно. Работает как агент: сам смотрит данные ScanHub, а по кнопке «Сделай сам» выполняет предложенные действия. Командной строки и файлов у него нет.	For those with a Claude Pro or Max subscription. ScanHub runs the official Claude Code program you signed in to with your account — answers use your subscription limits, no separate payment. Works as an agent: it looks at ScanHub's data itself and, with the "Do it for me" button, carries out the suggested actions. It has no command line and no file access.
+Инструменты ScanHub: данные этого компьютера (журналы, сбои, устройства, защита, файлы) и действия ScanHub.	-
+Как поставить Codex	How to install Codex
+Ключ хранится на этом компьютере зашифрованным.	The key is stored encrypted on this computer.
+Лимит подписки Claude на сейчас исчерпан — попробуй позже или выбери другую модель.	The Claude subscription limit is used up for now — try later or pick another model.
+Не удалось проверить вход в	Couldn't check the sign-in to
+Нужна бесплатная программа Claude Code: поставь её (claude.ai/download или «npm i -g @anthropic-ai/claude-code»), затем нажми «Проверить».	The free Claude Code program is required: install it (claude.ai/download or "npm i -g @anthropic-ai/claude-code"), then press "Check".
+Нужна бесплатная программа Codex от OpenAI: поставь её («npm i -g @openai/codex» или с developers.openai.com/codex), затем нажми «Проверить».	The free Codex program from OpenAI is required: install it ("npm i -g @openai/codex" or from developers.openai.com/codex), then press "Check".
+Один ключ — сотни моделей: Claude, GPT, Gemini, DeepSeek и бесплатные (с пометкой :free). Удобно, если хочешь попробовать разные. Платные списываются с баланса OpenRouter.	One key — hundreds of models: Claude, GPT, Gemini, DeepSeek and free ones (marked :free). Handy if you want to try different ones. Paid ones are charged to your OpenRouter balance.
+Оплата за использование, отдельно от подписки ChatGPT Plus: пополни баланс на platform.openai.com и создай ключ.	Pay as you go, separate from the ChatGPT Plus subscription: top up your balance at platform.openai.com and create a key.
+Оплата за использование, отдельно от подписки: пополни баланс в Claude Console и создай ключ. Лучше всех разбирается в журналах Windows. Модель по умолчанию — Claude Opus 5.5; дешевле — Sonnet 5.5 или Haiku 5.5 в списке.	Pay as you go, separate from the subscription: top up your balance in Claude Console and create a key. Best at reading Windows logs. Default model is Claude Opus 5.5; cheaper options are Sonnet 5.5 or Haiku 5.5 in the list.
+Открылось окно входа: войди в браузере и вернись сюда — ScanHub сам заметит вход.	A sign-in window opened: sign in in the browser and come back here — ScanHub will notice the sign-in by itself.
+Перед отправкой ScanHub убирает имя пользователя, имя компьютера, личные пути, почту и ключи.	Before sending, ScanHub removes the user name, computer name, personal paths, email and keys.
+Получить ключ в Claude Console	Get a key in Claude Console
+Получить ключ на openrouter.ai	Get a key at openrouter.ai
+Получить ключ на platform.openai.com	Get a key at platform.openai.com
+Помощник сам выполнит эти действия по очереди и проверит результат	The assistant will carry out these actions one by one and check the result
+Помощник выполнит по очереди только эти действия и проверит результат:	The assistant will carry out only these actions one by one and check the result:
+Каждое действие идёт через те же проверки, что и кнопки ScanHub: только найденное проверкой, окно UAC для системных, и всё попадает в «Приватность и защита → Что изменил ScanHub» — там же можно отменить. Ничего сверх списка помощник сделать не может.	Each action goes through the same checks as ScanHub's buttons: only what a check found, a UAC window for system ones, and everything is recorded in "Privacy & protection → What ScanHub changed" — where it can be undone. The assistant can't do anything beyond this list.
+Проверяю программу…	Checking the program…
+Скачать Claude Code	Download Claude Code
+агент	agent
+в автозагрузке нет записи	no startup entry
+в ответе помощника нет действий, которые ScanHub может сделать сам	the assistant's answer has no actions ScanHub can do itself
+выполнит	will carry out
+выполнит и проверит	will carry it out and check
+действия по очереди и проверит	actions one by one and check
+для Claude по ключу нужен пакет anthropic: в папке ScanHub выполни «pip install -r requirements.txt» (в архиве ScanHub-Windows он уже есть)	Claude with a key needs the anthropic package: in the ScanHub folder run "pip install -r requirements.txt" (the ScanHub-Windows archive already includes it)
+ещё выполняется — ход видно в окне ScanHub	still running — progress is shown in the ScanHub window
+итог	result
+ключ Claude не подходит — проверь, что скопировал его целиком (начинается с sk-ant-)	the Claude key doesn't work — check you copied all of it (it starts with sk-ant-)
+лучшая модель подписки (рекомендую)	best model of your subscription (recommended)
+на балансе Claude Console закончились деньги — пополни его	the Claude Console balance ran out — top it up
+не ответил за	didn't respond within
+неизвестная программа	unknown program
+нет метода	no method
+нет связи с Claude — проверь интернет	can't reach Claude — check the internet
+обнови программу и нажми «Проверить».	update the program and press "Check".
+обновление запущено: ScanHub скачает установщик, проверит его на вирусы и поставит. Ход — «Программы → Обновления программ».	update started: ScanHub will download the installer, check it for viruses and install it. Progress — "Programs → Program updates".
+открыт Windows Update → необязательные обновления (драйверы) — выбрать и установить там	Windows Update → optional updates (drivers) opened — pick and install there
+открыто окно администратора с восстановлением системных файлов: 10–30 минут, потом перезагрузка. Человеку нужно подтвердить UAC и дождаться конца.	an administrator window with system file repair opened: 10–30 minutes, then a restart. Confirm UAC and wait for it to finish.
+ошибка Claude:	Claude error:
+по подписке	subscription
+по решению помощника	by the assistant's decision
+повтори вопрос.	ask again.
+повтори через минуту	try again in a minute
+превышен лимит запросов Claude — подожди минуту	Claude request limit exceeded — wait a minute
+системные — с окном UAC	system ones with a UAC window
+этот помощник работает как агент — задай вопрос в панели помощника	this assistant works as an agent — ask your question in the assistant panel
+✦ Сделай сам	✦ Do it for me
