@@ -1,0 +1,34 @@
+{
+  "id": "chainsaw",
+  "name": "Chainsaw",
+  "section": "research",
+  "category": "Охота по журналам Windows · WithSecure",
+  "description": "Ищет следы атак в журналах событий Windows по правилам Sigma: подозрительные запуски PowerShell, создание служб, очистку журналов, вход по RDP. Для журнала безопасности нужны права администратора.",
+  "repo": "WithSecureLabs/chainsaw",
+  "source": {
+    "type": "github-release",
+    "asset": "^chainsaw_all_platforms\\+rules\\.zip$"
+  },
+  "exe": "chainsaw_x86_64-pc-windows-msvc.exe",
+  "modes": [
+    {
+      "id": "hunt",
+      "label": "Проверить журналы (админ)",
+      "target": "none",
+      "console": true,
+      "admin": true,
+      "args": [
+        "hunt",
+        "C:\\Windows\\System32\\winevt\\Logs",
+        "-s",
+        "{dir}\\sigma",
+        "--mapping",
+        "{dir}\\mappings\\sigma-event-logs-all.yml",
+        "-r",
+        "{dir}\\rules",
+        "--level",
+        "high"
+      ]
+    }
+  ]
+}

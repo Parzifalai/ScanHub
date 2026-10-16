@@ -1,0 +1,21 @@
+{
+  "id": "kvrt",
+  "name": "Kaspersky Virus Removal Tool",
+  "section": "downloadable",
+  "category": "Антивирус-сканер · Kaspersky",
+  "description": "Бесплатный сканер от Kaspersky, работает без установки. Базы встроены в сам файл, поэтому перед проверкой лучше скачать свежую версию. Открывается своим окном.",
+  "simple": "Глубокая проверка компьютера от Kaspersky. Бесплатно, без установки.",
+  "homepage": "https://www.kaspersky.ru/downloads/free-virus-removal-tool",
+  "source": {
+    "type": "direct",
+    "url": "https://devbuilds.s.kaspersky-labs.com/devbuilds/KVRT/latest/full/KVRT.exe",
+    "signer": "Kaspersky"
+  },
+  "exe": "KVRT.exe",
+  "admin": true,
+  "auto_update": false,
+  "max_age_days": 3,
+  "modes": [
+    { "id": "run", "label": "Запустить проверку", "target": "none", "gui": true, "args": [] }
+  ]
+}

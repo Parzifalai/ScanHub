@@ -1,0 +1,118 @@
+PATH: убраны лишние записи	PATH: unneeded entries removed
+ScanHub вернул как было	ScanHub restored it as it was
+ScanHub вернёт исходное состояние. Для системных настроек появится окно UAC (в нём будет «Python» — это ScanHub).	ScanHub will restore the original state. For system settings a UAC window will appear ("Python" in it is ScanHub).
+ScanHub не удалён	ScanHub was not removed
+ScanHub обновлён — перезапускаюсь…	ScanHub updated — restarting…
+ScanHub пока ничего не менял на этом компьютере. Записи появятся здесь, когда ты применишь настройки, удалишь записи программ, выключишь что-то из автозагрузки и т. п.	ScanHub hasn't changed anything on this computer yet. Entries will appear here when you apply settings, remove program entries, turn something off in startup, etc.
+ScanHub скачает архив с GitHub	ScanHub will download the archive from GitHub
+ScanHub уберёт всё, что он добавил в систему вне своей папки:	ScanHub will remove everything it added to the system outside its folder:
+ScanHub удалён	ScanHub removed
+«Обновить» скачает её с GitHub, сверит контрольную сумму и поставит поверх — ключи, история и карантин останутся. Что нового — по ссылке «Что нового».	"Update" downloads it from GitHub, verifies the checksum and installs it over the current one — keys, history and quarantine stay.
+«Отменить» вернёт удалённые записи реестра; удалённые папки не вернутся.	"Undo" restores the deleted registry entries; deleted folders won't come back.
+Блокировка майнинг-сайтов (файл hosts)	Mining sites blocking (hosts file)
+Блокировка майнинг-сайтов в файле hosts	Mining sites blocking in the hosts file
+Вернуть: «Проверка на вирусы → Карантин» → «Вернуть».	To restore: "Virus check → Quarantine" → "Restore".
+Вернуть: найди приложение в Microsoft Store и установи снова.	To restore: find the app in the Microsoft Store and install it again.
+Вернуть: открой Корзину Windows → правой кнопкой по файлу → «Восстановить».	To restore: open the Windows Recycle Bin → right-click the file → "Restore".
+Вернуть: поставь программу заново с её официального сайта.	To restore: install the program again from its official site.
+Включена защита системы	System protection turned on
+Вне своей папки ScanHub ничего не оставил.	ScanHub left nothing outside its folder.
+Всё, что ScanHub менял на компьютере по твоим нажатиям: настройки приватности и защиты, автозагрузка, меню правой кнопки, брандмауэр, PATH, удалённые записи программ и ярлыки, отключённые драйверы. «Отменить» возвращает как было — ScanHub сохранял исходное состояние перед каждым изменением. Удалённые файлы (мусор, кэши, старые драйверы) вернуть нельзя — у таких пунктов так и написано.	Everything ScanHub changed on the computer at your request: privacy and protection settings, startup, the right-click menu, firewall, PATH, removed program entries and shortcuts, disabled drivers. "Undo" puts things back — ScanHub saved the original state before every change. Deleted files (junk, caches, old drivers) can't be restored — such items say so.
+Выключить: «Приватность и защита → Точки восстановления».	To turn off: "Privacy & protection → Restore points".
+Датчики Lenovo	Lenovo sensors
+Датчики Lenovo — задача планировщика и скрипт в Program Files	Lenovo sensors — a scheduled task and a script in Program Files
+Для задач планировщика и файла hosts появится одно окно UAC (в нём будет «Python» — это ScanHub).	One UAC window will appear for the scheduled tasks and the hosts file ("Python" in it is ScanHub).
+Если хочешь вернуть как было — сначала открой «Приватность и защита → Что изменил ScanHub».	If you want to put things back, first open "Privacy & protection → What ScanHub changed".
+Защита Windows: включено	Windows protection: turned on
+Защита Windows: возвращено как было	Windows protection: restored as it was
+Изменение отменено	Change undone
+Изменения настроек Windows, которые ты делал через ScanHub, останутся (их можно отменить:	Windows settings you changed through ScanHub will stay (can be undone:
+Копии ярлыков лежат в	Shortcut copies are in
+Меню правой кнопки	Right-click menu
+Не получилось прочитать:	Couldn't read:
+Не получилось удалить	Couldn't remove
+Обновить ScanHub до	Update ScanHub to
+Обновить не получилось	Update failed
+Обновляю ScanHub…	Updating ScanHub…
+Окно перезагрузится само через несколько секунд.	The window will reload by itself in a few seconds.
+Остатки удалятся при перезагрузке	Leftovers will be deleted on restart
+Отключён уязвимый драйвер	Vulnerable driver disabled
+Отменить	Undo
+Очистка мусора и кэшей	Junk and cache cleanup
+Папка ScanHub удалится через несколько секунд после закрытия этого окна.	The ScanHub folder will be deleted a few seconds after this window closes.
+Папка удалится через несколько секунд после того, как окно закроется.	The folder will be deleted a few seconds after the window closes.
+Папки ScanHub в Program Files и ProgramData	ScanHub folders in Program Files and ProgramData
+Позже	Later
+Позже это меняли ещё раз — отменять нужно последнее изменение	This was changed again later — undo the latest change instead
+Полная очистка памяти	Full memory cleanup
+Полная очистка памяти — задача планировщика и скрипт	Full memory cleanup — a scheduled task and a script
+Приватность: возвращено как было	Privacy: restored as it was
+Приватность: выключено	Privacy: turned off
+Пункт «Проверить в ScanHub» в меню правой кнопки	The "Check in ScanHub" item in the right-click menu
+Системные следы убраны. Папку ScanHub можно удалить вручную.	System traces removed. You can delete the ScanHub folder manually.
+Создана точка восстановления	Restore point created
+Созданы ярлыки ScanHub	ScanHub shortcuts created
+Спасибо, что пользовался!	Thanks for using it!
+Сторож (проверка раз в 15 минут)	Watchdog (check every 15 minutes)
+Сторож — задача планировщика (проверка раз в 15 минут)	Watchdog — a scheduled task (check every 15 minutes)
+Страница выпуска	Release page
+Удалена запись программы из списка установленных	Program entry removed from the installed list
+Удалена программа	Program uninstalled
+Удалены битые ярлыки	Broken shortcuts removed
+Удалены встроенные приложения Windows	Built-in Windows apps removed
+Удалены записи удалённых программ	Entries of uninstalled programs removed
+Удалены остатки программы	Program leftovers removed
+Удалены пустые папки	Empty folders removed
+Удалены старые драйверы	Old drivers removed
+Удалить ScanHub	Remove ScanHub
+Удалить ScanHub с компьютера?	Remove ScanHub from this computer?
+Удалить ScanHub с компьютера…	Remove ScanHub from this computer…
+Удалить и саму папку ScanHub	Also delete the ScanHub folder itself
+Файл возвращён из карантина	File restored from quarantine
+Файл удалён из карантина навсегда	File permanently deleted from quarantine
+Файлы перемещены в Корзину	Files moved to the Recycle Bin
+Файлы перемещены в карантин	Files moved to quarantine
+Файлы уничтожены шредером	Files destroyed by the shredder
+Читаю журнал…	Reading the journal…
+Что изменил ScanHub	What ScanHub changed
+Что нового	What's new
+Это не отменяется: удалённое стёрто.	This can't be undone: the deleted data is gone.
+Ярлыки ScanHub на рабочем столе и в «Пуске»	ScanHub shortcuts on the desktop and in Start
+архив выпуска слишком большой	the release archive is too large
+архив не совпал с контрольной суммой GitHub — не ставлю	the archive doesn't match GitHub's checksum — not installing
+браузеры: Firefox	-
+в архиве нет ScanHub — не ставлю	there's no ScanHub in the archive — not installing
+в выпуске нет архива ScanHub — скачай его со страницы выпуска	the release has no ScanHub archive — download it from the release page
+включено:	turned on:
+включён:	shown:
+датчики	-
+журнал изменений	-
+журнал изменений: прошлые изменения	-
+изменений:	changes:
+история здоровья (сторож)	-
+карантин	quarantine
+копия записи реестра не найдена	the registry entry backup wasn't found
+можно отменить:	can be undone:
+не всё вернулось — окно UAC отменено или файл повреждён	not everything was restored — the UAC window was cancelled or the file is damaged
+не проверены. Закрой браузер и нажми «Проверить снова».	weren't checked. Close the browser and press "Check again".
+новой версии нет — у тебя последняя	no new version — you have the latest
+окно UAC отменено	UAC window cancelled
+окно администратора отменено — системные задачи и hosts остались	the administrator window was cancelled — the scheduled tasks and hosts stayed
+перетащи нужный обратно на рабочий стол или в меню «Пуск».	drag the one you need back to the desktop or Start menu.
+прежнее значение PATH	previous PATH value
+программа, история проверок, ключи	the program, check history, keys
+расширения	extensions
+резервная копия PATH не найдена	PATH backup not found
+сверит контрольную сумму, поставит поверх и перезапустится — окно обновится само. Ключи, история и карантин останутся.	verify the checksum, install it over the current one and restart — the window will refresh by itself. Keys, history and quarantine stay.
+скачиваю и проверяю архив	downloading and verifying the archive
+скрыт:	hidden:
+ультра: сравнение с прошлой проверкой	-
+файлов — они удалятся навсегда)	files — they'll be deleted permanently)
+часть системных шагов не выполнилась	some system steps didn't complete
+шифрование ключей в настройках	-
+этих браузеров	of these browsers
+это изменение уже нельзя отменить из журнала	this change can no longer be undone from the journal
+этого браузера	of this browser
+выключено:	turned off:
+Проверяю, что ScanHub оставил в системе…	Checking what ScanHub left in the system…
+несколько секунд	a few seconds

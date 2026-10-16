@@ -1,0 +1,26 @@
+{
+  "id": "adwcleaner",
+  "name": "Malwarebytes AdwCleaner",
+  "section": "downloadable",
+  "category": "Рекламный мусор · Malwarebytes",
+  "description": "Удаляет рекламное ПО, тулбары, угонщики браузера и навязанные «оптимизаторы»: то, что обычные антивирусы часто пропускают. Разовый сканер, без установки.",
+  "simple": "Убирает рекламный мусор, тулбары и угонщики браузера.",
+  "homepage": "https://www.malwarebytes.com/adwcleaner",
+  "source": {
+    "type": "direct",
+    "url": "https://adwcleaner.malwarebytes.com/adwcleaner?channel=release",
+    "filename": "adwcleaner.exe",
+    "signer": "Malwarebytes"
+  },
+  "exe": "adwcleaner.exe",
+  "admin": true,
+  "modes": [
+    {
+      "id": "run",
+      "label": "Запустить",
+      "target": "none",
+      "gui": true,
+      "args": []
+    }
+  ]
+}

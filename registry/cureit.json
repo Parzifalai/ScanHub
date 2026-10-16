@@ -1,0 +1,30 @@
+{
+  "id": "cureit",
+  "name": "Dr.Web CureIt!",
+  "section": "downloadable",
+  "category": "Антивирус-сканер · Doctor Web",
+  "description": "Бесплатный (для дома) лечащий сканер Dr.Web без установки. Скачивается только со страницы Dr.Web: там нужно принять лицензию. После скачивания нажми «Найти скачанный», и ScanHub сам найдёт файл по цифровой подписи Doctor Web.",
+  "simple": "Лечащая утилита Dr.Web: найдёт и вылечит вирусы. Бесплатно для дома.",
+  "homepage": "https://free.drweb.ru/download+cureit+free/",
+  "source": {
+    "type": "manual",
+    "page": "https://free.drweb.ru/download+cureit+free/",
+    "signer": "DOCTOR WEB",
+    "min_mb": 50,
+    "search": [
+      "%USERPROFILE%\\Downloads",
+      "%USERPROFILE%\\Desktop"
+    ]
+  },
+  "admin": true,
+  "max_age_days": 3,
+  "modes": [
+    {
+      "id": "run",
+      "label": "Запустить проверку",
+      "target": "none",
+      "gui": true,
+      "args": []
+    }
+  ]
+}

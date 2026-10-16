@@ -1,0 +1,78 @@
+{
+  "id": "clamav",
+  "name": "ClamAV",
+  "section": "scanners",
+  "category": "Антивирусный сканер · Cisco Talos",
+  "description": "Антивирус с открытым кодом от Cisco Talos. Здесь он используется только как разовый сканер (clamscan) без фоновой службы. Базы около 250 МБ, их нужно скачать один раз и потом обновлять кнопкой.",
+  "simple": "Ещё один антивирусный движок со своими базами.",
+  "repo": "Cisco-Talos/clamav",
+  "source": {
+    "type": "github-release",
+    "asset": "^clamav-[\\d.]+\\.win\\.x64\\.zip$"
+  },
+  "exe": "clamscan.exe",
+  "setup": [
+    [
+      "{python}",
+      "-I",
+      "-c",
+      "import os,sys;d=sys.argv[1];os.makedirs(os.path.join(d,'database'),exist_ok=True);open(os.path.join(d,'freshclam.conf'),'w').write('DatabaseDirectory '+os.path.join(d,'database')+chr(10)+'DatabaseMirror database.clamav.net'+chr(10)+'ConnectTimeout 30'+chr(10)+'ReceiveTimeout 300'+chr(10))",
+      "{dir}"
+    ]
+  ],
+  "exit_codes": {
+    "0": [
+      "clean",
+      "Чисто"
+    ],
+    "1": [
+      "threat",
+      "Найдены угрозы"
+    ],
+    "2": [
+      "error",
+      "Ошибка"
+    ]
+  },
+  "needs_data": {
+    "glob": "database\\daily.c?d",
+    "label": "Нужно скачать базы",
+    "mode": "update"
+  },
+  "modes": [
+    {
+      "id": "path",
+      "label": "Проверить файл или папку",
+      "target": "path",
+      "multi": true,
+      "args": [
+        "--database={dir}\\database",
+        "--recursive",
+        "--infected",
+        "--max-filesize=4000M",
+        "--max-scansize=4000M",
+        "{target}"
+      ]
+    },
+    {
+      "id": "update",
+      "label": "Скачать / обновить базы",
+      "target": "none",
+      "cmd": [
+        "{dir}\\freshclam.exe",
+        "--config-file={dir}\\freshclam.conf",
+        "--stdout"
+      ],
+      "exit_codes": {
+        "0": [
+          "clean",
+          "Базы обновлены"
+        ],
+        "1": [
+          "clean",
+          "Базы уже свежие"
+        ]
+      }
+    }
+  ]
+}

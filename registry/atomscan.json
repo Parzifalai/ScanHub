@@ -1,0 +1,100 @@
+{
+  "id": "atomscan",
+  "name": "Atomdrift Scan",
+  "section": "scanners",
+  "simple": "Ищет новые вирусы в программах, скриптах и архивах с помощью ИИ.",
+  "category": "Supply-chain / 0-day",
+  "description": "ML-сканер вредоносного кода в бинарниках, исходниках, скриптах, пакетах (npm, pip, crate…) и архивах. Свои правила обновляет сам раз в сутки.",
+  "repo": "atomdrift-project/scan",
+  "homepage": "https://atomdrift.org/scan/",
+  "source": {
+    "type": "github-release",
+    "asset": "^atomscan-.*-x86_64-pc-windows-msvc\\.tar\\.gz$",
+    "checksums": "SHA256SUMS"
+  },
+  "exe": "atomscan.exe",
+  "exit_codes": {
+    "0": [
+      "clean",
+      "Чисто"
+    ],
+    "1": [
+      "threat",
+      "Вредонос"
+    ],
+    "2": [
+      "suspicious",
+      "Подозрительно"
+    ],
+    "3": [
+      "error",
+      "Ошибка анализа"
+    ],
+    "4": [
+      "suspicious",
+      "Неполные правила"
+    ]
+  },
+  "modes": [
+    {
+      "id": "path",
+      "label": "Проверить файл или папку",
+      "target": "path",
+      "args": [
+        "{target}"
+      ],
+      "multi": true
+    },
+    {
+      "id": "sys",
+      "label": "Триаж системы",
+      "target": "none",
+      "args": [
+        "--no-update",
+        "sys"
+      ]
+    },
+    {
+      "id": "purl",
+      "label": "Проверить пакет (PURL)",
+      "target": "text",
+      "placeholder": "npm/left-pad@1.3.0",
+      "args": [
+        "purl",
+        "{target}"
+      ]
+    },
+    {
+      "id": "url",
+      "label": "Проверить ссылку на файл",
+      "target": "text",
+      "placeholder": "https://example.com/setup.exe",
+      "args": [
+        "url",
+        "{target}"
+      ]
+    },
+    {
+      "id": "ps",
+      "label": "Процессы (экспериментально)",
+      "target": "none",
+      "args": [
+        "ps"
+      ]
+    },
+    {
+      "id": "version",
+      "label": "Версия",
+      "target": "none",
+      "args": [
+        "--version"
+      ],
+      "exit_codes": {
+        "0": [
+          "clean",
+          "OK"
+        ]
+      }
+    }
+  ]
+}

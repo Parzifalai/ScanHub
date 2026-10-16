@@ -1,0 +1,20 @@
+{
+  "id": "rootcerts",
+  "name": "Корневые сертификаты",
+  "section": "research",
+  "category": "Перехват HTTPS · Sysinternals Sigcheck (Microsoft)",
+  "description": "Рекламное ПО, «ускорители» и шпионы ставят свой корневой сертификат — после этого они читают и подменяют HTTPS-сайты, а браузер не видит подвоха (так было с Superfish на ноутбуках Lenovo). Sigcheck от Microsoft сверяет сертификаты компьютера и пользователя со списком доверенных Microsoft и показывает лишние; ScanHub объясняет известные (госцентры, антивирусы, инструменты разработчика). Нужен интернет. Ничего не удаляет.",
+  "simple": "Находит поддельные сертификаты, через которые программы подглядывают за HTTPS.",
+  "homepage": "https://learn.microsoft.com/sysinternals/downloads/sigcheck",
+  "source": {
+    "type": "direct",
+    "url": "https://download.sysinternals.com/files/Sigcheck.zip",
+    "signer": "Microsoft"
+  },
+  "exe": "sigcheck64.exe",
+  "modes": [
+    { "id": "check", "label": "Проверить сертификаты", "target": "none", "handler": "rootcerts" },
+    { "id": "user", "label": "Сертификаты пользователя", "target": "none", "gui": true, "cmd": ["mmc.exe", "certmgr.msc"] },
+    { "id": "machine", "label": "Сертификаты компьютера", "target": "none", "gui": true, "admin": true, "cmd": ["mmc.exe", "certlm.msc"] }
+  ]
+}

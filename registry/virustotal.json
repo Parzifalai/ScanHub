@@ -1,0 +1,22 @@
+{
+  "id": "virustotal",
+  "name": "VirusTotal",
+  "section": "online",
+  "optional": true,
+  "category": "Онлайн · ~70 антивирусов",
+  "description": "Проверка в 70+ антивирусах сразу. По умолчанию отправляется только хэш (отпечаток) файла: если такой файл уже кто-то проверял, ты сразу видишь результат. Загрузка самого файла — отдельная кнопка. Учти, что загруженные файлы становятся доступны исследователям безопасности. Нужен бесплатный API-ключ (4 запроса в минуту, 500 в день).",
+  "simple": "Сверяет файл с базой 70+ антивирусов. Сам файл никуда не отправляется.",
+  "homepage": "https://www.virustotal.com",
+  "source": {
+    "type": "service",
+    "service": "virustotal",
+    "key": "virustotal_key",
+    "signup": "https://www.virustotal.com/gui/join-us",
+    "key_page": "https://www.virustotal.com/gui/my-apikey"
+  },
+  "modes": [
+    { "id": "lookup", "label": "Проверить по хэшу", "target": "path", "action": "lookup", "multi": true },
+    { "id": "upload", "label": "Загрузить файл на анализ", "target": "file", "action": "upload", "upload": true },
+    { "id": "url", "label": "Проверить ссылку", "target": "url", "action": "url", "placeholder": "https://example.com/file.exe" }
+  ]
+}

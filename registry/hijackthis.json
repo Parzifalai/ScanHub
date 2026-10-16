@@ -1,0 +1,21 @@
+{
+  "id": "hijackthis",
+  "name": "HiJackThis+",
+  "section": "research",
+  "category": "Точки перехвата системы · Alex Dragokas",
+  "description": "Классический разовый сканер: показывает всё нестандартное в автозагрузке, браузерах, службах, политиках, сетевых настройках и других местах, которые захватывают вирусы и рекламное ПО. Баз нет — поэтому находит и новые угрозы, но не отличает хорошее от плохого: в отчёте будут и обычные программы. Отчёт удобно отдать на разбор (мне или на форуме помощи). Ничего не удаляй, если не уверен. Нужны права администратора.",
+  "simple": "Подробный отчёт о том, что изменено в системе, — для разбора вручную.",
+  "homepage": "https://github.com/dragokas/hijackthis",
+  "source": {
+    "type": "direct",
+    "url": "https://dragokas.com/tools/HiJackThis_test.zip",
+    "signer": "Stanislav Polshyn"
+  },
+  "exe": "HiJackThis.exe",
+  "admin": true,
+  "modes": [
+    { "id": "log", "label": "Создать отчёт (без окна)", "target": "none", "elevated_log": "HiJackThis*.log", "admin": true,
+      "args": ["/accepteula", "/silentautolog"] },
+    { "id": "open", "label": "Открыть программу", "target": "none", "gui": true, "args": ["/accepteula"] }
+  ]
+}

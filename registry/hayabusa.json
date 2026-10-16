@@ -1,0 +1,30 @@
+{
+  "id": "hayabusa",
+  "name": "Hayabusa",
+  "section": "research",
+  "category": "Таймлайн угроз по журналам · Yamato Security",
+  "description": "Быстро строит хронологию подозрительных событий по журналам Windows: 4000+ правил Sigma и собственные правила. Показывает только события высокого и критического уровня. Нужны права администратора.",
+  "repo": "Yamato-Security/hayabusa",
+  "source": {
+    "type": "github-release",
+    "asset": "^hayabusa-[\\d.]+-win-x64-live-response\\.zip$"
+  },
+  "exe": "hayabusa*.exe",
+  "modes": [
+    {
+      "id": "live",
+      "label": "Таймлайн этого ПК (админ)",
+      "target": "none",
+      "console": true,
+      "admin": true,
+      "args": [
+        "csv-timeline",
+        "-l",
+        "-m",
+        "high",
+        "-w",
+        "-q"
+      ]
+    }
+  ]
+}

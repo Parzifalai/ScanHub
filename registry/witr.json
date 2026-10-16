@@ -1,0 +1,18 @@
+{
+  "id": "witr",
+  "name": "witr — why is this running?",
+  "section": "research",
+  "category": "Анализ процессов",
+  "description": "Объясняет, почему что-то запущено: кто запустил процесс (вся цепочка родителей), какая программа занимает порт или держит файл открытым. Удобно, чтобы понять, откуда взялся подозрительный процесс.",
+  "repo": "pranshuparmar/witr",
+  "source": { "type": "github-release", "asset": "^witr-windows-amd64\\.zip$", "checksums": "SHA256SUMS" },
+  "exe": "witr.exe",
+  "exit_codes": { "0": ["clean", "Готово"], "4": ["error", "Нужно уточнить цель"] },
+  "modes": [
+    { "id": "name", "label": "Почему запущен процесс", "target": "text", "placeholder": "имя процесса, напр. node", "args": ["--no-color", "{target}"] },
+    { "id": "pid", "label": "По PID", "target": "text", "placeholder": "PID, напр. 1234", "args": ["--no-color", "--pid", "{target}"] },
+    { "id": "port", "label": "Кто занимает порт", "target": "text", "placeholder": "порт, напр. 8080", "args": ["--no-color", "--port", "{target}"] },
+    { "id": "file", "label": "Кто держит файл", "target": "file", "args": ["--no-color", "--file", "{target}"] },
+    { "id": "tui", "label": "Интерактивный режим", "target": "none", "console": true, "args": ["-i"] }
+  ]
+}

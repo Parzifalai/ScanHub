@@ -1,0 +1,32 @@
+{
+  "id": "capa",
+  "name": "capa",
+  "section": "research",
+  "category": "Возможности программы · Mandiant",
+  "description": "Объясняет, что умеет exe-файл: «шифрует данные», «закрепляется в автозагрузке», «внедряется в процессы», «майнит». Привязывает это к MITRE ATT&CK. Полезно для непонятного файла, который другие сканеры не трогают.",
+  "repo": "mandiant/capa",
+  "source": {
+    "type": "github-release",
+    "asset": "^capa-v[\\d.]+-windows\\.zip$"
+  },
+  "exe": "capa.exe",
+  "modes": [
+    {
+      "id": "file",
+      "label": "Что умеет файл",
+      "target": "file",
+      "args": [
+        "{target}"
+      ]
+    },
+    {
+      "id": "verbose",
+      "label": "Подробно",
+      "target": "file",
+      "args": [
+        "-v",
+        "{target}"
+      ]
+    }
+  ]
+}

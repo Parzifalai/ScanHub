@@ -1,0 +1,117 @@
+{
+  "id": "emsisoft",
+  "name": "Emsisoft Emergency Kit",
+  "section": "downloadable",
+  "category": "Антивирус-сканер · Emsisoft (движок Bitdefender + свой)",
+  "description": "Портативный сканер Emsisoft: два движка (свой и Bitdefender), ловит трояны, шпионов, руткиты и нежелательные программы. Работает без установки и без окна: одно окно UAC — ScanHub сам обновит базы и покажет результат здесь. По умолчанию только ищет; «С лечением» убирает найденное в карантин Emsisoft. Занимает ~750 МБ, для распаковки нужен 7-Zip.",
+  "simple": "Независимое второе мнение от Emsisoft: два антивирусных движка, без установки.",
+  "homepage": "https://www.emsisoft.com/en/home/emergencykit/",
+  "source": {
+    "type": "direct",
+    "url": "https://dl.emsisoft.com/EmsisoftEmergencyKit.exe",
+    "filename": "EmsisoftEmergencyKit.exe",
+    "signer": "Emsisoft"
+  },
+  "requires": [
+    {
+      "path": "%ProgramFiles%\\7-Zip\\7z.exe",
+      "label": "7-Zip (для распаковки)",
+      "url": "https://www.7-zip.org"
+    }
+  ],
+  "setup": [
+    [
+      "%ProgramFiles%\\7-Zip\\7z.exe",
+      "x",
+      "-y",
+      "-o{dir}",
+      "{dir}\\EmsisoftEmergencyKit.exe",
+      "bin64\\*",
+      "readme.txt"
+    ],
+    [
+      "cmd",
+      "/c",
+      "del",
+      "/q",
+      "{dir}\\EmsisoftEmergencyKit.exe"
+    ]
+  ],
+  "exe": "a2cmd.exe",
+  "admin": true,
+  "auto_update": false,
+  "exit_codes": {
+    "0": [
+      "clean",
+      "Угроз нет"
+    ],
+    "1": [
+      "threat",
+      "Найдены угрозы"
+    ]
+  },
+  "modes": [
+    {
+      "id": "malware",
+      "label": "Проверить места вредоносов",
+      "target": "none",
+      "elevated": true,
+      "admin": true,
+      "timeout": 3600,
+      "started_text": "обновляю базы и проверяю (обычно 5–15 минут)…",
+      "pre": [
+        [
+          "/u"
+        ]
+      ],
+      "args": [
+        "/malware",
+        "/pup",
+        "/n"
+      ],
+      "raw_cmdline": true
+    },
+    {
+      "id": "path",
+      "label": "Проверить файл или папку",
+      "target": "path",
+      "elevated": true,
+      "admin": true,
+      "timeout": 7200,
+      "started_text": "обновляю базы и проверяю…",
+      "pre": [
+        [
+          "/u"
+        ]
+      ],
+      "args": [
+        "/f=\"{target}\"",
+        "/pup",
+        "/a",
+        "/n"
+      ],
+      "raw_cmdline": true
+    },
+    {
+      "id": "clean",
+      "label": "Проверка с лечением (в карантин)",
+      "target": "none",
+      "elevated": true,
+      "admin": true,
+      "timeout": 3600,
+      "started_text": "обновляю базы, проверяю и убираю найденное в карантин…",
+      "pre": [
+        [
+          "/u"
+        ]
+      ],
+      "args": [
+        "/malware",
+        "/pup",
+        "/n",
+        "/q"
+      ],
+      "raw_cmdline": true
+    }
+  ]
+}

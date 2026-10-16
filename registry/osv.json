@@ -1,0 +1,14 @@
+{
+  "id": "osv",
+  "name": "Пакеты npm и pip (OSV)",
+  "section": "scanners",
+  "category": "Встроенная проверка · база OSV.dev (Google)",
+  "description": "Ищет вредоносные пакеты — те, что крадут ключи и пароли при установке, — и пакеты с известными уязвимостями. Проверяет глобальные пакеты npm и все установленные Python или выбранную папку проекта: package-lock.json, node_modules, requirements.txt и виртуальные окружения. В OSV.dev отправляются только названия и версии пакетов, код не отправляется. Замена Bumblebee от Perplexity: у него нет версии для Windows.",
+  "simple": "Проверяет библиотеки для программирования на вредоносные и уязвимые версии.",
+  "homepage": "https://osv.dev",
+  "source": { "type": "builtin", "builtin": "osv" },
+  "modes": [
+    { "id": "global", "label": "Пакеты на этом ПК", "target": "none" },
+    { "id": "project", "label": "Папка проекта", "target": "path" }
+  ]
+}

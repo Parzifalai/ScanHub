@@ -1,0 +1,100 @@
+Windows ещё не посчитала индекс — он появляется через несколько дней работы компьютера.	Windows hasn't calculated the index yet — it appears after a few days of using the computer.
+Windows предупреждала, что памяти не хватает	Windows warned that memory was running low
+Windows снижает его после сбоев и неудачных установок и поднимает, если всё работает.	Windows lowers it after failures and failed installs and raises it when everything works.
+[А-Яа-яЁё]	-
+Больше половины сбоев	More than half of the failures
+Видеодрайвер	Graphics driver
+Внезапное выключение	Unexpected shutdown
+Всё, что ниже, — разовые и неопасные сбои. Разбираться не обязательно.	Everything below is one-off and harmless. No need to dig into it.
+Вылет программы	Program crash
+Другой сбой	Other failure
+Есть серьёзные сбои	There are serious failures
+За 4 недели Windows не записала ни одного сбоя.	Windows recorded no failures in 4 weeks.
+За последние недели сбоев было много. Ниже видно, что именно их вызвало — часто это одна и та же программа или обновление.	There were many failures in recent weeks. Below you can see what caused them — often it's the same program or update.
+Зависание программы	Program hang
+Индекс снижают в основном программы — не Windows и не железо.	The index is lowered mostly by programs — not by Windows or the hardware.
+Исправленные аппаратные ошибки:	Corrected hardware errors:
+Как считается: Windows ставит оценку от 1 до 10 по сбоям за последние недели. Каждый вылет, зависание, сбой Windows или неудачная установка снижает её (свежие — сильнее), а каждый день без сбоев понемногу поднимает. Это не оценка железа, а то, сколько всего ломалось.	How it's calculated: Windows gives a score from 1 to 10 based on failures in recent weeks. Every crash, hang, Windows failure or failed install lowers it (recent ones more), and every day without failures raises it a little. It's not a hardware rating, just how much went wrong.
+Компонент Windows	A Windows component
+Нажми «Проверить снова» в разделе — ScanHub прочитает, какие сбои записала Windows, и покажет, что снизило индекс.	Press "Check again" in the section — ScanHub will read the failures Windows recorded and show what lowered the index.
+Найти программу, службу или драйвер — например, Excel	Find a program, service or driver — e.g. Excel
+Не опасно, можно не разбираться:	Harmless, no need to dig in:
+Не устанавливаются обновления:	Updates won't install:
+Не установилась программа	Program failed to install
+Не установилось обновление	Update failed to install
+Неисправимые аппаратные ошибки:	Uncorrectable hardware errors:
+Опасного нет, но	Nothing dangerous, but
+Опасных сбоев нет	No dangerous failures
+По дням	By day
+Повторяющиеся сбои — их причину лучше устранить.	Repeating failures — better to fix their cause.
+Показать	Show
+Последние дни индекс падает: появились новые сбои.	The index has been falling lately: new failures appeared.
+Почему такой?	Why is it like this?
+Предупреждения диска:	Disk warnings:
+Приложение из Microsoft Store	A Microsoft Store app
+Программа из папки	A program from the folder
+Разбери их в первую очередь — они ниже, раскрыты.	Deal with them first — they're below, expanded.
+Сбоев очень много. Если среди них синие экраны или внезапные выключения — это серьёзно; если в основном вылеты одной программы — дело в ней.	Lots of failures. If there are blue screens or sudden shutdowns among them, it's serious; if it's mostly one program crashing, that program is the problem.
+Сбоев почти нет.	Almost no failures.
+Сбой Windows	Windows failure
+Сейчас индекс растёт: последние дни сбоев меньше.	The index is rising now: fewer failures in recent days.
+Среди сбоев есть сбои самой Windows или внезапные выключения — их стоит разобрать в первую очередь.	Some failures are Windows failures or sudden shutdowns — look at those first.
+Так выглядит обычный компьютер, на котором много работают и ставят программы: изредка что-то вылетает или не ставится обновление.	This is what a typical heavily used computer looks like: occasionally something crashes or an update fails to install.
+Успешных установок и обновлений за это время:	Successful installs and updates in this period:
+Устройства, службы, драйверы и обновления, которые не смогли запуститься или установиться. Сначала — то, что стоит посмотреть.	Devices, services, drivers and updates that failed to start or install. What's worth a look comes first.
+Что снизило индекс за 4 недели	What lowered the index in 4 weeks
+Эти разделы ниже свёрнуты.	These sections are collapsed below.
+без них не запускаются некоторые программы и игры	some programs and games won't start without them
+вещей	things
+вещи	things
+вещь	thing
+внезапное выключение	unexpected shutdown
+вылетала	crashed
+вылетела	crashed
+диагностических снимков ядра	kernel diagnostic snapshots
+дней не найдено: программа работала без ошибок (или выбери период побольше вверху справа).	days found: the program ran without errors (or pick a longer period at the top right).
+другой сбой	other failure
+единичные — не страшно, много — проверь разгон и питание	a few are fine; many — check overclocking and power
+зависала	hung
+зависание	hang
+зависаний	hangs
+зависания	hangs
+зависла	hung
+индекс	index
+компьютер аварийно перезагружался	the computer crashed and restarted
+нажми, что случилось в этот день	click to see what happened that day
+найдено:	found:
+не загружается	doesn't load
+не установилась программа	program failed to install
+не установилось обновление	update failed to install
+неудачные установки обновлений и программ. Это не поломка: Windows считает каждую неудачную попытку сбоем. Индекс поднимется сам, когда обновление установится или его перестанут предлагать.	failed installs of updates and programs. It's not a breakdown: Windows counts every failed attempt as a failure. The index will rise by itself once the update installs or stops being offered.
+ниже обычного	below normal
+низкий	low
+нормально	normal
+обновление Windows	Windows update
+они индекс не снижают.	they don't lower the index.
+отлично	excellent
+отложенных обновлений приложений Store	postponed Store app updates
+питание, батарея, перегрев или зависание	power, battery, overheating or a freeze
+по разу	once each
+проверь диск подробно	run a detailed disk check
+процессор, память или шина сообщили о сбое	the CPU, memory or bus reported a failure
+разовый вылет	one-off crash
+разовых вылета	one-off crashes
+разовых вылетов	one-off crashes
+сбоев за	failures in
+сбоев не было — индекс подрос	no failures — the index went up
+сбои повторяются или были недавно	failures repeat or were recent
+сбой Windows	Windows failure
+сделай резервную копию важных файлов	back up important files
+служб упали	services crashed
+служба падает снова и снова	the service keeps crashing
+служба упала	service crashed
+службы упали	services crashed
+стоит посмотреть	worth a look
+утечек	leaks
+утечка	leak
+утечки	leaks
+утечек памяти	memory leaks
+утечки памяти	memory leaks
+утечка памяти	memory leak

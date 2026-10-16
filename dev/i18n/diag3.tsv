@@ -1,0 +1,15 @@
+Все программы со сбоями	All programs with failures
+Всё, что за	Everything that in the last
+Показать сбои этой программы	Show this program's failures
+Службы	Services
+Установки	Installs
+Установщик программы завершился с ошибкой. Если программа сейчас работает — значит, со следующей попытки всё встало; если нет — скачай установщик заново и запусти от администратора.	The program's installer ended with an error. If the program works now, a later attempt succeeded; if not, download the installer again and run it as administrator.
+Утечки	Leaks
+дней вылетало, зависало, теряло память, не запускалось или не устанавливалось. Нажми на строку — внизу останутся только сбои этой программы.	days crashed, hung, leaked memory, failed to start or failed to install. Click a row — only that program's failures will stay below.
+не установилась	failed to install
+приложение из Microsoft Store	a Microsoft Store app
+служба Windows или программы	a Windows or program service
+служба удалённой программы	a service of an uninstalled program
+частое предупреждение Windows, обычно безвредно	a common Windows warning, usually harmless
+Фильтр по названию	Filter by name
+Последний раз	Last time

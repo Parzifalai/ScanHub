@@ -1,0 +1,42 @@
+{
+  "id": "minersearch",
+  "name": "MinerSearch",
+  "section": "downloadable",
+  "simple": "Находит скрытые майнеры, которые тайно грузят компьютер.",
+  "category": "Антимайнер",
+  "description": "Ищет и удаляет скрытые майнеры: процессы, службы, задачи планировщика, реестр, hosts, руткиты. Открывается своим окном и просит права администратора.",
+  "repo": "BlendLog/MinerSearch",
+  "source": {
+    "type": "github-release",
+    "asset": "^MinerSearch_v.*\\.zip$"
+  },
+  "exe": "MinerSearch*.exe",
+  "admin": true,
+  "modes": [
+    {
+      "id": "scanonly",
+      "label": "Только найти, ничего не удалять",
+      "target": "none",
+      "gui": true,
+      "args": [
+        "--scan-only"
+      ]
+    },
+    {
+      "id": "full",
+      "label": "Проверка с лечением",
+      "target": "none",
+      "gui": true,
+      "args": []
+    },
+    {
+      "id": "fullscan",
+      "label": "Глубокая (все диски)",
+      "target": "none",
+      "gui": true,
+      "args": [
+        "--full-scan"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "malext",
+  "name": "Вредоносные расширения (MalExt)",
+  "section": "research",
+  "category": "Встроенная проверка · база MalExt Sentry",
+  "description": "Сверяет расширения Chrome, Edge и других браузеров на Chromium с базой из ~7000 расширений, которые Google и Microsoft удалили из магазинов за вредоносность, шпионаж, рекламу и угон поиска (MalExt Sentry, обновляется ежедневно). Такие расширения остаются в браузере и после удаления из магазина. Эта же сверка встроена в «Приватность и защита → Браузеры» и в глубокую проверку.",
+  "simple": "Находит расширения браузера, удалённые из магазина за вредоносность.",
+  "homepage": "https://github.com/toborrm9/malicious_extension_sentry",
+  "source": { "type": "builtin", "builtin": "malext" },
+  "modes": [
+    { "id": "check", "label": "Проверить расширения", "target": "none" },
+    { "id": "update", "label": "Обновить базу", "target": "none" }
+  ]
+}
