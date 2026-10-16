@@ -1,0 +1,16 @@
+{
+  "id": "yara",
+  "name": "YARA (правила Elastic и YARA Forge)",
+  "section": "scanners",
+  "category": "Сигнатурный сканер · движок yara-x от VirusTotal",
+  "description": "Проверяет файлы по 7 тыс. открытых правил: Elastic Security и YARA Forge (signature-base, Malpedia, ESET, ReversingLabs и десятки других источников). Это те же наборы, что использует Kudu. Хорошо ловит известные семейства вредоносов, хакерские утилиты и майнеры. Находки автоматически перепроверяются по цифровой подписи и VirusTotal, чтобы отсеять ложные срабатывания.",
+  "simple": "7 тыс. правил исследователей безопасности: узнаёт известные вирусы, майнеры и хакерские утилиты.",
+  "homepage": "https://github.com/YARAHQ/yara-forge",
+  "source": { "type": "builtin", "builtin": "yara" },
+  "max_age_days": 14,
+  "needs_data": { "builtin": "yara", "label": "Нужно скачать правила (~12 МБ, один раз)", "mode": "update" },
+  "modes": [
+    { "id": "path", "label": "Проверить файл или папку", "target": "path", "multi": true },
+    { "id": "update", "label": "Скачать / обновить правила", "target": "none" }
+  ]
+}

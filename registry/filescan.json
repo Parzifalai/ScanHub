@@ -1,0 +1,22 @@
+{
+  "id": "filescan",
+  "name": "Filescan.io",
+  "section": "online",
+  "optional": true,
+  "category": "Онлайн · песочница OPSWAT",
+  "description": "Песочница OPSWAT: разбирает поведение файла (эмуляция, извлечение индикаторов) и проверяет его репутацию. Проверка по хэшу ничего не загружает. Загрузка файла идёт в приватном режиме, то есть другие пользователи файл не скачают. Нужен бесплатный API-ключ.",
+  "simple": "Проверяет репутацию файла в песочнице OPSWAT.",
+  "homepage": "https://www.filescan.io",
+  "source": {
+    "type": "service",
+    "service": "filescan",
+    "key": "filescan_key",
+    "signup": "https://www.filescan.io/auth/signup",
+    "key_page": "https://www.filescan.io/users/profile"
+  },
+  "modes": [
+    { "id": "lookup", "label": "Проверить по хэшу", "target": "path", "action": "lookup", "multi": true },
+    { "id": "upload", "label": "Загрузить в песочницу (приватно)", "target": "file", "action": "upload", "upload": true },
+    { "id": "url", "label": "Проверить ссылку", "target": "url", "action": "url", "placeholder": "https://example.com" }
+  ]
+}

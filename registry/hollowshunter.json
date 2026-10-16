@@ -1,0 +1,53 @@
+{
+  "id": "hollowshunter",
+  "name": "HollowsHunter",
+  "section": "scanners",
+  "category": "Внедрённый код в процессах · hasherezade",
+  "description": "Проверяет все запущенные процессы на внедрённый код: подмену (hollowing), шелл-код, перехват функций. Так прячутся майнеры и трояны внутри explorer.exe или svchost.exe. Ничего не удаляет, только сообщает.",
+  "simple": "Ищет вирусы, спрятанные внутри запущенных программ.",
+  "repo": "hasherezade/hollows_hunter",
+  "source": {
+    "type": "github-release",
+    "asset": "^hollows_hunter64\\.zip$"
+  },
+  "exe": "hollows_hunter*.exe",
+  "modes": [
+    {
+      "id": "scan",
+      "label": "Проверить все процессы",
+      "target": "none",
+      "args": [
+        "/json",
+        "/quiet",
+        "/ofilter",
+        "1",
+        "/dir",
+        "{dir}\reports",
+        "/uniqd"
+      ],
+      "count_regex": "\"suspicious_count\"\\s*:\\s*(\\d+)",
+      "count_verdict": [
+        "suspicious",
+        "Подозрительных: {n}"
+      ],
+      "zero_verdict": [
+        "clean",
+        "Внедрений нет"
+      ]
+    },
+    {
+      "id": "admin",
+      "label": "Все процессы от администратора",
+      "target": "none",
+      "console": true,
+      "admin": true,
+      "args": [
+        "/ofilter",
+        "1",
+        "/dir",
+        "{dir}\reports",
+        "/uniqd"
+      ]
+    }
+  ]
+}

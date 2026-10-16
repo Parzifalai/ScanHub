@@ -1,0 +1,18 @@
+USB-устройство ввода	USB Input Device
+Развернуть всё	Expand all
+Свернуть всё	Collapse all
+Раскрыть все разделы ниже	Expand all sections below
+Нажми — отсортировать	Click to sort
+Сортировка: нажми на название столбца (ещё раз — в обратную сторону). Сейчас:	Sorting: click a column name (again to reverse). Now:
+сначала самое важное	most important first
+по столбцу	by column
+скорее всего, дело в самом устройстве, кабеле или порте, а не в драйвере	most likely the device itself, its cable or the port, not the driver
+не запускается	doesn't start
+работает неправильно	works incorrectly
+Windows остановила устройство из-за сбоя	Windows stopped the device after a failure
+Аварийно закрылась	Crashed
+Драйвер у мышей, клавиатур и других USB-устройств ввода встроен в Windows — обновлять его обычно нечего. Чаще дело в самом устройстве, кабеле или порте: отключи и подключи в другой USB-порт (прямо в ноутбук, без хаба и переходника), попробуй другой кабель или другой компьютер. Не заработало и там — устройство неисправно. Если на другом компьютере работает — перезагрузи этот и подключи снова.	Mice, keyboards and other USB input devices use a driver built into Windows — there is usually nothing to update. More often the problem is the device itself, its cable or the port: unplug it and plug it into another USB port (directly into the laptop, without a hub or adapter), try another cable or another computer. If it does not work there either, the device is faulty. If it works on another computer, restart this one and plug it in again.
+Набирала память и не отдавала	Kept taking memory and never released it
+Не установилась сама программа или её обновление	The program or its update failed to install
+Перестала отвечать	Stopped responding
+Служба или драйвер не запустились или упали	A service or driver failed to start or crashed

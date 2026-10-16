@@ -1,0 +1,38 @@
+Сведения о файлах	File details
+Имя, размер, даты, цифровая подпись, издатель, откуда скачан, что сказали проверки. Содержимое не читает.	Name, size, dates, digital signature, publisher, where it was downloaded from, what the checks said. Doesn't read the contents.
+Не смотреть файлы	Don't look at files
+Только журналы Windows и то, что нашёл ScanHub.	Only Windows logs and what ScanHub found.
+Сведения и чтение текстовых файлов	Details and reading text files
+Плюс журналы программ, настройки, скрипты (.txt, .log, .ini, .bat…) — например, почему не запускается игра. Пароли, ключи, данные браузеров и мессенджеров не читает никогда.	Plus program logs, settings, scripts (.txt, .log, .ini, .bat…) — for example, why a game won't start. Never reads passwords, keys, browser or messenger data.
+ScanHub перезапустился посреди ответа — спроси ещё раз	ScanHub restarted in the middle of the answer — ask again
+Ищу доступные модели…	Looking for available models…
+Проверяю связь с моделью…	Checking the connection to the model…
+Помощник не ответил:	The assistant didn't answer:
+ИИ-помощник подключён	AI assistant connected
+Не получилось:	Didn't work:
+ИИ-помощник	AI assistant
+Файл для проверки	File to check
+Папка для проверки	Folder to check
+Почему вылетает игра?	Why does a game crash?
+Что подозрительного в Загрузках?	What's suspicious in Downloads?
+Что занимает место на диске C?	What takes up space on drive C?
+Что лежит в карантине?	What's in quarantine?
+Почему ноутбук сам просыпается?	Why does the laptop wake up by itself?
+Что с моим компьютером не так?	What's wrong with my computer?
+Почему ноутбук греется и шумит?	Why does the laptop heat up and get noisy?
+Почему Windows медленно загружается?	Why does Windows boot slowly?
+Почему тормозит интернет?	Why is the internet slow?
+режим Тихий	Quiet mode
+режим Баланс	Balanced mode
+режим Производительность	Performance mode
+режим Свой	Custom mode
+Тихий	Quiet
+Баланс	Balanced
+Свой	Custom
+не хватило питания	not enough power
+ЦП	CPU
+ОЗУ	RAM
+ПК	PC
+Почему:	Why:
+Что делать:	What to do:
+Устарело программы:	Programs outdated:

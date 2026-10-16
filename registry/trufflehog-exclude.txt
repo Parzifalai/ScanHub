@@ -1,0 +1,6 @@
+(^|[\\/])node_modules([\\/]|$)
+(^|[\\/])\.git([\\/]|$)
+(^|[\\/])(\.venv|venv|env|__pycache__|site-packages|\.mypy_cache|\.pytest_cache|\.tox)([\\/]|$)
+(^|[\\/])(dist|build|out|\.next|\.nuxt|\.cache|\.turbo|coverage)([\\/]|$)
+(^|[\\/])(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|poetry\.lock|Cargo\.lock)$
+\.(png|jpe?g|gif|webp|ico|svg|mp4|mov|mkv|mp3|wav|ttf|woff2?|otf|pdf|zip|7z|rar|exe|dll|bin|iso|psd|ai|fig)$

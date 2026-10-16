@@ -1,0 +1,13 @@
+{
+  "id": "circl",
+  "name": "CIRCL hashlookup",
+  "section": "online",
+  "category": "Онлайн · база известных чистых файлов (NIST NSRL)",
+  "description": "Не ищет вирусы, а наоборот подтверждает, что файл — оригинальный из известного дистрибутива: база NIST NSRL (миллионы файлов из программ и сборок Windows и Linux) от CERT Люксембурга. Если файл там есть, срабатывания эвристик на него почти наверняка ложные — ScanHub учитывает это в итоге проверки. Отправляется только хэш, ключ не нужен.",
+  "simple": "Подтверждает, что файл оригинальный, — помогает отсеять ложные тревоги. Без ключа.",
+  "homepage": "https://www.circl.lu/services/hashlookup",
+  "source": { "type": "service", "service": "circl", "nokey": true },
+  "modes": [
+    { "id": "lookup", "label": "Проверить по хэшу", "target": "path", "action": "lookup", "multi": true }
+  ]
+}

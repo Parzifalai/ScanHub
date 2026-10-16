@@ -1,0 +1,90 @@
+{
+  "id": "defender",
+  "name": "Microsoft Defender",
+  "section": "scanners",
+  "simple": "Встроенный антивирус Windows. Всегда под рукой.",
+  "category": "Антивирус",
+  "description": "Встроенный антивирус Windows. Проверка файлов и папок без удаления (только отчёт), быстрая проверка системы и обновление баз. Офлайн-проверка перезагружает компьютер и проверяет диск до запуска Windows — против руткитов.",
+  "homepage": "https://learn.microsoft.com/defender-endpoint/command-line-arguments-microsoft-defender-antivirus",
+  "source": {
+    "type": "system",
+    "path": "%ProgramFiles%\\Windows Defender\\MpCmdRun.exe",
+    "status_ps": "$s=Get-MpComputerStatus; [pscustomobject]@{version=$s.AMProductVersion; signatures=$s.AntivirusSignatureVersion; updated=$s.AntivirusSignatureLastUpdated.ToString('yyyy-MM-ddTHH:mm:ss'); realtime=$s.RealTimeProtectionEnabled} | ConvertTo-Json -Compress"
+  },
+  "exit_codes": {
+    "0": [
+      "clean",
+      "Угроз нет"
+    ],
+    "2": [
+      "threat",
+      "Найдены угрозы"
+    ]
+  },
+  "modes": [
+    {
+      "id": "path",
+      "label": "Проверить файл или папку",
+      "target": "path",
+      "args": [
+        "-Scan",
+        "-ScanType",
+        "3",
+        "-File",
+        "{target}",
+        "-DisableRemediation"
+      ],
+      "multi": true
+    },
+    {
+      "id": "quick",
+      "label": "Быстрая проверка системы",
+      "target": "none",
+      "args": [
+        "-Scan",
+        "-ScanType",
+        "1"
+      ]
+    },
+    {
+      "id": "sigupdate",
+      "label": "Обновить базы",
+      "target": "none",
+      "args": [
+        "-SignatureUpdate"
+      ],
+      "exit_codes": {
+        "0": [
+          "clean",
+          "Базы обновлены"
+        ]
+      }
+    },
+    {
+      "id": "offline",
+      "label": "Офлайн-проверка при перезагрузке",
+      "target": "none",
+      "elevated": true,
+      "admin": true,
+      "timeout": 120,
+      "started_text": "запускаю офлайн-проверку…",
+      "cmd": [
+        "powershell",
+        "-NoProfile",
+        "-Command",
+        "Start-MpWDOScan"
+      ],
+      "confirm": "Перезагрузить компьютер для офлайн-проверки? Defender проверит диск до запуска Windows (около 15 минут) — так он находит руткиты, которые прячутся от обычной проверки. Перезагрузка начнётся примерно через минуту: сохрани и закрой всё открытое. Результат — в «Безопасность Windows → Журнал защиты».",
+      "exit_codes": {
+        "0": [
+          "launched",
+          "Перезагрузка через минуту — проверка пройдёт до запуска Windows"
+        ],
+        "1": [
+          "error",
+          "Не запустилась — нужна среда восстановления Windows (reagentc /enable)"
+        ]
+      }
+    }
+  ]
+}

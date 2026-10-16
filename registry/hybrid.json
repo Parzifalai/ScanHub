@@ -1,0 +1,20 @@
+{
+  "id": "hybrid",
+  "name": "Hybrid Analysis",
+  "section": "online",
+  "optional": true,
+  "category": "Онлайн · песочница CrowdStrike",
+  "description": "Показывает, что делал файл, когда его запускали в песочнице CrowdStrike: вердикт, оценку угрозы от 0 до 100 и семейство вредоноса. Ищет по хэшу (отпечатку) — сам файл не отправляется. Если файл в песочнице ещё никто не запускал, будет «нет в базе». Нужен бесплатный API-ключ.",
+  "simple": "Смотрит, что файл делал в песочнице у CrowdStrike. Сам файл никуда не отправляется.",
+  "homepage": "https://hybrid-analysis.com",
+  "source": {
+    "type": "service",
+    "service": "hybrid",
+    "key": "hybrid_key",
+    "signup": "https://hybrid-analysis.com/signup",
+    "key_page": "https://hybrid-analysis.com/my-account?tab=%23api-key-tab"
+  },
+  "modes": [
+    { "id": "lookup", "label": "Проверить по хэшу", "target": "path", "action": "lookup", "multi": true }
+  ]
+}

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="600 270 800 960" fill="none">
+  <!-- ScanHub: щит с радаром. Полная версия — для размеров от 48 px -->
+  <defs>
+    <linearGradient id="beam" x1="1010" y1="720" x2="1180" y2="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22c55e" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#22c55e" stop-opacity="0.55"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#4ade80" stop-opacity="0.65"/>
+      <stop offset="1" stop-color="#4ade80" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#22c55e" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <!-- щит -->
+    <path d="M1000 294 L1332 380 Q1370 392 1370 432 L1370 742 C1370 960 1225 1108 1022 1199 Q1000 1209 978 1199 C775 1108 630 960 630 742 L630 432 Q630 392 668 380 Z"/>
+    <!-- внешнее кольцо: сплошное и «пройденное» лучом -->
+    <path d="M1000 497 A248 248 0 1 0 1248 745"/>
+    <path d="M1248 745 A248 248 0 0 0 1000 497" stroke-opacity="0.3"/>
+    <!-- внутреннее кольцо -->
+    <path d="M1000 600 A145 145 0 1 0 1145 745"/>
+    <path d="M1145 745 A145 145 0 0 0 1000 600" stroke-opacity="0.3"/>
+    <!-- центр и опора -->
+    <circle cx="1000" cy="745" r="27" stroke-width="18"/>
+    <path d="M1000 772 L1000 890"/>
+    <!-- луч -->
+    <path d="M1012 720 L1125 458 A290 290 0 0 1 1226 528 Z" fill="url(#beam)" stroke-width="20"/>
+  </g>
+  <!-- найденная точка -->
+  <circle cx="1216" cy="650" r="44" fill="url(#glow)"/>
+  <circle cx="1216" cy="650" r="19" fill="#4ade80"/>
+</svg>

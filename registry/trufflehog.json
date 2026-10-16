@@ -1,0 +1,23 @@
+{
+  "id": "trufflehog",
+  "name": "TruffleHog",
+  "section": "scanners",
+  "category": "Утечки ключей и паролей · Truffle Security",
+  "description": "Ищет в папках проектов забытые ключи API, токены и пароли (800+ видов: OpenAI, Anthropic, GitHub, AWS, Telegram-боты, базы данных…) — до того, как они попадут на GitHub. По умолчанию ничего никуда не отправляет. Режим «только действующие» проверяет каждый найденный ключ у его же сервиса (например, ключ OpenAI — у OpenAI), поэтому находит только настоящие, но обращается в интернет. Сами секреты в журнал ScanHub не пишутся — только тип, файл и маска. node_modules, .git, окружения Python и картинки пропускаются.",
+  "simple": "Находит забытые пароли и ключи API в твоих проектах.",
+  "repo": "trufflesecurity/trufflehog",
+  "source": {
+    "type": "github-release",
+    "asset": "^trufflehog_[\\d.]+_windows_amd64\\.tar\\.gz$",
+    "checksums": "trufflehog_[\\d.]+_checksums\\.txt"
+  },
+  "exe": "trufflehog.exe",
+  "modes": [
+    { "id": "path", "label": "Найти ключи в папке", "target": "path",
+      "args": ["filesystem", "{target}", "--no-update", "--no-verification", "--json", "--exclude-paths={registry}\\trufflehog-exclude.txt"] },
+    { "id": "verified", "label": "Только действующие ключи (проверка у сервисов)", "target": "path",
+      "args": ["filesystem", "{target}", "--no-update", "--results=verified", "--json", "--exclude-paths={registry}\\trufflehog-exclude.txt"] },
+    { "id": "git", "label": "История git-репозитория", "target": "path",
+      "args": ["git", "file://{target}", "--no-update", "--no-verification", "--json"] }
+  ]
+}

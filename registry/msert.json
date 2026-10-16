@@ -1,0 +1,28 @@
+{
+  "id": "msert",
+  "name": "Microsoft Safety Scanner",
+  "section": "downloadable",
+  "category": "Разовый сканер · Microsoft",
+  "description": "Разовый сканер от Microsoft на свежих базах Defender. Ничего не устанавливает и через 10 дней устаревает, поэтому скачивай его перед проверкой. Около 230 МБ.",
+  "simple": "Разовая проверка от Microsoft. Действует 10 дней после скачивания.",
+  "homepage": "https://learn.microsoft.com/defender-endpoint/safety-scanner-download",
+  "source": {
+    "type": "direct",
+    "url": "https://go.microsoft.com/fwlink/?LinkId=212732",
+    "filename": "msert.exe",
+    "signer": "Microsoft"
+  },
+  "exe": "msert.exe",
+  "admin": true,
+  "auto_update": false,
+  "max_age_days": 10,
+  "modes": [
+    {
+      "id": "run",
+      "label": "Запустить проверку",
+      "target": "none",
+      "gui": true,
+      "args": []
+    }
+  ]
+}

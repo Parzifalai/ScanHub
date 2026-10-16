@@ -1,0 +1,20 @@
+{
+  "id": "metadefender",
+  "name": "MetaDefender Cloud",
+  "section": "online",
+  "optional": true,
+  "category": "Онлайн · ~20 антивирусов OPSWAT",
+  "description": "Второе мнение рядом с VirusTotal: файл сверяется с базами 20+ антивирусных движков OPSWAT (среди них есть те, которых нет на VirusTotal). Отправляется только хэш (отпечаток) файла, сам файл остаётся у тебя. Нужен бесплатный API-ключ.",
+  "simple": "Сверяет файл ещё с 20+ антивирусами. Сам файл никуда не отправляется.",
+  "homepage": "https://metadefender.com",
+  "source": {
+    "type": "service",
+    "service": "metadefender",
+    "key": "metadefender_key",
+    "signup": "https://id.opswat.com/register",
+    "key_page": "https://metadefender.com/account"
+  },
+  "modes": [
+    { "id": "lookup", "label": "Проверить по хэшу", "target": "path", "action": "lookup", "multi": true }
+  ]
+}

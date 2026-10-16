@@ -1,0 +1,14 @@
+{
+  "id": "ntwarden",
+  "name": "NtWarden",
+  "section": "research",
+  "category": "Исследование Windows",
+  "description": "Инспектор системы: процессы (дерево, хэндлы, память, модули), службы, сетевые соединения, корневые сертификаты, ETW, RPC и пайпы, реестр. По правому клику на процессе есть «Analyze Process»: ищет внедрённый код (hollowing, module stomping). Драйвер KWinSys из комплекта ставь только в виртуалке: так советует сам автор.",
+  "repo": "mrT4ntr4/NtWarden",
+  "source": { "type": "github-release", "asset": "^NtWarden-x64-.*\\.zip$" },
+  "exe": "NtWarden.exe",
+  "modes": [
+    { "id": "open", "label": "Открыть", "target": "none", "gui": true, "args": [] },
+    { "id": "admin", "label": "Открыть от администратора", "target": "none", "gui": true, "admin": true, "args": [] }
+  ]
+}

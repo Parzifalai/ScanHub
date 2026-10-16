@@ -1,0 +1,25 @@
+{
+  "id": "eset",
+  "name": "ESET Online Scanner",
+  "section": "downloadable",
+  "category": "Разовый сканер · ESET",
+  "description": "Бесплатный разовый сканер ESET: скачивает свежие базы и проверяет компьютер. После проверки предложит удалить себя, соглашайся. В настройках не включай «периодическую проверку», тогда в фоне он работать не будет.",
+  "simple": "Разовая проверка от ESET (NOD32). Бесплатно.",
+  "homepage": "https://www.eset.com/int/home/online-scanner/",
+  "source": {
+    "type": "direct",
+    "url": "https://download.eset.com/com/eset/tools/online_scanner/latest/esetonlinescanner.exe",
+    "signer": "ESET"
+  },
+  "exe": "esetonlinescanner.exe",
+  "admin": true,
+  "modes": [
+    {
+      "id": "run",
+      "label": "Запустить проверку",
+      "target": "none",
+      "gui": true,
+      "args": []
+    }
+  ]
+}

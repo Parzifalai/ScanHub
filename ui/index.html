@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScanHub</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="icon" type="image/png" sizes="256x256" href="/icon-256.png">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header>
+  <button class="burger" id="burger" aria-label="Меню">☰</button>
+  <h1><img src="/logo-small.svg" width="26" height="26" alt=""> ScanHub</h1>
+  <div class="seg" id="modeSeg">
+    <button data-mode-set="simple" title="Только главное, простыми словами">Простой</button>
+    <button data-mode-set="dev" title="Все подробности: пути, команды, коды выхода, консоль">Разработчик</button>
+  </div>
+  <div class="grow"></div>
+  <span class="sub dev-only" id="lastCheck"></span>
+  <button class="dev-only" id="conBtn" title="Вывод сканеров">⌨ Консоль</button>
+  <button class="dev-only" id="checkBtn">Проверить обновления</button>
+  <button id="aiTop" title="ИИ-помощник: объяснит находки и ответит «почему у меня…»"><span class="ai-star">✦</span>Помощник</button>
+  <button id="bugBtn" title="Нашёл ошибку в ScanHub? Напиши автору — отчёт уйдёт ему в Telegram"><span data-ic="bug"></span>Нашёл ошибку?</button>
+  <button id="settingsBtn" title="Настройки"><span data-ic="gear"></span>Настройки</button>
+  <button id="quitBtn" title="Закрыть ScanHub полностью — сразу, а не через 2 минуты после закрытия окна"><span data-ic="power"></span>Выйти</button>
+</header>
+
+<div class="layout">
+  <nav class="side" id="side" aria-label="Разделы"></nav>
+  <main>
+    <div id="pageHead"></div>
+
+    <!-- ===================== главная ===================== -->
+    <section id="v-home" class="view" hidden>
+      <div class="hero" id="hero"></div>
+      <div class="ultra-cta" id="ultraCta"></div>
+      <div id="todo"></div>
+      <div>
+        <h2 class="sec">Быстрые действия</h2>
+        <div class="quick">
+          <button class="qa" data-act="pick"><span class="qi" data-ic="scan"></span><b>Проверить на вирусы</b><span>Файл или папку: скачанную программу, «Загрузки», флешку</span></button>
+          <button class="qa" data-act="quick"><span class="qi" data-ic="quick"></span><b>Быстрая проверка</b><span>Defender: память и система, 2–5 минут</span></button>
+          <button class="qa" data-go-page="scan:deep"><span class="qi" data-ic="deep"></span><b>Глубокая проверка</b><span>Все сканеры по очереди, 15–40 минут</span></button>
+          <button class="qa" data-go-page="clean:junk"><span class="qi" data-ic="clean"></span><b>Очистить мусор</b><span>Кэши, временные файлы, Корзина</span></button>
+          <button class="qa" data-go-page="disk:disk"><span class="qi" data-ic="disk"></span><b>Что занимает место</b><span>Папки, типы файлов, большие файлы</span></button>
+          <button class="qa" data-go-page="apps:uninst"><span class="qi" data-ic="apps"></span><b>Удалить программу</b><span>Вместе с остатками</span></button>
+          <button class="qa" data-go-page="health:health"><span class="qi" data-ic="health"></span><b>Полная проверка ПК</b><span>Защита, обновления, диски, батарея</span></button>
+          <button class="qa" data-noise-go><span class="qi" data-ic="fan"></span><b>Почему шумит</b><span>Кто греет компьютер и раскручивает вентиляторы — 25 секунд</span></button>
+          <button class="qa" data-go-page="speed:net"><span class="qi" data-ic="net"></span><b>Почему тормозит интернет</b><span>Wi‑Fi, роутер, DNS или провайдер — около 40 секунд</span></button>
+          <button class="qa" data-go-page="speed:game"><span class="qi" data-ic="game"></span><b>Игровой режим</b><span>Максимум мощности для игры, фоновые задачи на паузу</span></button>
+          <button class="qa" data-hwcheck-go><span class="qi" data-ic="chip"></span><b>Проверить комплектующие</b><span>Память, видеокарта, экран, зарядка, BIOS, кабели — несколько секунд</span></button>
+        </div>
+      </div>
+      <div>
+        <h2 class="sec">Компьютер сейчас</h2>
+        <div id="sRes"><div class="sub">Собираю данные…</div></div>
+      </div>
+      <div>
+        <h2 class="sec">Последние проверки</h2>
+        <div class="recent" id="sRecent"></div>
+      </div>
+    </section>
+
+    <!-- ===================== проверка ===================== -->
+    <section id="v-check" class="view" hidden>
+      <div id="sResult" hidden></div>
+      <div class="actions">
+        <button class="action" id="sFile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><circle cx="11" cy="14" r="3"/><path d="m16 19-2.8-2.8"/></svg><b>Проверить файл</b><span>Скачал программу? Проверь перед запуском — всеми сканерами сразу</span></button>
+        <button class="action" id="sFolder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z"/></svg><b>Проверить папку</b><span>Например, «Загрузки» или флешку</span></button>
+        <button class="action" data-go-page="scan:apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><circle cx="17.5" cy="17.5" r="3"/><path d="m21 21-1.4-1.4"/></svg><b>Проверить программу</b><span>Выбери из установленных — проверим её папку</span></button>
+        <button class="action" id="sQuick" title="Microsoft Defender проверяет память, автозагрузку и системные папки — места, где вирусы бывают чаще всего."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg><b>Быстрая проверка</b><span>Defender смотрит память, автозагрузку и системные папки. 2–5 минут</span></button>
+        <button class="action" data-go-page="scan:deep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 9 8 10 4.6-1 8-5 8-10V6z"/><circle cx="12" cy="11" r="3"/><path d="m16 15-1.8-1.8"/></svg><b>Глубокая проверка</b><span>Все сканеры по очереди: процессы, майнеры, сеть, автозагрузка, файлы</span></button>
+        <button class="action" data-go-page="ultra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.8" cy="18.8" r="2.3"/><path d="M7.1 18.8h8.4a3.15 3.15 0 0 0 0-6.3h-7a3.15 3.15 0 0 1 0-6.3h6.3"/><path d="M17.8 10.5V2.6"/><path d="M17.8 3h4l-1.3 2 1.3 2h-4"/></svg><b>Ультра проверка</b><span>Всё сразу: вирусы, мусор, здоровье, обновления, автозагрузка, приватность, сбои</span></button>
+        <button class="action" data-go-page="health:health"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><b>Полная проверка ПК</b><span>Не вирусы, а здоровье: защита, обновления, диски, батарея</span></button>
+      </div>
+      <div id="sOnline"></div>
+      <div>
+        <h2 class="sec">Дополнительные полезные сканеры — если есть подозрения на вирус</h2>
+        <div class="sub" style="margin:-4px 0 12px">Открываются своим окном. Запускай их, если проверка что-то нашла или компьютер ведёт себя странно: тормозит, сам открывает сайты, греется в простое.</div>
+        <div class="tiles" id="sTiles"></div>
+      </div>
+    </section>
+
+    <!-- ===================== сканеры (разработчик) ===================== -->
+    <section id="v-tools" class="view" hidden>
+      <div class="scanbar">
+        <div class="label">Цель для режимов со стрелкой ↑ и для общей проверки</div>
+        <div class="row">
+          <input type="text" id="target" placeholder="Путь к файлу или папке, например C:\Users\Имя\Downloads\setup.exe" spellcheck="false">
+          <button id="pickFile">Файл…</button>
+          <button id="pickFolder">Папка…</button>
+        </div>
+        <div class="row">
+          <div class="row" id="multiTools"></div>
+          <div style="flex:1"></div>
+          <button class="primary" id="scanAll">Проверить выбранными</button>
+        </div>
+      </div>
+      <div id="summary"></div>
+      <div id="sections"></div>
+      <p class="howto">
+        Новый сканер = один JSON-файл в папке <code>registry</code> (схема — в README.md там же). Обновления проверяются при запуске и каждые
+        <span id="every">6</span> ч, пока ScanHub открыт. Без окна: <code>python scanhub.py --update-all</code>.
+      </p>
+    </section>
+
+    <!-- ===================== ресурсы ===================== -->
+    <section id="v-res" class="view" hidden>
+      <div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button data-noise-go>🔊 Почему шумит устройство?</button></div>
+      <div id="resAlert"></div>
+      <div class="kpis" id="resKpis"></div>
+      <div class="charts" id="resCharts"></div>
+      <div class="charts">
+        <div class="chart" id="cpuBox" style="grid-column:1/-1" hidden></div>
+        <div class="chart" id="heatBox" style="grid-column:1/-1" hidden></div>
+        <div class="chart"><h4>Потоки процессора, %</h4><div class="sub" id="coresSub"></div><div class="cores" id="cores"></div></div>
+        <div class="chart"><h4>Диски</h4><div id="disks"></div></div>
+      </div>
+      <div class="panel">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <h4 style="margin:0">Процессы</h4><span class="sub" id="procCount"></span><div style="flex:1"></div>
+          <div class="seg small" id="procSort"><button data-sort="cpu" class="on">По процессору</button><button data-sort="mem">По памяти</button></div>
+        </div>
+        <table class="t procs" id="procs"></table>
+      </div>
+      <p class="sub" style="margin-top:10px" id="resSys"></p>
+      </div>
+    </section>
+
+    <section id="v-history" class="view" hidden><div id="history"></div></section>
+    <section id="v-panel" class="view" hidden><div id="panelBox"></div></section>
+  </main>
+</div>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+<div class="console min dev-only" id="console">
+  <div class="bar">
+    <button class="small" id="conToggle" title="Скрыть консоль">✕ Скрыть</button>
+    <div id="conTabs" style="display:flex;gap:6px"></div>
+    <div style="flex:1"></div>
+    <button class="small" id="conStop" hidden>Остановить</button>
+  </div>
+  <pre id="conOut"></pre>
+</div>
+
+<dialog id="settings">
+  <form method="dialog" id="settingsForm">
+    <h2>Настройки</h2>
+    <label>API-ключ VirusTotal <span class="hint" id="vtState"></span>
+      <input type="password" name="virustotal_key" placeholder="вставь ключ, чтобы сохранить или заменить" autocomplete="off">
+      <span class="hint">Бесплатно: <a data-link="https://www.virustotal.com/gui/join-us">регистрация</a>, затем ключ на странице <a data-link="https://www.virustotal.com/gui/my-apikey">API key</a>.</span>
+    </label>
+    <label>API-ключ Filescan.io <span class="hint" id="fsState"></span>
+      <input type="password" name="filescan_key" placeholder="вставь ключ, чтобы сохранить или заменить" autocomplete="off">
+      <span class="hint">Бесплатно: <a data-link="https://www.filescan.io/auth/signup">регистрация</a>, затем ключ в <a data-link="https://www.filescan.io/users/profile">профиле</a>.</span>
+    </label>
+    <label>API-ключ MetaDefender Cloud <span class="hint" id="mdState"></span>
+      <input type="password" name="metadefender_key" placeholder="вставь ключ, чтобы сохранить или заменить" autocomplete="off">
+      <span class="hint">Бесплатно: <a data-link="https://id.opswat.com/register">регистрация OPSWAT</a>, затем ключ на странице <a data-link="https://metadefender.com/account">аккаунта</a>.</span>
+    </label>
+    <label>API-ключ Hybrid Analysis <span class="hint" id="haState"></span>
+      <input type="password" name="hybrid_key" placeholder="вставь ключ, чтобы сохранить или заменить" autocomplete="off">
+      <span class="hint">Бесплатно: <a data-link="https://hybrid-analysis.com/signup">регистрация</a>, затем «Profile → API key».</span>
+    </label>
+    <label>GitHub-токен (необязательно) <span class="hint" id="ghState"></span>
+      <input type="password" name="github_token" placeholder="поднимает лимит проверок обновлений с 60 до 5000 в час" autocomplete="off">
+    </label>
+    <label>Проверять обновления каждые, часов
+      <input type="number" name="check_every_hours" min="1" max="168" style="width:100px">
+    </label>
+    <label class="switch"><input type="checkbox" name="ctx_menu"> <span>Пункт «Проверить в ScanHub» в меню правой кнопки мыши
+      <span class="hint" style="display:block">Скачал программу — нажми по ней правой кнопкой → «Проверить в ScanHub», и до запуска увидишь, можно ли её открывать. Включён по умолчанию. В Windows 11 пункт — в «Показать дополнительные параметры» (или сразу: Shift + правая кнопка). Только для твоей учётной записи, без прав администратора.</span></span></label>
+    <fieldset class="limits"><legend>Проверка папок и программ</legend>
+      <label class="switch"><input type="checkbox" name="folder_full"> <span>Проверять папки полностью — все файлы любого размера
+        <span class="hint" style="display:block">Надёжнее, но большая программа (например, After Effects) проверяется десятки минут. Без галочки — только программы, библиотеки, скрипты, архивы и документы с макросами.</span></span></label>
+      <label>Максимальный размер файла в быстрой проверке, МБ <input type="number" name="smart_mb" min="10" max="4000" style="width:110px"></label>
+      <label>Сколько файлов папки сверять в VirusTotal <input type="number" name="vt_files" min="1" max="100" style="width:110px">
+        <span class="hint">Бесплатный ключ VirusTotal — 4 файла в минуту и 500 в день: 20 файлов ≈ 5 минут. Это ограничение самого VirusTotal, поднять его можно только платной подпиской.</span></label>
+      <label>Сколько файлов папки сверять в Filescan, MetaDefender и Hybrid Analysis <input type="number" name="fs_files" min="1" max="200" style="width:110px"></label>
+    </fieldset>
+    <span class="hint">Ключи хранятся только на этом компьютере, в <code>data\config.json</code> рядом со ScanHub, зашифрованные Windows для твоей учётной записи. Удалить ключ: впиши <code>-</code> и сохрани.
+      <a data-wipe>Очистить историю проверок и журналы</a> · <a data-uninstall-self class="danger-link">Удалить ScanHub с компьютера…</a></span>
+    <div class="btns"><button value="cancel" formnovalidate>Отмена</button><button class="primary" value="save">Сохранить</button></div>
+  </form>
+</dialog>
+
+<script>const TOKEN = "__TOKEN__", VERSION = "__VERSION__";
+// страховка от пустого окна: если скрипты не загрузились (например, ScanHub перезапускался в момент перезагрузки окна) —
+// перезагрузиться самому; если ошибка повторяется — показать её, а не пустой экран
+window.__errs = [];
+window.addEventListener("error", e => window.__errs.push((e.message || "не загрузился " + (e.target?.src || "файл")) + (e.filename ? " · " + e.filename.split("/").pop() + ":" + e.lineno : "")), true);
+window.addEventListener("load", () => setTimeout(() => {
+  const ok = typeof go === "function" && document.querySelector("#side")?.children.length;
+  let n = 0;
+  try { n = +sessionStorage.getItem("scanhub.boot") || 0 } catch {}
+  if (ok) { try { sessionStorage.removeItem("scanhub.boot") } catch {} return }
+  try { sessionStorage.setItem("scanhub.boot", n + 1) } catch {}
+  const main = document.querySelector("main");
+  if (n < 4) {
+    main.innerHTML = '<div style="padding:40px;color:#9aa4b2;font:15px system-ui">ScanHub запускается… окно перезагрузится само.</div>';
+    setTimeout(() => location.reload(), 2000);
+  } else {
+    main.innerHTML = '<div style="padding:40px;font:15px system-ui;color:#e5e7eb;max-width:720px"><h2 style="margin:0 0 8px">Окно ScanHub не запустилось</h2>' +
+      '<p style="color:#9aa4b2">Нажми Ctrl+R. Если не помогает — закрой окно и открой ScanHub ярлыком заново.</p>' +
+      '<pre style="white-space:pre-wrap;color:#f87171;font-size:12px">' + (window.__errs.join("\n") || "скрипты приложения не ответили").replace(/[<&]/g, c => c === "<" ? "&lt;" : "&amp;") + '</pre>' +
+      '<button onclick="sessionStorage.removeItem(\'scanhub.boot\');location.reload()" style="padding:8px 16px;border-radius:10px">Перезагрузить</button></div>';
+  }
+}, 2500));
+</script>
+<script src="/i18n.js"></script>
+<script src="/core.js"></script>
+<script src="/ai.js"></script>
+<script src="/bug.js"></script>
+<script src="/res.js"></script>
+<script src="/panels.js"></script>
+<script src="/ultra.js"></script>
+<script src="/fix.js"></script>
+<script src="/history.js"></script>
+<script src="/pages.js"></script>
+</body>
+</html>

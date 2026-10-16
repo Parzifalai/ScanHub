@@ -1,0 +1,31 @@
+{
+  "id": "autoruns",
+  "name": "Autoruns",
+  "section": "research",
+  "category": "Автозагрузка · Sysinternals (Microsoft)",
+  "description": "Полный список того, что запускается вместе с Windows: программы, службы, задачи, драйверы, расширения проводника и браузеров. Можно сверить с VirusTotal (Options → Scan Options). Майнеры закрепляются именно здесь.",
+  "homepage": "https://learn.microsoft.com/sysinternals/downloads/autoruns",
+  "source": {
+    "type": "direct",
+    "url": "https://download.sysinternals.com/files/Autoruns.zip",
+    "signer": "Microsoft"
+  },
+  "exe": "Autoruns64.exe",
+  "modes": [
+    {
+      "id": "open",
+      "label": "Открыть",
+      "target": "none",
+      "gui": true,
+      "args": []
+    },
+    {
+      "id": "admin",
+      "label": "Открыть от администратора",
+      "target": "none",
+      "gui": true,
+      "admin": true,
+      "args": []
+    }
+  ]
+}
