@@ -213,10 +213,19 @@ def clean_paths(paths, older_hours=24, progress=None):
     return freed, skipped
 
 
-def junk_clean(ids, run_elevated, prog=None):
+def junk_clean(ids, run_elevated, prog=None, expect=None):
+    """expect — {id: байт} из последнего junk_scan: по нему окно показывает проценты («37% · …»)."""
     prog = prog or (lambda s: None)
     cats = {c["id"]: c for c in categories()}
     freed, skipped, admin_paths, done = 0, 0, [], []
+    expect = {k: v for k, v in (expect or {}).items() if k in ids and v}
+    total = sum(expect.values()) or 0
+    base = [0]                                          # сколько ожидаемых байт уже «закрыто» прошлыми категориями
+
+    def pct(cid, fr):
+        if not total:
+            return ""
+        return f"{min(99, int((base[0] + min(fr, expect.get(cid, 0))) * 100 / total))}% · "
     for cid in ids:
         c = cats.get(cid)
         if not c:
@@ -225,8 +234,9 @@ def junk_clean(ids, run_elevated, prog=None):
         if c.get("admin"):
             admin_paths.append({"paths": c["paths"], "hours": hours, "id": cid})
             continue
-        prog(f"очищаю: {c['label']}")
-        f, s = clean_paths(c["paths"], hours, lambda n, fr: prog(f"{c['label']}: удалено файлов {n:,} · {fr / 2 ** 20:,.0f} МБ".replace(",", " ")))
+        prog(f"{pct(cid, 0)}очищаю: {c['label']}")
+        f, s = clean_paths(c["paths"], hours, lambda n, fr: prog(f"{pct(cid, fr)}{c['label']}: удалено файлов {n:,} · {fr / 2 ** 20:,.0f} МБ".replace(",", " ")))
+        base[0] += expect.get(cid, 0)
         freed += f
         skipped += s
         done.append(cid)
@@ -326,6 +336,12 @@ def analyze(root, progress=lambda s: None):
     types = [[0, 0] for _ in range(len(TYPES) + 1)]
     top = []                                            # куча (size, path) — 300 самых больших файлов
     nfiles, ndirs, denied, t0 = 0, 0, 0, time.time()
+    seen, used = 0, 0
+    if os.path.splitdrive(root)[1] in ("\\", ""):     # весь диск: проценты считаем от занятого места
+        try:
+            used = shutil.disk_usage(root).used
+        except OSError:
+            pass
     order = []                                          # папки в порядке обхода (для подсчёта снизу вверх)
     stack = [root]
     while stack:
@@ -363,9 +379,10 @@ def analyze(root, progress=lambda s: None):
         sizes[d], counts[d], children[d] = own, cnt, kids
         nfiles += cnt
         ndirs += 1
+        seen += own
         stack.extend(kids)
         if ndirs % 2000 == 0:
-            progress(f"просмотрено {nfiles:,} файлов в {ndirs:,} папках… сейчас: {d[:90]}".replace(",", " "))
+            progress((f"{min(99, seen * 100 // used)}% · " if used else "") + f"просмотрено {nfiles:,} файлов в {ndirs:,} папках… сейчас: {d[:90]}".replace(",", " "))
     for d in reversed(order):                           # сложить размеры снизу вверх
         for k in children[d]:
             sizes[d] += sizes.get(k, 0)
@@ -475,7 +492,7 @@ def duplicates(root, min_size=1024 * 1024, progress=lambda s: None, stopped=lamb
     for i, (size, paths) in enumerate(sorted(cands, key=lambda x: -x[0])):
         if stopped():
             break
-        progress(f"сравниваю содержимое: группа {i + 1} из {len(cands)}")
+        progress(f"{i * 100 // max(1, len(cands))}% · сравниваю содержимое: группа {i + 1} из {len(cands)}")
         head = {}
         for p in paths:
             try:
@@ -822,7 +839,7 @@ def shred(paths, progress=lambda s: None):
         except OSError as e:
             errors.append(f"{f}: {e.strerror or e}")
         if i % 20 == 0:
-            progress(f"уничтожено {done} из {len(files)}")
+            progress(f"{done * 100 // max(1, len(files))}% · уничтожено {done} из {len(files)}")
     for p in paths:
         if os.path.isdir(p):
             for r, d, fs in os.walk(p, topdown=False):

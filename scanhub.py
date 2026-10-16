@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "1.1.1"
+VERSION = "1.2.0"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -1589,9 +1589,10 @@ def _task_fn(name, args):
     path = args.get("path") or ""
     lazy = {
         # ---- очистка и место на диске
-        "prepare": lambda: prepare(prog, args.get("_cancel") or (lambda: False)),
+        "prepare": lambda: prepare(prog, args.get("_cancel") or (lambda: False), bool(args.get("trails"))),
         "junk_scan": lambda: pcclean.junk_scan(),
-        "junk_clean": lambda: pcclean.junk_clean(list(args.get("ids", [])), run_el, prog),
+        "junk_clean": lambda: pcclean.junk_clean(list(args.get("ids", [])), run_el, prog,
+                                                 {c["id"]: c.get("size", 0) for c in (_last("junk_scan") or {}).get("categories", [])}),
         "disk_analyze": lambda: pcclean.analyze(path or "C:\\", prog),
         "dups": lambda: pcclean.duplicates(path, int(args.get("min_mb", 1)) * 2 ** 20, prog),
         "empty": lambda: pcclean.empty_folders(path, prog),
@@ -1676,6 +1677,15 @@ def _task_fn(name, args):
         "sysfiles": lambda: deepscan.sysfiles_check(sfc=args.get("sfc", True), disk=bool(args.get("disk"))),
         "noise": lambda: metrics.METRICS.noise_report(),
         "hardware": lambda: _hardware(bool(args.get("refresh"))),
+        "devices": lambda: __import__("devices").check(),
+        "phone_status": lambda: __import__("phone").status(),
+        "phone_last": lambda: __import__("phone").last() or {},
+        "phone_install": lambda: __import__("phone").install(prog),
+        "phone_scan": lambda: __import__("phone").scan(args.get("serial"), prog, config().get("virustotal_key")),
+        "phone_open": lambda: __import__("phone").open_app(str(args.get("pkg", ""))),
+        "phone_uninstall": lambda: __import__("phone").uninstall(str(args.get("pkg", ""))),
+        "phone_a11y_off": lambda: __import__("phone").a11y_off(str(args.get("pkg", ""))),
+        "device_fix": lambda: __import__("devices").fix(str(args.get("kind", ""))),
         "hwcheck": lambda: hwcheck.check(metrics.METRICS.snapshot() if metrics else None, load_json(os.path.join(DATA, "diag.json"), None)),
         "mem_quick": system.mem_quick,
         "mem_full": system.mem_full,
@@ -1773,6 +1783,8 @@ CHANGE_TASKS = {
     "firewall_set": "Брандмауэр", "startup_set": "Автозагрузка", "driver_disable": "Отключён уязвимый драйвер",
     "driver_restore": "Драйвер включён обратно", "hosts_set": "Блокировка майнинг-сайтов (файл hosts)",
     "watch_set": "Сторож (проверка раз в 15 минут)", "memclean_set": "Полная очистка памяти", "sensors_set": "Датчики Lenovo",
+    "device_fix": "Устройства: настройка Windows",
+    "phone_uninstall": "Телефон: удалено приложение", "phone_a11y_off": "Телефон: снят доступ к спец. возможностям",
     "envpath_fix": "PATH: убраны лишние записи", "shortcuts_remove": "Удалены битые ярлыки",
     "force_remove": "Удалена запись программы из списка установленных", "force_remove_many": "Удалены записи удалённых программ",
     "uninstall": "Удалена программа", "leftovers_remove": "Удалены остатки программы", "leftovers_delay": "Остатки удалятся при перезагрузке",
@@ -1805,6 +1817,10 @@ HOW = {
     "quarantine": "Вернуть: «Проверка на вирусы → Карантин» → «Вернуть».",
     "restore_create": "", "restore_enable": "Выключить: «Приватность и защита → Точки восстановления».", "app_links_create": "",
     "q_restore": "", "game_off": "", "driver_restore": "", "privacy_revert": "", "security_revert": "",
+    "phone_uninstall": "Вернуть: поставь приложение заново из магазина на телефоне.",
+    "phone_a11y_off": "Вернуть: на телефоне «Настройки → Спец. возможности» → приложение → включить.",
+    "device_fix": "Вернуть: «Параметры Windows → Специальные возможности → Клавиатура» (залипание, фильтрация), «Bluetooth и устройства → Мышь» "
+                  "(повышенная точность) или «Конфиденциальность → Микрофон/Камера».",
 }
 IRREVERSIBLE = "Это не отменяется: удалённое стёрто."
 
@@ -1852,6 +1868,11 @@ def _change_items(name, a, r):
             return [("включено: " if a.get("enable") else "выключено: ") + x for x in find("firewall", a.get("ids") or [a.get("id")], "name", "title", "display")]
         if name in ("driver_disable", "driver_restore"):
             return [str(a.get("service"))]
+        if name in ("phone_uninstall", "phone_a11y_off"):
+            return [str(a.get("pkg", ""))]
+        if name == "device_fix":
+            return [{"filterkeys": "выключена фильтрация ввода", "stickykeys": "выключено залипание клавиш", "mouseaccel": "выключена повышенная точность указателя",
+                     "privacy_microphone": "программам разрешён микрофон", "privacy_webcam": "программам разрешена камера"}.get(a.get("kind"), str(a.get("kind")))]
         if name in ("hosts_set", "watch_set", "memclean_set", "sensors_set"):
             return ["включено" if a.get("enable") else "выключено"]
         if name == "envpath_fix":
@@ -2150,7 +2171,7 @@ def start_deep(skip=None):
            "log": os.path.join(LOGS, f"{jid}.log")}
     jobs[jid] = job
     ctx = {"manifest": manifest, "state": state, "exe_path": exe_path, "config": config,
-           "metrics": metrics.METRICS if metrics else None, "skip": skip}
+           "metrics": metrics.METRICS if metrics else None, "skip": skip, "install": _install_wait}
 
     def work():
         try:
@@ -2188,12 +2209,23 @@ def _deep_wait(skip):
 
 # «Подготовить ScanHub»: всё, без чего проверка файла и глубокая проверка неполные. Один раз, ~1 ГБ.
 PREPARE = [("clamav", "антивирус ClamAV"), ("atomscan", "ИИ-сканер Atomdrift"), ("hollowshunter", "проверку процессов HollowsHunter"),
-           ("rootcerts", "Sigcheck для проверки сертификатов")]
+           ("rootcerts", "Sigcheck для проверки сертификатов"), ("minersearch", "поиск майнеров MinerSearch")]
+# списки угроз, которые проверки качают сами при первом запуске, — подготовка берёт их заранее
+PREPARE_INTEL = [("update_loldrivers", "база уязвимых драйверов (LOLDrivers)"), ("update_fmhy", "списки опасных сайтов (FMHY)"),
+                 ("update_malext", "база вредоносных расширений браузеров")]
 
 
-def prepare(prog=lambda s: None, cancel=lambda: False):
-    """Поставить недостающие рекомендуемые сканеры и скачать их базы. Уже готовое пропускается — можно нажимать повторно."""
+def prepare(prog=lambda s: None, cancel=lambda: False, trails=False):
+    """Поставить недостающие рекомендуемые сканеры и скачать их базы. Уже готовое пропускается — можно нажимать повторно.
+    trails — человек согласился с лицензией баз Maltrail (мастер первого запуска): скачать и их."""
     done, errors = [], []
+    step, total = [0], len(PREPARE) + 4
+    _prog = prog
+
+    def prog(text):                                     # «37% · …» — окно рисует полосу и сколько осталось
+        sub = re.search(r"(\d{1,3})%", str(text))
+        frac = (step[0] + (int(sub.group(1)) / 100 if sub else 0)) / total
+        _prog(f"{min(99, int(frac * 100))}% · {text}")
 
     def wait_job(job, label):
         while job["status"] == "running":
@@ -2205,6 +2237,7 @@ def prepare(prog=lambda s: None, cancel=lambda: False):
         return job.get("verdict") or ["error", "ошибка"]
 
     for tid, label in PREPARE:
+        step[0] += 1 if tid != PREPARE[0][0] else 0
         if cancel():
             break
         m = manifest(tid)
@@ -2221,15 +2254,18 @@ def prepare(prog=lambda s: None, cancel=lambda: False):
         else:
             errors.append(f"{label}: {ts.get('blocked') or ts.get('error') or 'не установилось'}")
     # базы ClamAV
+    step[0] = len(PREPARE)
     cm, cts = manifest("clamav"), tool_state(state(), "clamav")
     if not cancel() and exe_path(cm, cts) and not glob.glob(os.path.join(cts.get("path") or "", cm["needs_data"]["glob"])):
         v = wait_job(start_job("clamav", "update", None), "базы ClamAV (~250 МБ)")
         (done if v[0] != "error" else errors).append("базы ClamAV" if v[0] != "error" else f"базы ClamAV: {v[1]}")
     # правила YARA
+    step[0] += 1
     if not cancel() and not yarascan.installed():
         v = wait_job(start_job("yara", "update", None), "правила YARA")
         (done if v[0] != "error" else errors).append("правила YARA" if v[0] != "error" else f"правила YARA: {v[1]}")
     # правила Atomdrift: скачать сейчас и разобрать заранее, чтобы первая проверка не ждала 1–3 минуты
+    step[0] += 1
     ats = tool_state(state(), "atomscan")
     aexe = exe_path(manifest("atomscan"), ats)
     if not cancel() and aexe:
@@ -2240,6 +2276,29 @@ def prepare(prog=lambda s: None, cancel=lambda: False):
             done.append("правила Atomdrift")
         except Exception as e:
             errors.append(f"правила Atomdrift: {e}")
+    # списки угроз и базы опасных адресов (Maltrail — только с согласия: лицензия разрешает их для своего компьютера)
+    step[0] += 1
+    try:
+        import intel
+        if trails:
+            intel._save_meta("trails_accepted", datetime.now().isoformat(timespec="seconds"))
+        jobs_i = list(PREPARE_INTEL) + ([("ensure_trails", "базы опасных адресов (Maltrail, ~12 МБ)")] if intel.trails_accepted() else [])
+        for i, (fn, label) in enumerate(jobs_i):
+            if cancel():
+                break
+            part = fn.replace("update_", "").replace("ensure_", "")
+            if fn != "ensure_trails" and intel._fresh(part, 7 * 24 if part == "loldrivers" else 24):
+                continue                                   # уже свежие — второй раз не качаем
+            prog(f"{label}… ({i + 1} из {len(jobs_i)})")
+            try:
+                r = getattr(intel, fn)(lambda s: None)
+                if r is False:
+                    raise RuntimeError("не скачалось")
+                done.append(label)
+            except Exception as e:
+                errors.append(f"{label}: {e}")
+    except Exception as e:
+        errors.append(f"списки угроз: {e}")
     return {"done": done, "errors": errors, "stopped": cancel()}
 
 
@@ -2393,7 +2452,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if ctype.startswith("text/html"):
             # окно грузит только свои файлы и обращается только к своему серверу: чужой скрипт или картинку-«маячок» вставить нельзя
             self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
-                             "img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; "
+                             "img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; "
                              "frame-ancestors 'none'")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
@@ -2441,6 +2500,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self.send(200, {"app": "scanhub", "version": VERSION, "window": time.time() - last_ping < 20})
         if u.path == "/api/ai/config":
             return self.send(200, assistant.cfg_view(config()))
+        if u.path == "/api/setup":
+            # мастер первого запуска: пройден ли, согласие на базы Maltrail, какие ключи уже есть
+            import intel
+            c = config()
+            return self.send(200, {"done": bool(c.get("setup_done")), "trails": intel.trails_accepted(),
+                                   "keys": {k: bool(c.get(k)) for k in ("virustotal_key", "filescan_key", "metadefender_key", "hybrid_key")}})
+        if u.path == "/api/usage":
+            return self.send(200, {"on": config().get("usage_ping")})
         if u.path == "/api/ai/job":
             j = assistant.view(q.get("id"))
             return self.send(200, j) if j else self.send(404, {"error": "нет такого запроса"})
@@ -2544,7 +2611,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             except Exception as e:
                 self.close_connection = True
                 return self.send(500, {"error": str(e)})
-        if n > 2 * 2 ** 20:                         # окну хватает килобайтов; огромный запрос — ошибка или атака на память
+        if n > (3 if u.path.startswith("/api/report/") else 2) * 2 ** 20:   # окну хватает килобайтов (отчёту со снимками — до 3 МБ)
             return self.send(413, {"error": "слишком большой запрос"})
         try:
             body = json.loads(self.rfile.read(n) or b"{}")
@@ -2583,10 +2650,23 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self.send(200, {"on": on})
             if p == "/api/report/preview":
                 r = report.build(body, VERSION, config())
-                return self.send(200, {"text": report.preview_text(r), "ready": bool(config().get("report_url") or report.REPORT_URL)})
+                return self.send(200, {"text": report.preview_text(r), "ready": bool(config().get("report_url") or report.REPORT_URL),
+                                       "log": report.log_info()})
             if p == "/api/report/send":
                 report.send(report.build(body, VERSION, config()), config())
                 return self.send(200, {"ok": True})
+            if p == "/api/setup/done":
+                _cfg_update({"setup_done": now()})
+                return self.send(200, {"ok": True})
+            if p == "/api/setup/testkey":
+                return self.send(200, test_key(str(body.get("key", "")), str(body.get("value", "")).strip()))
+            if p == "/api/usage":
+                # анонимный счётчик запусков: только с согласия (спрашиваем один раз на главной, меняется в ⚙)
+                on = bool(body.get("on"))
+                _cfg_update({"usage_ping": on, **({} if on else {"usage_last": ""})})
+                if on:
+                    threading.Thread(target=lambda: __import__("usage").ping(config(), _cfg_update, VERSION), daemon=True).start()
+                return self.send(200, {"on": on})
             if p == "/api/quit":
                 # «Выйти»: выключить сервер сразу, а не через 2 минуты после закрытия окна.
                 # Если что-то идёт — без force только сообщаем, что именно (окно спросит, останавливать ли)
@@ -2596,6 +2676,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     return self.send(409, {"error": "busy", "jobs": [j.get("tool_name") or j["tool"] for j in run], "tasks": tasks})
                 for j in run:
                     stop_job(j["id"])
+                _stop_helpers()
                 threading.Timer(1.5, os._exit, [0]).start()
                 return self.send(200, {"ok": True})
             if p == "/api/ping":
@@ -2666,7 +2747,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         "storage": "ms-settings:storagesense", "apps": "ms-settings:appsfeatures", "recovery": "ms-settings:recovery",
                         "sysprotect": "SystemPropertiesProtection.exe", "rstrui": "rstrui.exe", "firewall": "wf.msc",
                         "proxy": "ms-settings:network-proxy", "coreisolation": "windowsdefender://coreisolation",
-                        "threatsettings": "windowsdefender://threatsettings", "bitlocker": "control.exe /name Microsoft.BitLockerDriveEncryption"}
+                        "threatsettings": "windowsdefender://threatsettings", "bitlocker": "control.exe /name Microsoft.BitLockerDriveEncryption",
+                        "sound": "ms-settings:sound", "mic_privacy": "ms-settings:privacy-microphone", "cam_privacy": "ms-settings:privacy-webcam",
+                        "bluetooth": "ms-settings:bluetooth", "mouse": "ms-settings:mousetouchpad", "typing": "ms-settings:typing",
+                        "ease_keyboard": "ms-settings:easeofaccess-keyboard", "devmgmt": "devmgmt.msc", "mmsys": "control.exe mmsys.cpl"}
                 if what in uris:
                     if " " in uris[what]:            # программа с параметрами (control.exe /name …)
                         subprocess.Popen(uris[what].split())
@@ -2736,6 +2820,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         c["ai_model"] = str(body["model"])[:120]
                     if body.get("files") in assistant.FILE_MODES:
                         c["ai_files"] = body["files"]
+                    if "web" in body:
+                        c["ai_web"] = bool(body["web"])
                     for k in AI_KEYS:
                         if k in body:
                             v = str(body[k]).strip()
@@ -2820,6 +2906,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     return self.send(400, {"error": "эту ссылку ScanHub не открывает"})
                 return self.send(200, {"ok": True})
         except Exception as e:
+            if isinstance(e, (ConnectionError, BrokenPipeError)):    # окно закрыли или перезагрузили посреди ответа — не ошибка ScanHub
+                return
             if not isinstance(e, (RuntimeError, PermissionError, FileNotFoundError)):
                 report.record(f"POST {p}", e)
             return self.send(400, {"error": str(e)})
@@ -2836,6 +2924,7 @@ STATIC = {"/logo.svg": "image/svg+xml", "/logo-small.svg": "image/svg+xml", "/ic
           "/pages.js": "text/javascript; charset=utf-8", "/ultra.js": "text/javascript; charset=utf-8", "/fix.js": "text/javascript; charset=utf-8",
           "/ai.js": "text/javascript; charset=utf-8", "/bug.js": "text/javascript; charset=utf-8",
           "/history.js": "text/javascript; charset=utf-8", "/i18n.js": "text/javascript; charset=utf-8",
+          "/devices.js": "text/javascript; charset=utf-8", "/phone.js": "text/javascript; charset=utf-8", "/setup.js": "text/javascript; charset=utf-8",
           "/en.json": "application/json; charset=utf-8"}
 
 
@@ -3175,13 +3264,56 @@ def bind_server(prefer=None, wait=0):
         time.sleep(0.5)
 
 
+def _stop_helpers():
+    """Выход: погасить то, что ScanHub запускал сам и что живёт отдельным процессом (сервер adb)."""
+    if "phone" in sys.modules:
+        try:
+            sys.modules["phone"].stop_server()
+        except Exception:
+            pass
+
+
 def idle_watch():
     while True:
         time.sleep(15)
         running = any(j["status"] == "running" for j in list(jobs.values())) or \
             any(t.get("status") == "running" for t in list(TASKS.values()))
         if not running and not busy and time.time() - last_ping > IDLE_EXIT:
+            _stop_helpers()
             os._exit(0)
+
+
+KEY_TESTS = {   # безопасный запрос с ключом: отпечаток тестового файла EICAR — его знают все сервисы
+    "virustotal_key": ("https://www.virustotal.com/api/v3/files/275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f", "x-apikey", {}),
+    "filescan_key": ("https://www.filescan.io/api/reputation/hash?sha256=275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f", "X-Api-Key", {}),
+    "metadefender_key": ("https://api.metadefender.com/v4/apikey/", "apikey", {}),
+    "hybrid_key": ("https://hybrid-analysis.com/api/v2/key/current", "api-key", {"User-Agent": "Falcon Sandbox"}),
+}
+
+
+def test_key(name, value):
+    """Проверить ключ сервиса одним запросом: {ok, text}. Ключ никуда, кроме самого сервиса, не уходит."""
+    if name not in KEY_TESTS or not value:
+        return {"ok": False, "text": "пустой ключ"}
+    url, header, extra = KEY_TESTS[name]
+    try:
+        code, body = services.request(url, {header: value, "accept": "application/json", **extra}, timeout=20)
+    except Exception as e:
+        return {"ok": None, "text": f"сервис не ответил: {getattr(e, 'reason', e)} — ключ сохраню, проверю позже"}
+    if code in (200, 404):
+        return {"ok": True, "text": "ключ работает"}
+    if code in (401, 403):
+        return {"ok": False, "text": "сервис не принял ключ — проверь, что скопирован целиком"}
+    if code == 429:
+        return {"ok": True, "text": "ключ верный, но сейчас лимит запросов — это нормально"}
+    return {"ok": None, "text": f"сервис ответил {code} — ключ сохраню, проверю при первой проверке"}
+
+
+def _cfg_update(d):
+    with lock:
+        c = load_json(CONFIG_FILE, {})
+        c.update(d)
+        save_json(CONFIG_FILE, c)
 
 
 def _health_snapshot_later():
@@ -3235,6 +3367,7 @@ def main():
     threading.Thread(target=protect_folder, daemon=True).start()
     threading.Thread(target=updater_loop, daemon=True).start()
     threading.Thread(target=_health_snapshot_later, daemon=True).start()
+    threading.Thread(target=lambda: __import__("usage").loop(config, _cfg_update, VERSION), daemon=True).start()
     threading.Thread(target=ctxmenu_startup, daemon=True).start()
     threading.Thread(target=lambda: ultra_report.seed(load_json(ULTRA_FILE, None)), daemon=True).start()
     if "--no-window" not in sys.argv:

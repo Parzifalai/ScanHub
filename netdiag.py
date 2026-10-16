@@ -168,25 +168,25 @@ def speed_up(size=8_000_000):
 # ---------------------------------------------------------------- всё вместе + вывод «где проблема»
 def run(progress=lambda s: None, speed=True):
     R = {"when": time.strftime("%Y-%m-%dT%H:%M:%S")}
-    progress("смотрю сетевой адаптер")
+    progress("2% · смотрю сетевой адаптер")
     R["adapter"] = _ps(INFO_PS) or {}
     R["wifi"] = wifi()
     gw = R["adapter"].get("gateway")
     if gw:
-        progress("пингую роутер (20 раз)")
+        progress("8% · пингую роутер (20 раз)")
         try:
             R["gateway"] = ping(gw, 20)
         except OSError as e:
             R["gateway"] = {"error": str(e)}
-    progress("пингую интернет (1.1.1.1 и 8.8.8.8)")
+    progress("30% · пингую интернет (1.1.1.1 и 8.8.8.8)")
     R["internet"] = [ping("1.1.1.1", 20), ping("8.8.8.8", 10)]
-    progress("проверяю DNS")
+    progress("58% · проверяю DNS")
     dns = [d for d in (R["adapter"].get("dns") or []) if re.fullmatch(r"[\d.]+", str(d))][:2]
     R["dns"] = [dns_test(d) for d in dns] + ([dns_test("1.1.1.1")] if "1.1.1.1" not in dns else [])
     if speed:
-        progress("меряю скорость скачивания (~8 с)")
+        progress("65% · меряю скорость скачивания (~8 с)")
         R["down"] = speed_down()
-        progress("меряю скорость отдачи")
+        progress("85% · меряю скорость отдачи")
         R["up"] = speed_up()
     R["verdict"], R["findings"] = judge(R)
     return R

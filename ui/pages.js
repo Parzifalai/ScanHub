@@ -20,8 +20,9 @@ const PAGES = [
   {id: "privacy", ico: "privacy", t: "Приватность и защита",
    intro: "Что Windows отправляет о тебе, что программы добавили в меню правой кнопки, кого пускает брандмауэр и как откатить изменения.",
    tabs: [["privacy", "Приватность"], ["security", "Защита Windows"], ["browsers", "Браузеры"], ["ctx", "Контекстное меню"], ["firewall", "Брандмауэр"], ["restore", "Точки восстановления"], ["miners", "Защита от майнеров"], ["shred", "Шредер"], ["changes", "Что изменил ScanHub"]]},
-  {id: "health", ico: "health", t: "Здоровье ПК", intro: "Общая проверка системы, сбои и их причины, компоненты для программ, предупреждения, драйверы и комплектующие.",
-   tabs: [["health", "Полная проверка"], ["crash", "Сбои и ошибки"], ["runtimes", "Компоненты для программ"], ["alerts", "Предупреждения"], ["drivers", "Драйверы"], ["hw", "Комплектующие"], ["history", "История"]]},
+  {id: "health", ico: "health", t: "Здоровье ПК", intro: "Общая проверка системы, сбои и их причины, компоненты для программ, предупреждения, устройства (клавиатура, мышь, микрофон, звук, камера), драйверы и комплектующие.",
+   tabs: [["health", "Полная проверка"], ["crash", "Сбои и ошибки"], ["runtimes", "Компоненты для программ"], ["alerts", "Предупреждения"], ["devices", "Устройства"], ["drivers", "Драйверы"], ["hw", "Комплектующие"], ["history", "История"]]},
+  {id: "phone", ico: "phone", t: "Телефон", intro: "Проверка Android-телефона по кабелю: следилки, приложения не из магазина, кто получил опасный доступ, обновления безопасности, батарея и память. На телефон ничего не ставится."},
   {id: "res", ico: "res", t: "Ресурсы", intro: "Нагрузка на процессор, память, видеокарту, сеть и диск за последние 5 минут — и какие программы её создают."},
   {id: "tools", ico: "tools", t: "Сканеры", dev: true, intro: "Все подключённые сканеры: версии, обновления, режимы запуска и технические подробности."},
   {id: "history", ico: "history", t: "История", intro: "Все проверки с результатами и журналами."},
@@ -89,11 +90,12 @@ function renderNav(){
     if (n && c) c.textContent = n; else if (n) b.insertAdjacentHTML("beforeend", ` <span class="cnt">${n}</span>`); else c?.remove();
   });
   $("#side").innerHTML += `<div class="side-foot">${MODE === "dev" ? "Режим «Разработчик»: видны пути, команды, коды выхода и консоль." : "Простой режим: только главное. Подробности — в режиме «Разработчик»."}<div style="margin-top:6px;opacity:.6">ScanHub ${esc(typeof VERSION === "string" ? VERSION : "")}</div>
+    <div style="margin-top:6px"><a data-idea title="Чего не хватает или что неудобно — автор читает всё">✦ Предложить улучшение</a></div>
     <div class="langsw" data-noi18n><a data-lang="ru" class="${LANG === "ru" ? "on" : ""}">Русский</a> · <a data-lang="en" class="${LANG === "en" ? "on" : ""}">English</a></div></div>`;
 }
 
 // ============================================================ «Подготовить ScanHub»: всё, без чего проверки неполные
-const PREP = {clamav: "ClamAV", atomscan: "Atomdrift", hollowshunter: "HollowsHunter", rootcerts: "Sigcheck"};
+const PREP = {clamav: "ClamAV", atomscan: "Atomdrift", hollowshunter: "HollowsHunter", rootcerts: "Sigcheck", minersearch: "MinerSearch"};
 function prepMissing(){
   const out = Object.entries(PREP).filter(([id]) => tool(id) && !tool(id).ready && !tool(id).busy).map(([, n]) => n);
   if (tool("clamav")?.ready && tool("clamav").data_missing) out.push("базы ClamAV");
@@ -130,11 +132,23 @@ document.addEventListener("click", async e => {
   setTimeout(wait, 2500);
 });
 setTimeout(() => api("/api/self_update").then(r => { SELFUPD = r; if (r.newer && PAGE === "home") renderTodo() }).catch(() => {}), 4000);
-function prepHome(){ ["restore", "game", "quarantine_list", "diag", "hwcheck", "app_links"].forEach(n => ensureTask(n)) }
+function prepHome(){
+  ["restore", "game", "quarantine_list", "diag", "hwcheck", "app_links"].forEach(n => ensureTask(n));
+  if (USAGE === undefined) api("/api/usage").then(r => { USAGE = r.on ?? null; if (PAGE === "home") renderTodo() }).catch(() => {});
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-usage]");
+  if (!b) return;
+  USAGE = (await api("/api/usage", {on: b.dataset.usage === "1"}).catch(() => ({on: null}))).on;
+  toast(USAGE ? "Спасибо!" : "Хорошо, не буду", USAGE ? "ScanHub будет раз в день отмечаться у автора — без личных данных" : "ничего не отправляется; изменить можно в ⚙ Настройках");
+  renderTodo();
+});
 function computeTodo(){
   const T = [], add = (lvl, t, s, b) => T.push({lvl, t, s, b});
   const prep = prepCard();
   if (prep) T.push(prep);
+  if (USAGE === null) T.push({lvl: "info", t: "Помочь автору ScanHub?", s: "Раз в день сообщать автору, что ScanHub запущен: случайный номер этой копии, версия, язык и номер сборки Windows. Без имён, файлов и находок. Так автор узнаёт, сколько людей пользуется ScanHub. Изменить можно в ⚙ Настройках.",
+    b: ["Разрешить", `data-usage="1"`], b2: ["Не надо", `data-usage="0"`]});
   if (TASK.app_links?.result && !TASK.app_links.result.ok && store.get("links.ack") !== "1")
     add("info", "Создай ярлык ScanHub", "Ярлык на рабочем столе и в меню «Пуск» — чтобы открывать ScanHub в один клик, не заходя в папку.", ["Создать ярлык", `data-task-run="app_links_create"`]);
   if (SELFUPD?.newer) add("warn", `Вышла новая версия ScanHub — ${SELFUPD.latest}`, SELFUPD.asset
@@ -195,7 +209,7 @@ function renderTodo(){
   const ic = {bad: ["threat", "!"], warn: ["suspicious", "!"], info: ["running", "i"]};
   const html = TODO.length ? `<h2 class="sec">Что стоит сделать</h2><div class="checks">${TODO.map(x => `<div class="check">
       <span class="ic ic-${ic[x.lvl][0]}">${ic[x.lvl][1]}</span><span><b>${esc(x.t)}</b><span class="sub">${esc(x.s)}</span></span>
-      <span class="acts">${x.primary ? "" : aiBtn(x.t, x.s, {source: "Главная · Что стоит сделать"})}${x.b ? `<button class="small${x.lvl === "bad" || x.primary ? " primary" : ""}" ${x.b[1]}>${esc(x.b[0])}</button>` : ""}${x.lvl === "info" ? ` <button class="small" data-todo-ack="${esc(x.t)}" title="Убрать из списка">Понятно</button>` : ""}</span></div>`).join("")}</div>
+      <span class="acts">${x.primary ? "" : aiBtn(x.t, x.s, {source: "Главная · Что стоит сделать"})}${x.b ? `<button class="small${x.lvl === "bad" || x.primary ? " primary" : ""}" ${x.b[1]}>${esc(x.b[0])}</button>` : ""}${x.b2 ? ` <button class="small" ${x.b2[1]}>${esc(x.b2[0])}</button>` : x.lvl === "info" ? ` <button class="small" data-todo-ack="${esc(x.t)}" title="Убрать из списка">Понятно</button>` : ""}</span></div>`).join("")}</div>
       ${hidden.length ? `<div class="sub" style="margin-top:6px">Скрыто советов: ${hidden.length}. <a data-todo-unack>Показать снова</a></div>` : ""}`
     : `<h2 class="sec">Что стоит сделать</h2><div class="note info">Сейчас ничего срочного. 👍${hidden.length ? ` <a data-todo-unack>Показать скрытые советы (${hidden.length})</a>` : ""}</div>`;
   if (html === TODO_HTML) return;                // не перерисовывать без изменений (данные приходят каждые 1,5 с)
@@ -417,7 +431,7 @@ function renderSimpleResult(){
   const vtSum = r => { const d = (r.details || []).filter(x => !x.missing); if (!d.length) return null;
     const hits = d.reduce((n, x) => n + (x.engines || []).filter(e => e.c === "malicious" || e.c === "suspicious").length, 0);
     return d.length === 1 ? (hits ? `тревогу подняли ${hits} из ${d[0].total}` : `чисто у всех ${d[0].total}`) : (hits ? `тревоги в ${d.filter(x => x.positives || x.suspicious).length} из ${d.length} файлов` : `чисто, файлов: ${d.length}`) };
-  const plain = r => r.status === "running" ? `проверяет… ${r.started ? el(r) : ""}${r.progress ? " · " + r.progress : ""}` :
+  const plain = r => r.status === "running" ? `проверяет… ${r.started ? el(r) : ""}${r.progress ? " · " + progOf(r.progress).t : ""}${progOf(r.progress).f != null ? ` · ${Math.round(progOf(r.progress).f * 100)}%${etaText(r.started, progOf(r.progress).f) ? ", " + etaText(r.started, progOf(r.progress).f) : ""}` : ""}` :
     (r.tool === "virustotal" || r.tool === "metadefender") && vtSum(r) ? vtSum(r) :
     // CIRCL не ищет вирусы — он только подтверждает, что файл оригинальный из известного дистрибутива
     r.tool === "circl" ? ((r.details || []).some(d => d.malicious) ? "в базе известных файлов отмечен как вредоносный" :
@@ -1012,6 +1026,38 @@ const REL_CAT = {
   update: ["Не установилось обновление", "не установилось обновление"], install: ["Не установилась программа", "не установилась программа"],
   windows: ["Сбой Windows", "сбой Windows"], shutdown: ["Внезапное выключение", "внезапное выключение"], other: ["Другой сбой", "другой сбой"]};
 const fmtDay = d => new Date(d + "T12:00:00").toLocaleDateString(LOC, {day: "numeric", month: "long"});
+// Сбой из журнала надёжности → [уровень, коротко, почему]. n — сколько раз то же самое было за 4 недели.
+// Главное для обычного человека — сразу видно, можно ли не обращать внимания.
+const REL_BENIGN = /^(TextInputHost|SearchHost|SearchApp|StartMenuExperienceHost|ShellExperienceHost|PhoneExperienceHost|Widgets|backgroundTaskHost|RuntimeBroker)\.exe$/i;
+function relSev(e, n = 1){
+  const c = String(e.code || "").toLowerCase();
+  if (e.cat === "windows") return ["bad", "Важно", "сбой самой Windows — посмотри «Синие экраны» и «Аппаратные ошибки» в разделе «Сбои и ошибки»"];
+  if (e.cat === "shutdown") return [n >= 2 ? "warn" : "info", n >= 2 ? "Стоит посмотреть" : "Не страшно, если разово", "компьютер выключился некорректно: села батарея, перегрев или его выключили кнопкой"];
+  if (e.cat === "update" || e.cat === "install") {
+    if (c === "0x80073d02") return ["ok", "Не страшно", "приложение было открыто во время обновления — Store обновит его сам позже"];
+    if (n >= 5) return ["warn", "Стоит посмотреть", `не ставится уже ${n} раз — ${UPD_CODES[c] || "открой «Что установлено неправильно»"}`];
+    return ["ok", "Не страшно", "неудачная попытка — Windows попробует ещё раз сама"];
+  }
+  if (e.cat === "hang") {
+    if (REL_BENIGN.test(e.name || "")) return ["ok", "Не страшно", "часть Windows (поиск, клавиатура, меню «Пуск») на секунду не ответила — бывает у всех"];
+    return n >= 3 ? ["warn", "Стоит посмотреть", `зависает регулярно (${n} раз за 4 недели) — обнови или переустанови программу`] : ["ok", "Не страшно", "программа один раз не отвечала, и её закрыли"];
+  }
+  if (e.cat === "crash") return n >= 3 ? ["warn", "Стоит посмотреть", `вылетает регулярно (${n} раз за 4 недели) — в разделе есть кнопка «Решить»`] : ["ok", "Не страшно", "разовый вылет — если не повторяется, можно забыть"];
+  return ["info", "Для сведения", ""];
+}
+const SEV_RANK = {ok: 0, info: 1, warn: 2, bad: 3};
+// сбои одного дня с одинаковой причиной — одной строкой: «не установилось обновление: WhatsApp, Telegram, Phone Link»
+function stabGroup(list){
+  const g = {};
+  for (const {e, v} of list) {
+    const what = REL_CAT[e.cat]?.[1] || "";
+    const k = v[0] + "|" + v[2] + "|" + what + "|" + (v[0] === "ok" ? e.code || "" : e.name);
+    const x = g[k] ||= {v, what, names: [], code: e.code || ""};
+    if (!x.names.includes(e.name)) x.names.push(e.name);
+  }
+  return Object.values(g).sort((a, b) => SEV_RANK[b.v[0]] - SEV_RANK[a.v[0]]);
+}
+const sevChip = (v, title = "") => `<span class="schip schip-${v[0]}"${title || v[2] ? ` title="${esc(title || v[2])}"` : ""}>${esc(v[1])}</span>`;
 function stabVerdict(v){
   if (v == null) return ["info", "нет данных", "Windows ещё не посчитала индекс — он появляется через несколько дней работы компьютера."];
   if (v >= 8) return ["ok", "отлично", "Сбоев почти нет."];
@@ -1035,19 +1081,27 @@ function stabHtml(r, day){
     : !total ? "" : byCat.windows || byCat.shutdown ? "Среди сбоев есть сбои самой Windows или внезапные выключения — их стоит разобрать в первую очередь."
     : inst >= total / 2 ? `Больше половины сбоев (${inst} из ${total}) — неудачные установки обновлений и программ. Это не поломка: Windows считает каждую неудачную попытку сбоем. Индекс поднимется сам, когда обновление установится или его перестанут предлагать.`
     : "Индекс снижают в основном программы — не Windows и не железо.";
+  const sevN = {ok: 0, info: 0, warn: 0, bad: 0};
+  for (const x of groups) sevN[relSev(x, x.count)[0]] += x.count;
+  const sum = !total ? "" : sevN.bad ? `<div class="note bad"><b>Есть важное:</b> ${sevN.bad} ${plural3(sevN.bad, "сбой", "сбоя", "сбоев")} самой Windows — их стоит разобрать.</div>`
+    : sevN.warn ? `<div class="note warn"><b>Опасного нет, но ${sevN.warn} ${plural3(sevN.warn, "сбой стоит", "сбоя стоит", "сбоев стоит")} посмотреть</b> — они повторяются. Остальные ${total - sevN.warn} — обычные мелочи.</div>`
+    : `<div class="note ok-note"><b>Опасного нет.</b> ${last != null && last < 6 ? "Индекс низкий из-за мелочей: " : ""}все ${total} ${plural3(total, "сбой", "сбоя", "сбоев")} — разовые вылеты и неудачные попытки обновления. Компьютеру они не вредят, разбирать их не нужно.</div>`;
   const days = {};
   for (const e of ev) (days[e.d] ||= []).push(e);
   const prevOf = d => { const i = stab.findIndex(s => s.d === d); return i > 0 ? stab[i - 1].v : null };
   const dayList = stab.slice().reverse().filter(s => days[s.d] || s.d === day).slice(0, 30);
   return `<div class="stab-verdict lvl-${lvl}"><b>${last ?? "—"} из 10 — ${esc(word)}.</b> ${esc(text)}${trend >= 0.5 ? " Сейчас индекс растёт: последние дни сбоев меньше." : trend <= -0.5 ? " Последние дни индекс падает: появились новые сбои." : ""}</div>
-    ${hint ? `<p>${esc(hint)}</p>` : ""}
+    ${sum}${hint ? `<p>${esc(hint)}</p>` : ""}
     <div class="sub">Как считается: Windows ставит оценку от 1 до 10 по сбоям за последние недели. Каждый вылет, зависание, сбой Windows или неудачная установка снижает её (свежие — сильнее), а каждый день без сбоев понемногу поднимает. Это не оценка железа, а то, сколько всего ломалось.${rel ? ` Успешных установок и обновлений за это время: ${rel.ok} — они индекс не снижают.` : ""}</div>
     ${groups.length ? `<div class="grp" style="margin-top:14px">Что снизило индекс за 4 недели</div><table class="t small">${groups.slice(0, 12).map(x =>
-      `<tr><td class="sub">${esc(REL_CAT[x.cat]?.[0] || x.cat)}</td><td><b>${esc(x.name)}</b>${x.code ? ` <span class="mono sub-inline">${esc(x.code)}</span>` : ""}${UPD_CODES[(x.code || "").toLowerCase()] ? `<div class="sub">${esc(UPD_CODES[x.code.toLowerCase()])}</div>` : ""}</td><td>${x.count}×</td><td class="sub">${esc(fmtDay(x.last))}</td></tr>`).join("")}</table>`
+      { const v = relSev(x, x.count); return `<tr><td>${sevChip(v)}</td><td class="sub">${esc(REL_CAT[x.cat]?.[0] || x.cat)}</td><td><b>${esc(x.name)}</b>${x.code ? ` <span class="mono sub-inline">${esc(x.code)}</span>` : ""}${v[2] ? `<div class="sub">${esc(cap(v[2]))}</div>` : ""}</td><td>${x.count}×</td><td class="sub">${esc(fmtDay(x.last))}</td></tr>` }).join("")}</table>`
       : rel ? `<p>За 4 недели Windows не записала ни одного сбоя.</p>` : ""}
     ${dayList.length ? `<div class="grp" style="margin-top:14px">По дням</div>${dayList.map(st => { const p = prevOf(st.d), dv = p == null ? 0 : +(st.v - p).toFixed(1);
-      return `<div class="stab-day${st.d === day ? " on" : ""}"><div><b>${esc(fmtDay(st.d))}</b> · индекс ${st.v}${dv ? ` <span class="${dv < 0 ? "down" : "up"}">${dv > 0 ? "▲ +" : "▼ "}${dv}</span>` : ""}</div>
-        ${(days[st.d] || []).map(e => `<div class="sub">${esc(REL_CAT[e.cat]?.[1] || "")}: <b style="color:var(--text)">${esc(e.name)}</b>${e.code ? ` <span class="mono">${esc(e.code)}</span>` : ""}</div>`).join("") || `<div class="sub">сбоев не было — индекс подрос</div>`}</div>` }).join("")}` : ""}`;
+      const list = (days[st.d] || []).map(e => ({e, v: relSev(e, g[e.cat + "|" + e.name]?.count || 1)}));
+      const worst = list.reduce((w, x) => SEV_RANK[x.v[0]] > SEV_RANK[w] ? x.v[0] : w, "ok");
+      const dayV = !list.length ? "" : worst === "bad" ? sevChip(["bad", "Важно"]) : worst === "warn" ? sevChip(["warn", "Есть что посмотреть"]) : sevChip(["ok", "День в порядке"], "Только мелочи — компьютеру не вредят");
+      return `<div class="stab-day${st.d === day ? " on" : ""}"><div><b>${esc(fmtDay(st.d))}</b> · индекс ${st.v}${dv ? ` <span class="${dv < 0 ? "down" : "up"}">${dv > 0 ? "▲ +" : "▼ "}${dv}</span>` : ""} ${dayV}</div>
+        ${stabGroup(list).map(x => `<div class="sub stab-ev">${sevChip(x.v)} ${esc(x.what)}: ${x.names.map(n => `<b style="color:var(--text)">${esc(n)}</b>`).join(", ")}${x.code ? ` <span class="mono">${esc(x.code)}</span>` : ""}${x.v[2] ? `<span class="stab-why">${esc(x.v[2])}</span>` : ""}</div>`).join("") || `<div class="sub">сбоев не было — индекс подрос</div>`}</div>` }).join("")}` : ""}`;
 }
 // ---------- итог разбора сбоев: что опасно, что стоит посмотреть, что можно не читать
 let DIAG_Q = "";
@@ -1272,6 +1326,7 @@ function pCrash(dev){
   parts.push(sec(`Вылеты программ: ${r.crashes.reduce((a, c) => a + c.count, 0)}`, r.crashes.length ? `<div class="checks">${r.crashes.map(c => row(c.count >= 3 ? "warn" : "info",
     `${esc(c.app)} <span class="sub-inline">${c.count} ${c.count === 1 ? "раз" : "раза"}</span>`,
     `${aboutOf(c) ? `<b style="font-weight:600">Что это:</b> ${aboutHtml(c)}<br>` : ""}<b style="font-weight:600">Почему:</b> ${esc(c.what)}${c.code_name ? ` · ${esc(c.code_name)}` : ""}${c.code_desc ? ` — ${esc(c.code_desc)}` : ""}.<br><b style="font-weight:600">Что делать:</b> ${esc(c.advice)}
+     ${sevLine(c.count >= 3 ? ["warn", "Стоит посмотреть: вылетает регулярно — нажми «Решить»"] : c.count === 2 ? ["info", "Не страшно, если больше не повторится"] : ["info", "Не опасно: разовый вылет — если не повторяется, можно забыть"])}
      ${dev ? `<br>модули: <span class="mono">${esc(c.modules.join(", "))} · ${esc(c.code)} · ${esc(c.path)}</span>` : ""}`,
     `<span class="sub">${esc(ago2(c.last))}</span><button class="small primary" data-crash-fix="${attr({app: c.app, path: c.path, count: c.count})}" title="Что можно сделать именно с этой программой">Решить</button>`,
     {title: `Вылеты ${c.app}`, html: crashDet(c), ai: `Путь: ${c.path}. Код: ${c.code}. Модуль: ${c.module}. Что это: ${c.about?.ru || "?"}`})).join("")}</div>` : `<div class="note info">Программы не вылетали. 👍</div>`));
@@ -1374,14 +1429,15 @@ function panelHtml(name, dev){
   const f = {deep: pDeep, apps: pApps, quar: pQuar, network: pNetwork, junk: pJunk, shortcuts: pShortcuts, drvstore: pDrvStore, envpath: pEnvPath,
     disk: pDisk, dups: pDups, empty: pEmpty, uninst: pUninst, debloat: pDebloat, winget: pWinget, boot: pBoot, game: pGame, memory: pMemory,
     noise: pNoise, privacy: pPrivacy, security: pSecurity, browsers: pBrowsers, ctx: pCtx, firewall: pFirewall, restore: pRestore, miners: pProtect, shred: pShred, changes: pChanges,
-    health: pHealth, drivers: pDrivers, hw: pHw, history: pHistory, net: pNet, crash: pCrash, runtimes: pRuntimes, alerts: pAlerts, ultra: pUltra}[name];
+    health: pHealth, drivers: pDrivers, hw: pHw, history: pHistory, net: pNet, crash: pCrash, runtimes: pRuntimes, alerts: pAlerts, ultra: pUltra, devices: pDevices, phone: pPhone}[name];
   return f ? f(dev) : "";
 }
 function prepPanel(name){
   const auto = {drivers: "drivers", miners: ["hosts", "watch"], network: "network", apps: "apps", hw: ["hwcheck", "hardware"], quar: "quarantine_list",
     junk: "junk_scan", shortcuts: "shortcuts", drvstore: "drvstore", envpath: "envpath", uninst: "programs", debloat: "appx", winget: "winget",
     boot: "startup", game: "game", privacy: "privacy", security: "security", browsers: "browsers", ctx: "ctx", firewall: "firewall", restore: "restore", crash: "diag", runtimes: "runtimes",
-    alerts: "watch", history: "health_history"}[name];
+    alerts: "watch", history: "health_history", devices: "devices", phone: "phone_status"}[name];
+  if (name === "phone") runTask("phone_last", undefined, true);      // последний итог с диска — всегда свежий
   if (name === "changes") runTask("changes", undefined, true);      // журнал всегда свежий: изменения делаются в других разделах
   if (name === "alerts") pollAlerts().then(redrawPanels);
   if (name === "ultra") { ULTRA.seen = true; if (!ULTRA.polling) loadUltra() }
@@ -1454,6 +1510,7 @@ function taskToast2(name, t, args){
     winget: () => [r.apps == null ? "winget не найден" : r.apps.length ? `Устарело программ: ${r.apps.length}` : "Все программы обновлены", ""],
     diag: () => [r.summary?.length ? "Найдены сбои: " + r.summary.slice(0, 2).map(x => x.text.toLowerCase()).join(", ") : "Серьёзных сбоев нет", `за ${r.days} дней`, r.summary?.some(x => x.lvl === "bad") ? "warn" : "ok"],
     runtimes: () => [(r.items || []).some(x => !x.ok && x.need) ? "Не хватает компонентов" : "Все нужные компоненты установлены", ""],
+    device_fix: () => ["Исправлено", "настройка Windows изменена — проверь устройство ещё раз"],
     browsers: () => { const n = (r.extensions || []).filter(e => e.level === "bad" || e.level === "warn").length + (r.policies || []).length;
       return [n ? `Браузеры: на что посмотреть — ${n}` : "Браузеры в порядке", `расширений: ${(r.extensions || []).length}`, n ? "warn" : "ok"] },
   }[name];

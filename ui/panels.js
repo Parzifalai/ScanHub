@@ -23,8 +23,12 @@ async function ensureTask(name){
   if (t.status === "running") return runTask(name, undefined, true);
   redrawPanels();
 }
-const taskBusy = (name, text) => TASK[name]?.status === "running"
-  ? `<div class="sub busy" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="spin" style="width:16px;height:16px;border-width:2px"></div>${text}${TASK[name].progress ? ` <span class="mono">· ${esc(TASK[name].progress)}</span>` : ""}</div>` : "";
+const taskBusy = (name, text) => {
+  const t = TASK[name];
+  if (t?.status !== "running") return "";
+  const p = progOf(t.progress);
+  return `<div class="sub busy" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="spin" style="width:16px;height:16px;border-width:2px"></div>${text}${p.t ? ` <span class="mono">· ${esc(p.t)}</span>` : ""}</div>${progHtml(t.progress, t.started)}`;
+};
 // уязвимый драйвер: чей он и что с ним делать
 function drvFix(list){
   const off = TASK.driver_disable?.result?.service, on = TASK.driver_restore?.result?.service;
@@ -74,12 +78,12 @@ function pDeep(dev){
     `<div class="icon ${v === "threat" ? "i-bad" : v === "suspicious" || v === "error" || d.problems?.length ? "i-warn" : "i-ok"}">${v === "threat" ? "!" : v === "suspicious" ? "?" : v === "error" || d.problems?.length ? "!" : "✓"}</div>`;
   const title = running ? `Идёт глубокая проверка… шаг ${Math.min(done + 1, steps.length)} из ${steps.length}` : esc(d.verdict?.[1] || "Готово");
   const right = running ? `<button class="danger" data-stop-job="${d.id}">Остановить</button>` : startBtn;
-  const recs = ["cureit", "kvrt", "eset", "emsisoft", "msert", "malwarebytes", "minersearch", "adwcleaner"].map(tool).filter(Boolean);
+  const recs = ["cureit", "kvrt", "eset", "emsisoft", "msert", "malwarebytes", "adwcleaner"].map(tool).filter(Boolean);     // MinerSearch уже внутри глубокой
   const hjt = tool("hijackthis");   // те же, что советует ультра проверка
   return `<div class="pnl">
     <div class="head"><div class="result" style="padding:0;border:0;background:none"><div class="big">${big}<div><h3 style="margin:0">${title}</h3>
       <div class="sub">${running ? "можно свернуть окно — проверка продолжится" : "закончена " + esc((d.finished || "").replace("T", " "))}</div></div></div></div><div class="grow"></div>${right}</div>
-    ${running ? `<div class="progress"><div style="width:${done / steps.length * 100}%"></div></div>` : problemsHtml(d.problems)}
+    ${running ? progBar(done / steps.length) : problemsHtml(d.problems)}
     <ul class="steps">${steps.map(s => {
       const st = s.status === "done" ? (s.verdict || "clean") : s.status;
       const f = dev ? s.findings : s.findings.slice(0, 5);
@@ -89,8 +93,8 @@ function pDeep(dev){
         <span class="lbl">${esc(s.status === "pending" ? "ждёт" : s.status === "running" ? "идёт…" : s.label)}${!running && (s.findings.length || s.problem) ? aiBtn(`${s.title}: ${s.label}`, [...s.findings.slice(0, 15), s.problem || ""].join("; "), {source: "Глубокая проверка"}) : ""}</span></li>`;
     }).join("")}</ul>
     ${dev ? `<div><a data-show-deep="${d.id}">Открыть полный лог в консоли</a></div>` : ""}
-    ${!running ? `<div><div class="grp" style="margin-bottom:8px">Дополнительные полезные сканеры — если есть подозрение на вирус</div><div class="sub" style="margin:-4px 0 8px">Каждый работает своим окном и проверяет по своим базам. Начни с Dr.Web CureIt! и KVRT — они самые сильные из бесплатных; майнеры лучше всех ищет MinerSearch, рекламный мусор — AdwCleaner.</div>
-      <div class="recs">${recs.map(t => `<div class="tile"><b>${esc(t.name)}</b><p>${esc(t.simple || "")}</p><div class="row">${simpleTileButtons(t)}</div></div>`).join("")}${hjt ? hjtTile() : ""}</div></div>` : ""}
+    ${!running ? recsHtml(recs.map(t => t.id), {threat: v === "threat" || v === "suspicious",
+        extra: hjt ? `<div class="rec-g"><div class="rec-gh">Подробный отчёт о системе</div><div class="recs">${hjtTile()}</div></div>` : ""}) : ""}
   </div>`;
 }
 async function pollDeep(){
@@ -147,6 +151,7 @@ function sysfilesChecks(){
   const t = TASK.sysfiles, r = t?.result;
   if (!r || !r.dism) return [];
   const C = [], repair = `<button class="small" data-launch="sfc_repair">Восстановить</button>`;
+  if (r.cards) return r.cards.map(c => ({grp: "Системные файлы", st: c.lvl, title: c.title, text: c.text, action: c.action === "repair" ? repair : ""}));
   const D = {ok: ["ok", "Хранилище компонентов Windows исправно", ""],
              repairable: ["bad", "Хранилище компонентов Windows повреждено", "Его можно восстановить: DISM скачает исправные файлы из Windows Update"],
              broken: ["bad", "Хранилище компонентов не восстанавливается автоматически", "Понадобится восстановление с установочного образа Windows"],

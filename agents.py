@@ -161,8 +161,9 @@ def _toml(v):
     return json.dumps(v, ensure_ascii=False)
 
 
-def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, timeout=900, max_turns=30):
-    """Запустить агента на один ответ. Возвращает текст ответа. stop() — человек нажал «Остановить»."""
+def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, timeout=900, max_turns=30, web=False):
+    """Запустить агента на один ответ. Возвращает текст ответа. stop() — человек нажал «Остановить».
+    web — разрешить поиск и чтение страниц в интернете (только для вопросов; для «Сделай сам» всегда выключено)."""
     c = CLI[provider]
     exe = c["find"]()
     if not exe:
@@ -175,8 +176,9 @@ def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, t
     try:
         if provider == "claude_code":
             args = [exe, "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
-                    "--system-prompt", system, "--tools", "", "--mcp-config", json.dumps({"mcpServers": {"scanhub": mcp}}),
-                    "--strict-mcp-config", "--allowedTools", "mcp__scanhub", "--no-session-persistence", "--setting-sources", "",
+                    "--system-prompt", system, "--tools", "WebSearch,WebFetch" if web else "", "--mcp-config", json.dumps({"mcpServers": {"scanhub": mcp}}),
+                    "--strict-mcp-config", "--allowedTools", "mcp__scanhub,WebSearch,WebFetch" if web else "mcp__scanhub",
+                    "--no-session-persistence", "--setting-sources", "",
                     "--max-turns", str(max_turns)] + ([] if model in ("", "auto") else ["--model", model])
             stdin = json.dumps({"type": "user", "message": {"role": "user", "content": [{"type": "text", "text": prompt}]}}) + "\n"
         else:
@@ -186,7 +188,7 @@ def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, t
                    "startup_timeout_sec = 30, tool_timeout_sec = 900" + "}")
             args = [exe, "exec", *CODEX_AUTH, "--ephemeral", "--skip-git-repo-check", "--sandbox", "read-only",
                     "--ignore-user-config", "--ignore-rules", "--color", "never", "--output-last-message", answer,
-                    "-c", 'approval_policy="never"', "-c", 'web_search="disabled"', "-c", "project_doc_max_bytes=0",
+                    "-c", 'approval_policy="never"', "-c", 'web_search="live"' if web else 'web_search="disabled"', "-c", "project_doc_max_bytes=0",
                     "-c", f"mcp_servers={{ scanhub = {srv} }}",
                     "-c", "features.shell_tool=false", "-c", "features.unified_exec=false", "-c", "features.apps=false",
                     "-c", "features.multi_agent=false", "-c", "features.hooks=false", "-c", "features.memories=false",
