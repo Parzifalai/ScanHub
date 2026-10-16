@@ -15,3 +15,15 @@
 5. Адрес Worker вида `https://….workers.dev` + `/report` впиши в `report.py` → `REPORT_URL` (или в `data\config.json` → `report_url`).
 
 Ограничения от спама: не больше 5 отчётов за 10 минут с одного адреса и 200 за сутки, отчёт до 24 КБ. Бесплатного тарифа Cloudflare (100 000 запросов в сутки) хватает с запасом.
+
+
+## Обновить посредник (wrangler)
+
+```
+npm i -g wrangler
+cd support
+wrangler login
+wrangler deploy
+```
+
+`wrangler.toml` уже настроен: имя `scanhub-reports`, хранилище счётчика `USAGE`, сводка в Telegram раз в день. `CHAT_ID` задан на сайте Cloudflare и при деплое сохраняется (`keep_vars`). Секреты задаются один раз: `wrangler secret put BOT_TOKEN`, `wrangler secret put STATS_KEY`. Статистика: `https://<адрес>.workers.dev/stats?key=<STATS_KEY>`.
