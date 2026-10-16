@@ -196,10 +196,17 @@ def elevated_main(blob):
         try:
             if op["type"] == "run" and ctl:
                 # долгая операция, которую можно пропустить или остановить: окно пишет в ctl только слова skip/stop
-                p = subprocess.Popen(op["cmd"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=op.get("cwd"), creationflags=NO_WINDOW)
+                # stdout_file — вывод сразу в файл (его можно читать, пока программа пишет); alive — файл, который ScanHub
+                # обновляет раз в секунду: если ScanHub закрылся или упал, программа не остаётся работать с правами администратора
+                outf = op.get("stdout_file") if in_data(op.get("stdout_file")) else None
+                alive = op.get("alive") if in_data(op.get("alive")) else None
+                fh = open(outf, "wb") if outf else None
+                p = subprocess.Popen(op["cmd"], stdout=fh or subprocess.PIPE, stderr=subprocess.DEVNULL if fh else subprocess.STDOUT,
+                                     cwd=op.get("cwd"), creationflags=NO_WINDOW)
                 import threading
                 buf = []
-                threading.Thread(target=lambda: buf.append(p.stdout.read()), daemon=True).start()
+                if not fh:
+                    threading.Thread(target=lambda: buf.append(p.stdout.read()), daemon=True).start()
                 t0, cmd = time.time(), None
                 while p.poll() is None:
                     time.sleep(0.5)
@@ -207,6 +214,12 @@ def elevated_main(blob):
                         cmd = open(ctl, encoding="utf-8").read().strip()
                     except OSError:
                         cmd = None
+                    if alive and time.time() - t0 > 30:
+                        try:
+                            if time.time() - os.path.getmtime(alive) > 20:
+                                cmd = "stop"
+                        except OSError:
+                            cmd = "stop"
                     if cmd in ("skip", "stop") or time.time() - t0 > op.get("timeout", 1800):
                         subprocess.run(["taskkill", "/PID", str(p.pid), "/T", "/F"], capture_output=True, creationflags=NO_WINDOW)
                         try:
@@ -215,6 +228,8 @@ def elevated_main(blob):
                             pass
                         break
                 p.wait()
+                if fh:
+                    fh.close()
                 time.sleep(0.2)
                 out = system_decode(buf[0]) if buf and buf[0] else ""
                 if cmd == "stop":

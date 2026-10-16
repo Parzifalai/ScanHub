@@ -607,7 +607,7 @@ class Metrics:
     def _gpu_loop(self):
         q = ("utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,name,clocks.gr,clocks.max.gr,pstate,"
              "clocks_event_reasons.sw_thermal_slowdown,clocks_event_reasons.hw_thermal_slowdown,temperature.gpu.tlimit,"
-             "clocks_event_reasons.sw_power_cap")
+             "clocks_event_reasons.sw_power_cap,enforced.power.limit,power.max_limit")
         try:
             p = bind_to_server(subprocess.Popen(["nvidia-smi", f"--query-gpu={q}", "--format=csv,noheader,nounits",
                                                  "-lms", "1000"], stdout=subprocess.PIPE, text=True, creationflags=NO_WINDOW))
@@ -629,6 +629,8 @@ class Metrics:
                     self.gpu.update(clock=num(parts[6]), clock_max=num(parts[7]), pstate=parts[8], tlimit=num(parts[11]))
                     self.gpu.update(sw_thermal=parts[9].strip() == "Active", hw_thermal=parts[10].strip() == "Active",
                                     power_cap=len(parts) > 12 and parts[12].strip() == "Active")
+                    if len(parts) >= 15:                     # сколько ватт видеокарте разрешено сейчас и сколько максимум
+                        self.gpu.update(power_limit=num(parts[13]), power_max=num(parts[14]))
                     tl = self.gpu.get("tlimit")
                     # настоящий перегрев — аппаратный флаг или запас до порога меньше 10°C
                     self.gpu["throttle"] = self.gpu["hw_thermal"] or (self.gpu["sw_thermal"] and tl is not None and tl <= 10)

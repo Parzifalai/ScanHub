@@ -822,7 +822,9 @@ function pGame(dev){
         <div class="row-tools"><button class="primary" data-task-run="game_off">Выключить и вернуть как было</button></div>`
       : `<div class="rows">${g.options.map(o => `<label class="crow">${cb("game", o.id, S.has(o.id))}<span><b>${esc(o.title)}</b> ${o.admin ? adminChip : ""}<span class="sub">${esc(o.desc)}</span></span><span></span></label>`).join("")}</div>
         <div class="row-tools"><button class="primary" data-game-on>Включить игровой режим</button><button data-launch="gaming">Игровой режим в Параметрах</button></div>
-        ${g.last_log?.length ? `<div class="sub">В прошлый раз при выключении: ${g.last_log.map(esc).join(", ")}</div>` : ""}`}`);
+        ${g.last_log?.length ? `<div class="sub">В прошлый раз при выключении: ${g.last_log.map(esc).join(", ")}</div>` : ""}`}
+    ${fpsBlock()}
+    <div data-gpu-live>${gpuLiveHtml()}</div>`) + (setTimeout(fpsLiveDraw, 0), "");
 }
 function pMemory(dev){
   const now = M?.now, top = (M?.top_mem || []).slice(0, 8);
@@ -1437,7 +1439,8 @@ function prepPanel(name){
     junk: "junk_scan", shortcuts: "shortcuts", drvstore: "drvstore", envpath: "envpath", uninst: "programs", debloat: "appx", winget: "winget",
     boot: "startup", game: "game", privacy: "privacy", security: "security", browsers: "browsers", ctx: "ctx", firewall: "firewall", restore: "restore", crash: "diag", runtimes: "runtimes",
     alerts: "watch", history: "health_history", devices: "devices", phone: "phone_status"}[name];
-  if (name === "phone") runTask("phone_last", undefined, true);      // последний итог с диска — всегда свежий
+  if (name === "phone") runTask("phone_last", undefined, true);
+  if (name === "game") fpsPoll();      // последний итог с диска — всегда свежий
   if (name === "changes") runTask("changes", undefined, true);      // журнал всегда свежий: изменения делаются в других разделах
   if (name === "alerts") pollAlerts().then(redrawPanels);
   if (name === "ultra") { ULTRA.seen = true; if (!ULTRA.polling) loadUltra() }

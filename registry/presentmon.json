@@ -1,0 +1,24 @@
+{
+  "id": "presentmon",
+  "name": "PresentMon",
+  "section": "research",
+  "category": "Счётчик FPS · Intel",
+  "description": "Официальный счётчик кадров от Intel (открытый код). ScanHub запускает его только пока включён показ FPS в «Игровом режиме» и выключает вместе с ним. Нужны права администратора: Windows отдаёт сведения о кадрах только им.",
+  "simple": "Считает FPS в играх — для окошка поверх игры в «Игровом режиме».",
+  "repo": "GameTechDev/PresentMon",
+  "source": {
+    "type": "github-release",
+    "asset": "^PresentMon-[\\d.]+-x64\\.exe$"
+  },
+  "exe": "PresentMon-*-x64.exe",
+  "modes": [
+    {
+      "id": "help",
+      "label": "Показать параметры",
+      "target": "none",
+      "args": [
+        "--help"
+      ]
+    }
+  ]
+}

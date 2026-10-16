@@ -21,3 +21,6 @@ dev/i18n_todo.tsv
 dev/i18n_left.txt
 dev/i18n_src.json
 dev/ai_eval_last.json
+
+# служебный кэш wrangler (Cloudflare)
+support/.wrangler/

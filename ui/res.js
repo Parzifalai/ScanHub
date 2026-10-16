@@ -258,10 +258,10 @@ function drawHeat(){
 }
 let metricsBusy = false;
 async function pollMetrics(){
-  const want = ["home", "res"].includes(PAGE) || (PAGE === "speed" && ["memory", "noise"].includes(SUB));
+  const want = ["home", "res"].includes(PAGE) || (PAGE === "speed" && ["memory", "noise", "game"].includes(SUB)) || (PAGE === "health" && SUB === "hw");
   if (!want || metricsBusy || document.hidden) return;
   metricsBusy = true;
-  try { M = await api("/api/metrics"); drawRes() } catch (e) { $("#sRes").innerHTML = `<div class="sub">${esc(e.message)}</div>` }
+  try { M = await api("/api/metrics"); drawRes(); gpuLiveTick() } catch (e) { $("#sRes").innerHTML = `<div class="sub">${esc(e.message)}</div>` }
   metricsBusy = false;
 }
 setInterval(pollMetrics, 1500);
