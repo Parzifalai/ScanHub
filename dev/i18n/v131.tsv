@@ -1,0 +1,4 @@
+ScanHub закрылся	ScanHub has closed
+Закрыть окно	Close window
+Это окно больше не связано с ScanHub, поэтому кнопки в нём не работают. Открой ScanHub снова — ярлыком на рабочем столе или в меню «Пуск». Если открыть его, пока это окно на экране, оно оживёт само.	This window is no longer connected to ScanHub, so its buttons don't work. Open ScanHub again — with the shortcut on the desktop or in the Start menu. If you open it while this window is on screen, it will come back to life by itself.
+службы обновлений и поиска запускаются (подтверди окно UAC; если отменить — Windows запустит их сама)	update and search services are starting (confirm the UAC window; if you cancel, Windows will start them itself)

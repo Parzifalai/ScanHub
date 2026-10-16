@@ -866,13 +866,19 @@ def game_off(run_elevated):
             reg_set_local("HKCU", r"Software\Microsoft\GameBar", "AutoGameModeEnabled", kind, v)
         else:
             reg_del_local("HKCU", r"Software\Microsoft\GameBar", "AutoGameModeEnabled")
+    # режим выключен сразу — не дожидаясь окна UAC: службы Windows и так запускает сама, когда они нужны
     if s.get("services"):
-        try:
-            run_elevated([{"type": "run", "cmd": ["net", "start", x], "timeout": 90} for x in s["services"]])
-            log.append("службы снова запущены")
-        except PermissionError:
-            log.append("службы не запущены (UAC отменён) — Windows запустит их сама при перезагрузке")
+        log.append("службы обновлений и поиска запускаются (подтверди окно UAC; если отменить — Windows запустит их сама)")
     save(GAME_FILE, {"active": False, "last_log": log, "ended": datetime.now().isoformat(timespec="seconds")})
+    if s.get("services"):
+        import threading
+
+        def restart():
+            try:
+                run_elevated([{"type": "run", "cmd": ["net", "start", x], "timeout": 90} for x in s["services"]])
+            except Exception:
+                pass
+        threading.Thread(target=restart, daemon=True).start()
     return game_status()
 
 

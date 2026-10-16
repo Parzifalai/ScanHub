@@ -442,12 +442,26 @@ function taskToast(name, t, args = {}){
 }
 
 let UI_VER = null;
+let SRV_FAIL = 0;
 async function checkVersion(){
   try {
     const {ui} = await api("/api/version");
     if (UI_VER && ui !== UI_VER) location.reload();     // приложение обновили — подтянуть новую версию
     UI_VER = ui;
-  } catch {}
+    if (SRV_FAIL >= 2) location.reload();                 // ScanHub снова запустили — окно оживает само
+    SRV_FAIL = 0;
+  } catch (e) {
+    if (window.__quitting || e?.api) return;
+    if (++SRV_FAIL >= 2) srvDead();
+  }
+}
+// сервер ScanHub закрылся, а окно осталось — честно сказать, а не делать вид, что кнопки работают
+function srvDead(){
+  if (document.getElementById("srvDead")) return;
+  document.body.insertAdjacentHTML("beforeend", `<div class="mdl-back" id="srvDead"><div class="mdl"><div class="mdl-top"><span class="mdl-ic">!</span><h3>ScanHub закрылся</h3></div>
+    <p>Это окно больше не связано с ScanHub, поэтому кнопки в нём не работают. Открой ScanHub снова — ярлыком на рабочем столе или в меню «Пуск». Если открыть его, пока это окно на экране, оно оживёт само.</p>
+    <div class="mdl-btns"><button data-srv-close>Закрыть окно</button></div></div></div>`);
+  document.querySelector("[data-srv-close]").onclick = () => window.close();
 }
 setInterval(checkVersion, 5000); checkVersion();
 // пока что-то ставится или обновляется — окно само спрашивает сервер, чтобы кнопки показывали ход, а потом «Запустить»
