@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -87,7 +87,7 @@ try:
 except OSError:
     pass
 CHECK_EVERY = 6 * 3600          # как часто проверять обновления, пока приложение открыто
-IDLE_EXIT = 120                 # закрыть сервер, если окно закрыто и ничего не идёт
+IDLE_EXIT = 600                 # закрыть сервер, если окно закрыто 10 минут и ничего не идёт (свёрнутое окно Edge может молчать минутами)
 NO_WINDOW = 0x08000000          # CREATE_NO_WINDOW
 EDGE = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 
@@ -2980,8 +2980,11 @@ def open_window():
                           "--no-first-run", "--no-default-browser-check", "--disable-extensions", "--disable-sync",
                           "--disable-component-update", "--disable-background-networking", "--disable-domain-reliability",
                           "--disk-cache-size=20000000", "--disable-breakpad",
+                          # свёрнутое окно не «засыпает»: иначе оно перестаёт подавать сигнал «я открыто» и сервер закрывается
+                          "--disable-background-timer-throttling", "--disable-renderer-backgrounding",
+                          "--disable-backgrounding-occluded-windows",
                           "--disable-features=msEdgeSidebarV2,msUndersideButton,msShoppingExp,msEdgeWallet,EdgeEntityExtraction,"
-                          "msEdgeCopilot,OptimizationGuideModelDownloading,OptimizationHints"])
+                          "msEdgeCopilot,OptimizationGuideModelDownloading,OptimizationHints,IntensiveWakeUpThrottling"])
     else:
         webbrowser.open(url)
 
