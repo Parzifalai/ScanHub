@@ -447,6 +447,7 @@ function pHw(dev){
   const t = TASK.hardware, h = t?.result;
   const btns = `${h ? `<button data-hw-copy>Скопировать сводку</button>` : ""}<button data-task-run="hardware" data-args='{"refresh":true}' ${t?.status === "running" ? "disabled" : ""}>${h ? "Обновить" : "Собрать"}</button>`;
   return `<div class="pnl">${head("Комплектующие", h ? `собрано ${esc((h.collected || "").replace("T", " "))}` : "Процессор, память, видеокарта, накопители, экран, сеть, батарея — всё на одной странице", btns)}
+    <div data-gpu-live>${gpuLiveHtml()}</div>
     ${hwCheckBox()}
     ${taskBusy("hardware", "Собираю сведения о комплектующих… около минуты (потом сохранится и будет открываться сразу)")}${taskErr("hardware")}
     ${h ? `<div class="hwgrid">${hwModel(h).map(c => `<div class="hwcard"><div class="hwhead"><span class="hwic">${c.ic}</span><span><span class="sub">${esc(c.t)}</span><b>${esc(c.main || "")}</b></span></div>

@@ -1,0 +1,52 @@
+CPU до	CPU up to
+FPS · жду игру	FPS · waiting for a game
+FPS в играх	FPS in games
+FPS высокий, но есть подлагивания	High FPS, but with stutters
+GPU до	GPU up to
+ScanHub: подтверди окно UAC	ScanHub: confirm the UAC window
+Видеокарта ограничена, пока ноутбук не на зарядке. Подключи зарядку — лимит поднимется сам.	The graphics card is limited while the laptop isn't charging. Plug in the charger — the limit will rise by itself.
+Видеокарта сейчас	Graphics card now
+Видеокарте разрешено	The graphics card is allowed
+Включаю… (подтверди UAC)	Turning on… (confirm UAC)
+Вся мощность	Full power
+Вт возможных	W possible
+Вт — это её максимум.	W — that's its maximum.
+Выключаю…	Turning off…
+Выключить показ FPS	Turn off FPS display
+Где показывать:	Where to show:
+Зарядка подключена, но включён тихий или сбалансированный режим. Включи «Производительность» (на Lenovo — Fn+Q) — лимит поднимется до	The charger is connected, but a quiet or balanced mode is on. Turn on "Performance" (on Lenovo — Fn+Q) — the limit will rise to
+Итог игры готов	Game summary is ready
+Маленькое окошко в углу экрана: FPS, просадки, температура и мощность видеокарты. Мышь проходит сквозь него, игре не мешает. После игры здесь появится итог: шла ли игра плавно и что мешало.	A small box in the corner of the screen: FPS, drops, graphics card temperature and power. The mouse passes through it, it doesn't get in the way. After the game, a summary appears here: whether it ran smoothly and what got in the way.
+Мало кадров	Low frame rate
+Не видно окошка в игре? Поставь в настройках игры режим экрана «Оконный без рамки» (Borderless) — в «Полноэкранном» Windows рисует игру поверх всего.	If you don't see the box in the game, set the display mode to "Borderless window" in the game settings — in "Fullscreen" Windows draws the game over everything.
+Не всегда плавно	Not always smooth
+Не вся мощность	Not full power
+Нужно одно окно UAC: без прав администратора Windows не показывает кадры. Окно ScanHub можно закрыть — счётчик доработает, пока не выключишь.	One UAC window is needed: without administrator rights Windows doesn't report frames. You can close the ScanHub window — the counter keeps running until you turn it off.
+Обычно виноваты фоновые программы (браузер, обновления) или подгрузка игры с диска. Закрой лишнее и включи игровой режим ScanHub.	Usually background programs (browser, updates) or the game loading from disk are to blame. Close what you don't need and turn on ScanHub game mode.
+От батареи	On battery
+Официальный счётчик кадров от Intel (открытый код). ScanHub запускает его только пока включён показ FPS в «Игровом режиме» и выключает вместе с ним. Нужны права администратора: Windows отдаёт сведения о кадрах только им.	Intel's official frame counter (open source). ScanHub runs it only while FPS display is on in "Game mode" and stops it together with it. Administrator rights are needed: Windows reports frames only to them.
+Подтверди окно UAC — без прав администратора Windows не показывает кадры.	Confirm the UAC window — without administrator rights Windows doesn't report frames.
+Показать параметры	Show options
+Показывать FPS в игре	Show FPS in game
+Понизь качество графики или разрешение в игре; на ноутбуке играй от зарядки в режиме «Производительность».	Lower the graphics quality or resolution in the game; on a laptop, play on the charger in "Performance" mode.
+Последние игры	Recent games
+Смотрю на видеокарту…	Looking at the graphics card…
+Считает FPS в играх — для окошка поверх игры в «Игровом режиме».	Counts FPS in games — for the box over the game in "Game mode".
+Счётчик FPS · Intel	FPS counter · Intel
+Счётчик работает. Запусти игру — FPS появится в углу экрана и здесь.	The counter is running. Start a game — FPS will appear in the corner of the screen and here.
+Шла плавно	Ran smoothly
+видеокарта грелась до %d°C — почисти охлаждение или поставь ноутбук на подставку	-
+лимит сейчас	current limit
+нагрузка	load
+не получилось скачать счётчик FPS:	couldn't download the FPS counter:
+нет связи	no connection
+потребляет сейчас	drawing now
+права администратора не выданы — без них Windows не показывает кадры	administrator rights were not granted — without them Windows doesn't report frames
+просадки до	drops down to
+процессор грелся до %d°C — возможен перегрев	-
+слева сверху	top left
+слева снизу	bottom left
+смотри «Последние игры» в «Игровом режиме»	see "Recent games" in "Game mode"
+справа сверху	top right
+справа снизу	bottom right
+⚡ от зарядки	⚡ charging

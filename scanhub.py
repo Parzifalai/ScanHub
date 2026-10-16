@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -2506,6 +2506,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             c = config()
             return self.send(200, {"done": bool(c.get("setup_done")), "trails": intel.trails_accepted(),
                                    "keys": {k: bool(c.get(k)) for k in ("virustotal_key", "filescan_key", "metadefender_key", "hybrid_key")}})
+        if u.path == "/api/fps":
+            import fps
+            return self.send(200, fps.view())
         if u.path == "/api/usage":
             return self.send(200, {"on": config().get("usage_ping")})
         if u.path == "/api/ai/job":
@@ -2655,6 +2658,23 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if p == "/api/report/send":
                 report.send(report.build(body, VERSION, config()), config())
                 return self.send(200, {"ok": True})
+            if p == "/api/fps":
+                # счётчик FPS для игр: PresentMon с правами администратора + окошко поверх игры
+                import fps
+                if body.get("action") == "stop":
+                    return self.send(200, fps.stop())
+                if body.get("action") == "corner":
+                    fps.S["corner"] = str(body.get("corner") or "tl")[:2]
+                    _cfg_update({"fps_corner": fps.S["corner"]})
+                    return self.send(200, fps.view())
+                m = manifest("presentmon")
+                exe = exe_path(m, tool_state(state(), "presentmon"))
+                if not exe and not _install_wait("presentmon"):
+                    ts = tool_state(state(), "presentmon")
+                    return self.send(400, {"error": "не получилось скачать счётчик FPS: " + str(ts.get("blocked") or ts.get("error") or "нет связи")})
+                exe = exe or exe_path(m, tool_state(state(), "presentmon"))
+                corner = str(body.get("corner") or config().get("fps_corner") or "tl")[:2]
+                return self.send(200, fps.start(exe, deepscan.run_elevated, metrics.METRICS if metrics else None, corner, body.get("overlay", True) is not False))
             if p == "/api/setup/done":
                 _cfg_update({"setup_done": now()})
                 return self.send(200, {"ok": True})
@@ -2924,7 +2944,7 @@ STATIC = {"/logo.svg": "image/svg+xml", "/logo-small.svg": "image/svg+xml", "/ic
           "/pages.js": "text/javascript; charset=utf-8", "/ultra.js": "text/javascript; charset=utf-8", "/fix.js": "text/javascript; charset=utf-8",
           "/ai.js": "text/javascript; charset=utf-8", "/bug.js": "text/javascript; charset=utf-8",
           "/history.js": "text/javascript; charset=utf-8", "/i18n.js": "text/javascript; charset=utf-8",
-          "/devices.js": "text/javascript; charset=utf-8", "/phone.js": "text/javascript; charset=utf-8", "/setup.js": "text/javascript; charset=utf-8",
+          "/devices.js": "text/javascript; charset=utf-8", "/phone.js": "text/javascript; charset=utf-8", "/setup.js": "text/javascript; charset=utf-8", "/game.js": "text/javascript; charset=utf-8",
           "/en.json": "application/json; charset=utf-8"}
 
 
@@ -3265,7 +3285,12 @@ def bind_server(prefer=None, wait=0):
 
 
 def _stop_helpers():
-    """Выход: погасить то, что ScanHub запускал сам и что живёт отдельным процессом (сервер adb)."""
+    """Выход: погасить то, что ScanHub запускал сам и что живёт отдельным процессом (сервер adb, счётчик FPS)."""
+    if "fps" in sys.modules:
+        try:
+            sys.modules["fps"].stop()
+        except Exception:
+            pass
     if "phone" in sys.modules:
         try:
             sys.modules["phone"].stop_server()
@@ -3277,7 +3302,8 @@ def idle_watch():
     while True:
         time.sleep(15)
         running = any(j["status"] == "running" for j in list(jobs.values())) or \
-            any(t.get("status") == "running" for t in list(TASKS.values()))
+            any(t.get("status") == "running" for t in list(TASKS.values())) or \
+            ("fps" in sys.modules and sys.modules["fps"].S.get("on"))       # идёт игра с показом FPS — окно ScanHub можно закрыть
         if not running and not busy and time.time() - last_ping > IDLE_EXIT:
             _stop_helpers()
             os._exit(0)
