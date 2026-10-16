@@ -21,7 +21,7 @@
   <button class="dev-only" id="conBtn" title="Вывод сканеров">⌨ Консоль</button>
   <button class="dev-only" id="checkBtn">Проверить обновления</button>
   <button id="aiTop" title="ИИ-помощник: объяснит находки и ответит «почему у меня…»"><span class="ai-star">✦</span>Помощник</button>
-  <button id="bugBtn" title="Нашёл ошибку в ScanHub? Напиши автору — отчёт уйдёт ему в Telegram"><span data-ic="bug"></span>Нашёл ошибку?</button>
+  <button id="bugBtn" title="Нашёл ошибку или есть идея? Напиши автору — сообщение уйдёт ему в Telegram"><span data-ic="bug"></span>Ошибка или идея?</button>
   <button id="settingsBtn" title="Настройки"><span data-ic="gear"></span>Настройки</button>
   <button id="quitBtn" title="Закрыть ScanHub полностью — сразу, а не через 2 минуты после закрытия окна"><span data-ic="power"></span>Выйти</button>
 </header>
@@ -170,6 +170,8 @@
     <label>Проверять обновления каждые, часов
       <input type="number" name="check_every_hours" min="1" max="168" style="width:100px">
     </label>
+    <label class="switch"><input type="checkbox" name="usage_ping"> <span>Анонимная статистика запусков
+      <span class="hint" style="display:block">Раз в день сообщать автору, что ScanHub запущен: случайный номер этой копии, версия, язык и номер сборки Windows. Без имён, файлов и находок. Так автор узнаёт, сколько людей пользуется ScanHub.</span></span></label>
     <label class="switch"><input type="checkbox" name="ctx_menu"> <span>Пункт «Проверить в ScanHub» в меню правой кнопки мыши
       <span class="hint" style="display:block">Скачал программу — нажми по ней правой кнопкой → «Проверить в ScanHub», и до запуска увидишь, можно ли её открывать. Включён по умолчанию. В Windows 11 пункт — в «Показать дополнительные параметры» (или сразу: Shift + правая кнопка). Только для твоей учётной записи, без прав администратора.</span></span></label>
     <fieldset class="limits"><legend>Проверка папок и программ</legend>
@@ -181,7 +183,7 @@
       <label>Сколько файлов папки сверять в Filescan, MetaDefender и Hybrid Analysis <input type="number" name="fs_files" min="1" max="200" style="width:110px"></label>
     </fieldset>
     <span class="hint">Ключи хранятся только на этом компьютере, в <code>data\config.json</code> рядом со ScanHub, зашифрованные Windows для твоей учётной записи. Удалить ключ: впиши <code>-</code> и сохрани.
-      <a data-wipe>Очистить историю проверок и журналы</a> · <a data-uninstall-self class="danger-link">Удалить ScanHub с компьютера…</a></span>
+      <a data-setup-open>Мастер первого запуска</a> · <a data-wipe>Очистить историю проверок и журналы</a> · <a data-uninstall-self class="danger-link">Удалить ScanHub с компьютера…</a></span>
     <div class="btns"><button value="cancel" formnovalidate>Отмена</button><button class="primary" value="save">Сохранить</button></div>
   </form>
 </dialog>
@@ -218,6 +220,9 @@ window.addEventListener("load", () => setTimeout(() => {
 <script src="/ultra.js"></script>
 <script src="/fix.js"></script>
 <script src="/history.js"></script>
+<script src="/devices.js"></script>
+<script src="/phone.js"></script>
+<script src="/setup.js"></script>
 <script src="/pages.js"></script>
 </body>
 </html>

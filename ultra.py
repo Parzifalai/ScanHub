@@ -63,7 +63,7 @@ STEP = {p["id"]: p for p in PLAN}
 LVL = ["threat", "bad", "warn", "info", "ok"]
 
 # сканеры, которые запускаются только своим окном — в конце советуем их
-EXTERNAL = ["cureit", "kvrt", "eset", "emsisoft", "msert", "malwarebytes", "minersearch", "adwcleaner"]
+EXTERNAL = ["cureit", "kvrt", "eset", "emsisoft", "msert", "malwarebytes", "adwcleaner"]     # MinerSearch идёт внутри глубокой проверки
 
 
 def fmt(b):
@@ -222,7 +222,7 @@ class Ultra:
                      ". Проверь интернет или обнови вручную в «Безопасность Windows».", {"launch": "defender", "label": "Открыть"})
         deep = "deep" in self.sel["steps"]
         # сканеры, без которых шаги глубокой проверки пропустятся
-        for tid in (["hollowshunter", "clamav"] if deep else []):
+        for tid in (["hollowshunter", "clamav", "minersearch", "rootcerts"] if deep else []):
             t = tv.get(tid)
             if t and not t["ready"] and not t.get("missing") and t["source"]["type"] not in ("manual", "service") and not self.stopped():
                 s["progress"] = f"устанавливаю {t['name']}"
@@ -524,19 +524,10 @@ class Ultra:
         s["label"] = f"замечаний: {n}" if n else "всё в порядке"
 
     def _sysfiles(self, s, r):
+        # карточки с понятным выводом считает deepscan.sysfiles_cards — одинаково для ультра, «Полной проверки» и мастера
         repair = {"launch": "sfc_repair", "label": "Восстановить"}
-        if r.get("dism") in ("repairable", "broken"):
-            self.add(s, "bad", "Хранилище компонентов Windows повреждено",
-                     "DISM скачает исправные файлы из Windows Update." if r["dism"] == "repairable" else
-                     "Автоматически не восстанавливается — понадобится установочный образ Windows.", repair if r["dism"] == "repairable" else None)
-        elif r.get("dism") == "ok":
-            self.add(s, "ok", "Хранилище компонентов Windows исправно")
-        if r.get("sfc") == "violations":
-            self.add(s, "bad", "Найдены повреждённые системные файлы", "«Восстановить»: DISM, затем SFC, 15–30 минут и перезагрузка.", repair)
-        elif r.get("sfc") == "ok":
-            self.add(s, "ok", "Системные файлы целы (SFC)")
-        elif r.get("sfc") == "busy":
-            self.add(s, "warn", "SFC не запустился: Windows устанавливает обновления", "Перезагрузи компьютер и проверь снова.")
+        for c in r.get("cards") or deepscan.sysfiles_cards(r):
+            self.add(s, c["lvl"], c["title"], c["text"], repair if c["action"] == "repair" else None)
         d = r.get("disk")
         if d and not d.get("error"):
             for x in d.get("scan") or []:
@@ -726,9 +717,8 @@ class Ultra:
         R = []
         threat = any(s["verdict"] in ("threat", "warn") and s["id"] in ("quick", "deep") for s in self.steps)
         R.append({"kind": "tools", "t": "Проверь ещё отдельными антивирусами" + (" — обязательно, раз есть находки" if threat else ""),
-                  "s": "Они запускаются своим окном и сами ведут проверку, поэтому ультра проверка не может пройти их за тебя. "
-                       "Два-три разных антивируса находят больше, чем один.",
-                  "tools": EXTERNAL})
+                  "s": "Они запускаются своим окном и сами ведут проверку, поэтому ультра проверка не может пройти их за тебя.",
+                  "tools": EXTERNAL, "threat": threat})
         if threat:
             R.append({"t": "Офлайн-проверка Defender", "s": "Раз есть находки — проверь диск до запуска Windows: так Defender находит руткиты, "
                       "которые прячутся от обычной проверки. Компьютер перезагрузится, проверка займёт около 15 минут.",

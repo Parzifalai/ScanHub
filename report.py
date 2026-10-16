@@ -7,6 +7,7 @@
 * Отправка — на посредник Cloudflare Worker (support/cloudflare-worker.js), он пересылает отчёт автору в Telegram.
   Ключ Telegram-бота хранится только в Worker: в открытом коде ScanHub его нет, достать и злоупотребить им нельзя.
 """
+import base64
 import json
 import os
 import platform
@@ -70,6 +71,32 @@ def _short_tb(tb):
     return " ← ".join(reversed(out[-6:]))
 
 
+def log_info():
+    """Сколько записей в журнале ошибок и за какой срок — для галочки «Приложить журнал ошибок»."""
+    items = recent(LOG_SEND)
+    return {"n": len(items), "since": items[0].get("t", "") if items else ""}
+
+
+LOG_SEND = 60                    # сколько последних записей журнала уходит по галочке
+MAX_PHOTOS, MAX_PHOTO = 3, 600 * 1024   # снимки экрана: окно сжимает их в JPEG до ~400 КБ
+
+
+def _photos(items):
+    """Снимки из окна: только JPEG/PNG, не больше трёх и не больше 600 КБ каждый. Возвращает base64 без заголовка data:."""
+    out = []
+    for it in (items or [])[:MAX_PHOTOS]:
+        s = str(it or "")
+        s = s.split(",", 1)[1] if s.startswith("data:") else s
+        try:
+            raw = base64.b64decode(s, validate=True)
+        except (ValueError, TypeError):
+            continue
+        if len(raw) > MAX_PHOTO or not (raw[:3] == b"\xff\xd8\xff" or raw[:8] == b"\x89PNG\r\n\x1a\n"):
+            continue
+        out.append(base64.b64encode(raw).decode())
+    return out
+
+
 def recent(n=15):
     try:
         lines = open(ERRLOG, encoding="utf-8", errors="replace").read().splitlines()
@@ -102,41 +129,54 @@ def _windows():
 
 
 def build(body, version, cfg):
-    """Отчёт из того, что человек написал в окне, плюс (по галочке) технические сведения. Возвращает dict для отправки и показа."""
+    """Отчёт из того, что человек написал в окне, плюс (по галочкам) технические сведения и журнал ошибок ScanHub.
+    kind: "bug" — ошибка, "idea" — предложение улучшения. Возвращает dict для отправки и показа."""
     from assistant import redact
+    kind = "idea" if body.get("kind") == "idea" else "bug"
     text = str(body.get("text") or "").strip()[:3000]
-    steps = str(body.get("steps") or "").strip()[:2000]
+    steps = str(body.get("steps") or "").strip()[:2000] if kind == "bug" else ""
     contact = str(body.get("contact") or "").strip()[:120]
-    rep = {"app": "scanhub", "version": version, "text": redact(text, cfg), "steps": redact(steps, cfg), "contact": contact}
+    rep = {"app": "scanhub", "kind": kind, "version": version, "text": redact(text, cfg), "steps": redact(steps, cfg), "contact": contact}
+    tech = {}
     if body.get("tech", True):
-        errs = []
-        for e in recent(15):
-            errs.append(f"{e.get('t', '')} · {e.get('where', '')} · {e.get('msg', '')}" + (f"\n    {e['tb']}" if e.get("tb") else ""))
-        rep["tech"] = {
+        tech.update({
             "windows": _windows(),
             "python": sys.version.split()[0],
             "где": str(body.get("page") or "")[:80],
             "ошибка_на_экране": redact(str(body.get("error") or "")[:1500], cfg),
-            "последние_ошибки_ScanHub": redact("\n".join(errs), cfg) if errs else "журнал ошибок пуст",
-        }
+        })
+    if body.get("logs", kind == "bug"):
+        errs = []
+        for e in recent(LOG_SEND):
+            errs.append(f"{e.get('t', '')} · {e.get('where', '')} · {e.get('msg', '')}" + (f"\n    {e['tb']}" if e.get("tb") else ""))
+        tech["последние_ошибки_ScanHub"] = redact("\n".join(errs), cfg) if errs else "журнал ошибок пуст"
+    if tech:
+        rep["tech"] = tech
+    photos = _photos(body.get("photos"))
+    if photos:
+        rep["photos"] = photos
     return rep
 
 
 def preview_text(rep):
     """То, что человек видит в окне «Что уйдёт автору»."""
-    parts = [f"ScanHub {rep['version']}", "", "Что случилось:", rep["text"] or "—"]
+    idea = rep.get("kind") == "idea"
+    parts = [f"ScanHub {rep['version']}" + (" · предложение" if idea else ""), "", "Что предлагаешь:" if idea else "Что случилось:", rep["text"] or "—"]
     if rep.get("steps"):
         parts += ["", "Что делал перед этим:", rep["steps"]]
     if rep.get("contact"):
         parts += ["", f"Контакт для ответа: {rep['contact']}"]
     t = rep.get("tech")
-    if t:
+    if t and t.get("windows"):
         parts += ["", "Технические сведения:", f"Windows: {t['windows']}", f"Python: {t['python']}"]
         if t.get("где"):
             parts.append(f"Раздел: {t['где']}")
         if t.get("ошибка_на_экране"):
             parts.append(f"Ошибка на экране: {t['ошибка_на_экране']}")
-        parts += ["Последние ошибки ScanHub:", t["последние_ошибки_ScanHub"]]
+    if t and t.get("последние_ошибки_ScanHub"):
+        parts += ["", "Журнал ошибок ScanHub:", t["последние_ошибки_ScanHub"]]
+    if rep.get("photos"):
+        parts += ["", f"Снимков экрана: {len(rep['photos'])} (уйдут картинками, как ты их видишь в окне)"]
     return "\n".join(parts)
 
 
@@ -145,7 +185,7 @@ def send(rep, cfg):
     if not url:
         raise RuntimeError("отправка отчётов ещё не настроена в этой копии ScanHub")
     if len(rep.get("text", "")) < 5:
-        raise RuntimeError("напиши хотя бы пару слов о том, что случилось")
+        raise RuntimeError("напиши хотя бы пару слов" + ("" if rep.get("kind") == "idea" else " о том, что случилось"))
     data = json.dumps(rep, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(url, data=data, method="POST",
                                  headers={"Content-Type": "application/json", "User-Agent": f"ScanHub/{rep.get('version')}"})
@@ -159,6 +199,8 @@ def send(rep, cfg):
             msg = None
         if e.code == 429:
             raise RuntimeError("слишком много отчётов подряд — попробуй через 10 минут")
+        if e.code == 413 and rep.get("photos"):
+            raise RuntimeError("сервер отчётов пока не принимает снимки — убери их и отправь ещё раз")
         raise RuntimeError(msg or f"сервер отчётов ответил {e.code}")
     except (urllib.error.URLError, TimeoutError) as e:
         raise RuntimeError(f"нет связи с сервером отчётов: {getattr(e, 'reason', e)}")

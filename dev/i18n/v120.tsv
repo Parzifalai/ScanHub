@@ -1,0 +1,429 @@
+% · разбираю	% · checking
+% · сравниваю содержимое: группа	% · comparing contents: group
+% · уничтожено	% · destroyed
+% — телефон начинает тормозить, обновления не ставятся.	% — the phone starts to slow down and updates won't install.
+(у Xiaomi — на «Версия ОС HyperOS» или «Версия MIUI», у Samsung — «Сведения о ПО» → «Номер сборки»). Появится «Вы стали разработчиком».	(on Xiaomi — "HyperOS version" or "MIUI version", on Samsung — "Software information" → "Build number"). You'll see "You are now a developer".
+(уже стояли на компьютере)	(already installed on this PC)
+10% · скачиваю Google Platform Tools (~7 МБ) с dl.google.com	10% · downloading Google Platform Tools (~7 MB) from dl.google.com
+12% · проверяю root	12% · checking for root
+2% · смотрю сетевой адаптер	2% · looking at the network adapter
+25% · получаю список приложений	25% · getting the app list
+30% · пингую интернет (1.1.1.1 и 8.8.8.8)	30% · pinging the internet (1.1.1.1 and 8.8.8.8)
+40% · смотрю, у кого особые права	40% · checking who has special access
+5% · читаю сведения о телефоне	5% · reading phone info
+50% · сверяю со списком приложений-следилок	50% · checking against the stalkerware list
+58% · проверяю DNS	58% · checking DNS
+60% · распаковываю	60% · unpacking
+65% · меряю скорость скачивания (~8 с)	65% · measuring download speed (~8 s)
+8% · пингую роутер (20 раз)	8% · pinging the router (20 times)
+85% · меряю скорость отдачи	85% · measuring upload speed
+85% · проверяю подпись Google	85% · checking Google's signature
+96% · батарея и память	96% · battery and storage
+Android по кабелю, без установки чего-либо на телефон	Android over a cable, nothing gets installed on the phone
+Android сам сообщает о проблеме с батареей — её стоит проверить в сервисе.	Android itself reports a battery problem — have it checked at a service center.
+Discord, Zoom, Telegram и браузеры его не получат — разрешено только приложениям из Microsoft Store.	Discord, Zoom, Telegram and browsers won't get it — only Microsoft Store apps are allowed.
+Google Platform Tools готовы	Google Platform Tools are ready
+Google Play Защита выключена	Google Play Protect is off
+SMS по умолчанию	Default SMS app
+ScanHub будет раз в день отмечаться у автора — без личных данных	ScanHub will check in with the author once a day — no personal data
+ScanHub не связан с этими компаниями и ничего не получает за эти советы. Все сканеры — бесплатные, ScanHub скачивает их только с официальных сайтов и проверяет подпись.	ScanHub isn't affiliated with these companies and gets nothing for these suggestions. All scanners are free; ScanHub downloads them only from official sites and checks their signatures.
+ScanHub подключается к телефону по кабелю через официальный инструмент Google (adb) и только читает: какие приложения стоят и откуда, кто получил опасный доступ, есть ли известные программы-следилки, давно ли были обновления безопасности. На телефон ничего не ставится. Удалить приложение или снять с него доступ можно только по кнопке — и только то, что нашла проверка.	ScanHub connects to the phone over a cable using Google's official tool (adb) and only reads: which apps are installed and where from, who got dangerous access, whether there is known stalkerware, how old the security updates are. Nothing is installed on the phone. Removing an app or revoking its access happens only when you press a button — and only for what the check found.
+Shift, Ctrl и Alt «залипают» после одного нажатия. Включается, если пять раз подряд нажать Shift.	Shift, Ctrl and Alt "stick" after a single press. It turns on if you press Shift five times in a row.
+VirusTotal не знает	VirusTotal doesn't know it
+VirusTotal: чисто	VirusTotal: clean
+Windows запрещает приложениям использовать	Windows doesn't let apps use the
+Windows не нашла	Windows found
+Windows остановила устройство: оно сообщило об ошибке	Windows stopped the device: it reported an error
+Windows пропускает короткие и повторные нажатия — кажется, что клавиатура «тормозит» или не нажимаются клавиши. Обычно включается случайно, если долго держать правый Shift.	Windows ignores short and repeated presses — the keyboard seems "laggy" or keys don't register. It usually turns on by accident if you hold the right Shift for a long time.
+Windows сама запоминает, какие программы включали микрофон и камеру. Если видишь незнакомую — проверь её на вирусы.	Windows remembers which programs turned on the microphone and camera. If you see one you don't know, scan it for viruses.
+Windows удаляет устройство	Windows is removing the device
+adb вернул	adb returned
+adb не установлен	adb is not installed
+enumerator|перечислител|Microsoft Bluetooth LE|Bluetooth Device \(RFCOMM|Bluetooth Device \(Personal Area|Avrcp|Hands-Free Audio Gateway|Audio Gateway|Device Identification Service|Generic Attribute Profile|Generic Access Profile|vendor-defined|определяемое поставщиком|System Controller|Consumer Control|Устройство управления|Radio Management|Wireless Radio Controls|Portable Device Control|Converted Portable Device|Virtual|виртуальн|Универсальный профиль доступа|Служба сведений об устройств|Универсальная служба атрибутов|профиль атрибутов	-
+scanner|сканер|ir camera|инфракрасн	-
+«Для разработчиков»	"Developer options"
+«Настройки» → «О телефоне». Семь раз подряд нажми на	"Settings" → "About phone". Tap seven times in a row on the
+«Отладка по USB»	"USB debugging"
+Автор получит её в Telegram	The author will get it in Telegram
+Администратор устройства	Device administrator
+Анонимная статистика запусков	Anonymous launch statistics
+Батарея:	Battery:
+Блокировка экрана включена	Screen lock is on
+В «Параметры → Конфиденциальность	In "Settings → Privacy
+Вернись в «Настройки» → «Система» (у Xiaomi — «Расширенные настройки»)	Go back to "Settings" → "System" (on Xiaomi — "Additional settings")
+Вернуть: «Параметры Windows → Специальные возможности → Клавиатура» (залипание, фильтрация), «Bluetooth и устройства → Мышь» (повышенная точность) или «Конфиденциальность → Микрофон/Камера».	To undo: "Windows Settings → Accessibility → Keyboard" (Sticky/Filter Keys), "Bluetooth & devices → Mouse" (enhanced pointer precision) or "Privacy → Microphone/Camera".
+Вернуть: на телефоне «Настройки → Спец. возможности» → приложение → включить.	To undo: on the phone, "Settings → Accessibility" → the app → turn on.
+Вернуть: поставь приложение заново из магазина на телефоне.	To undo: install the app again from the store on the phone.
+Включаю камеру…	Turning on the camera…
+Включаю микрофон…	Turning on the microphone…
+Включена фильтрация ввода	Filter Keys is on
+Включено «Повышенная точность указателя»	"Enhance pointer precision" is on
+Включено залипание клавиш	Sticky Keys is on
+Включено озвучивание Caps Lock и Num Lock	Caps Lock and Num Lock sounds are on
+Включи	Turn on
+Включи на телефоне отладку по USB	Turn on USB debugging on the phone
+Вперёд (боковая)	Forward (side)
+Все клавиши откликаются.	All keys respond.
+Все порты ScanHub (8765–8775) заняты другими программами. Перезагрузи компьютер и открой ScanHub снова.	All ScanHub ports (8765–8775) are taken by other programs. Restart the computer and open ScanHub again.
+Все приложения	All apps
+Все устройства работают.	All devices work.
+Всё подключено, но есть что посмотреть:	Everything is connected, but there's something to look at:
+Второе мнение по вирусам	A second opinion on viruses
+Готово. Запись нигде не сохранилась.	Done. The recording wasn't saved anywhere.
+Гц (игровая)	Hz (gaming)
+Гц — для работы хватает, для игр мало. У игровых мышей частота меняется в их программе (обычно 1000 Гц).	Hz — fine for work, low for games. Gaming mice change this in their own app (usually 1000 Hz).
+Двойной щелчок сам по себе	Double-clicks on its own
+День в порядке	Day is fine
+Динамики и наушники	Speakers and headphones
+Диспетчер устройств	Device Manager
+Для неё почти не выходят исправления, а новые приложения перестают поддерживать.	It hardly gets fixes anymore, and new apps are dropping support for it.
+Для сведения	For information
+Для тех, у кого есть подписка ChatGPT Plus или Pro. ScanHub запускает официальную программу Codex, в которую ты вошёл аккаунтом ChatGPT, — ответы идут в лимиты подписки. Работает как агент, как и Claude Code: данные берёт инструментами ScanHub, может искать в интернете (выключается ниже); командной строки у него нет.	For ChatGPT Plus or Pro subscribers. ScanHub runs the official Codex app you signed into with your ChatGPT account — answers count against your subscription limits. Works as an agent like Claude Code: gets data with ScanHub tools and can search the web (can be turned off below); it has no command line.
+Для тех, у кого есть подписка Claude Pro или Max. ScanHub запускает официальную программу Claude Code, в которую ты вошёл своим аккаунтом, — ответы идут в лимиты подписки, отдельно платить не нужно. Работает как агент: сам смотрит данные инструментами ScanHub (они сами сверяют файлы с VirusTotal и базами в интернете), может искать справки в интернете (выключается ниже), а по кнопке «Сделай сам» выполняет предложенные действия. Командной строки у него нет, файлы — только через ScanHub и только как разрешено в «Файлы на компьютере».	For Claude Pro or Max subscribers. ScanHub runs the official Claude Code app you signed into with your account — answers count against your subscription limits, no extra payment. Works as an agent: looks at data itself using ScanHub tools (they check files against VirusTotal and online databases themselves), can look things up on the web (can be turned off below), and with the "Do it for me" button carries out the suggested actions. It has no command line; files — only through ScanHub and only as allowed in "Files on this computer".
+Добавь ключ VirusTotal в ⚙ Настройках — тогда приложения не из магазина будут сверяться и с антивирусами.	Add a VirusTotal key in ⚙ Settings — then apps not from a store will also be checked against antivirus engines.
+Доступ к камере	Camera access
+Доступ к уведомлениям	Notification access
+Дребезг	Chatter
+Если в браузере реклама, чужая стартовая страница или поиск	If your browser shows ads, someone else's start page or search
+Если компьютер шумит и греется без причины	If the computer is noisy and hot for no reason
+Если слышно не с той стороны — наушники надеты наоборот или перепутаны каналы.	If it comes from the wrong side, the headphones are on backwards or the channels are swapped.
+Если ставил не ты или не знаешь, что это, — сними доступ и удали.	If you didn't install it or don't know what it is, revoke the access and uninstall it.
+Если ты сам включал это для приложения — всё нормально.	If you enabled this for the app yourself, it's fine.
+Если что-то всё равно ведёт себя странно — проверь его вживую кнопкой «Проверить».	If something still behaves oddly, test it live with the "Test" button.
+Есть важное:	Something important:
+Есть серьёзные находки — разбери их ниже.	There are serious findings — go through them below.
+Есть что посмотреть	Worth a look
+Журнал ошибок ScanHub:	ScanHub error log:
+Загрузчик разблокирован	Bootloader is unlocked
+Закончил? Выключи «Отладку по USB» в настройках для разработчиков и отключи кабель. ScanHub сам закроет связь с телефоном через полторы минуты.	Done? Turn off "USB debugging" in Developer options and unplug the cable. ScanHub will close the connection to the phone by itself in a minute and a half.
+Закончить проверку	Finish test
+Занято	Used
+Записать 3 секунды и послушать	Record 3 seconds and play back
+Звук «хрипит» на громких местах — убавь громкость микрофона.	The sound "crackles" on loud parts — turn the microphone volume down.
+Звук есть, но слабый. Говори ближе или прибавь громкость микрофона в «Параметрах звука» → микрофон → «Громкость».	There's sound, but it's weak. Speak closer or raise the microphone volume in "Sound settings" → microphone → "Volume".
+Звук не приходит совсем. Проверь, не выключен ли микрофон кнопкой или шторкой на корпусе, выбран ли нужный микрофон в списке и не стоит ли громкость микрофона на нуле в «Параметрах звука».	No sound is coming in at all. Check whether the microphone is muted with a button or shutter on the case, whether the right microphone is selected in the list, and whether the microphone volume is at zero in "Sound settings".
+Звучит	Playing
+Здоровье ПК · Устройства	PC health · Devices
+Идея отправлена — спасибо!	Idea sent — thank you!
+Известные дыры в Android не закрыты. Проверь «Настройки → О телефоне → Обновление системы»; если обновлений больше не выходит — телефон перестал поддерживаться.	Known Android security holes are not fixed. Check "Settings → About phone → System update"; if no more updates come out, the phone is no longer supported.
+Индекс низкий из-за мелочей:	The index is low because of minor things:
+Исправить	Fix
+Исправляю…	Fixing…
+Кабель должен передавать данные (не только зарядка). Если на телефоне спросит режим USB — выбери «Передача файлов».	The cable must carry data (not only charge). If the phone asks for a USB mode, choose "File transfer".
+Как включить	How to turn it on
+Камеры	Cameras
+Клавиатуры	Keyboards
+Клавиши Fn и подсветки Windows не видит — их здесь не проверить. Выйти из проверки — кнопка выше или Shift+Esc.	Windows can't see the Fn and backlight keys, so they can't be tested here. To leave the test — the button above or Shift+Esc.
+Кнопка	The
+Кнопки работают	Buttons work
+Колесо: вверх	Wheel: up
+Колесо: вверх 0 · вниз 0 · частота опроса: подвигай мышью	Wheel: up 0 · down 0 · polling rate: move the mouse
+Кто получил особый доступ	Who has special access
+Кто пользовался микрофоном и камерой за 30 дней	Who used the microphone and camera in the last 30 days
+Кто угодно, взяв телефон, увидит всё. Поставь PIN, пароль или отпечаток: «Настройки → Пароли и безопасность».	Anyone who picks up the phone will see everything. Set a PIN, password or fingerprint: "Settings → Passwords & security".
+Левая	Left
+Лишних двойных щелчков нет.	No extra double-clicks.
+Микрофон	Microphone
+Микрофон не найден. Если он есть (в ноутбуке или наушниках) — проверь, что наушники вставлены до конца, и загляни в «Параметры звука».	No microphone found. If you have one (in the laptop or headphones), make sure the headphones are plugged in all the way and look in "Sound settings".
+Микрофон слышит тебя нормально. Чтобы услышать, как ты звучишь, — запиши 3 секунды.	The microphone hears you fine. To hear how you sound, record 3 seconds.
+Микрофоны	Microphones
+Может ставить другие приложения	Can install other apps
+Мыши и тачпады	Mice and touchpads
+На телефоне	On the phone
+На телефоне есть root	The phone is rooted
+Нажато клавиш: 0	Keys pressed: 0
+Нажато разных клавиш:	Different keys pressed:
+Нажимай клавиши по очереди — нажатые подсветятся. Те, что не загораются, не работают. Пока идёт проверка, клавиши ничего не делают в ScanHub.	Press keys one by one — pressed keys light up. The ones that don't light up don't work. While the test is running, keys do nothing in ScanHub.
+Назад (боковая)	Back (side)
+Написать автору ScanHub	Write to the ScanHub author
+Напиши хотя бы пару слов.	Write at least a couple of words.
+Например: нажал «Очистить», крутится уже 10 минут и ничего не происходит	For example: I pressed "Clean", it has been spinning for 10 minutes and nothing happens
+Например: хочу, чтобы очистка запускалась по кнопке прямо с главной	For example: I'd like to start cleanup with a button right on the home page
+Нашёл ошибку	Found a bug
+Нашёл ошибку или есть идея? Напиши автору — сообщение уйдёт ему в Telegram	Found a bug or have an idea? Write to the author — the message goes to their Telegram
+Не надо	No thanks
+Не найдено.	Not found.
+Не опасно: разовый вылет — если не повторяется, можно забыть	Not dangerous: a one-off crash — if it doesn't repeat, you can forget about it
+Не получилось включить:	Couldn't turn it on:
+Не получилось воспроизвести запись.	Couldn't play the recording.
+Не работает	Not working
+Не работает:	Not working:
+Не слышно совсем — проверь, какое устройство выбрано для вывода звука.	Can't hear anything — check which device is selected for sound output.
+Не страшно	Nothing to worry about
+Не страшно, если больше не повторится	Nothing to worry about if it doesn't happen again
+Не страшно, если разово	Nothing to worry about if it's a one-off
+Нет блокировки экрана	No screen lock
+Ниже — почему и что сделать.	Below — why and what to do.
+Низкая частота	Low polling rate
+Низкие → высокие	Low → high
+Низкий гул должен плавно перейти в писк. Если на каком-то месте дребезжит — динамик повреждён или громкость слишком большая.	A low hum should smoothly turn into a squeak. If it rattles at some point, the speaker is damaged or the volume is too high.
+Нужны официальные Google Platform Tools (~7 МБ, с dl.google.com) — ScanHub скачает их и проверит подпись Google.	Google's official Platform Tools (~7 MB, from dl.google.com) are needed — ScanHub will download them and check Google's signature.
+Оба	Both
+Обновления безопасности давно не ставились	Security updates haven't been installed for a long time
+Обновления безопасности свежие	Security updates are recent
+Обновления безопасности старше года	Security updates are over a year old
+Общая проверка системы, сбои и их причины, компоненты для программ, предупреждения, устройства (клавиатура, мышь, микрофон, звук, камера), драйверы и комплектующие.	A full system check, crashes and their causes, components for programs, alerts, devices (keyboard, mouse, microphone, sound, camera), drivers and hardware.
+Обычно норм	Usually fine
+Обычным программам запрещено использовать	Regular programs aren't allowed to use the
+Окно ScanHub не получило доступ к	The ScanHub window didn't get access to the
+Она нужна для этой проверки. Когда закончишь — выключи: «Настройки → Для разработчиков → Отладка по USB».	It's needed for this check. When you're done, turn it off: "Settings → Developer options → USB debugging".
+Она проверяет приложения на вирусы. Включи: Play Маркет → аватар → «Play Защита» → «Проверять приложения».	It scans apps for viruses. Turn it on: Play Store → avatar → "Play Protect" → "Scan apps".
+Они запускаются своим окном и сами ведут проверку, поэтому ультра проверка не может пройти их за тебя.	They run in their own window and do the scan themselves, so the ultra check can't go through them for you.
+Опасного не найдено, но есть что поправить.	Nothing dangerous found, but there are things to fix.
+Опасного нет.	Nothing dangerous.
+Особый доступ у	Special access for
+Откроет страницу приложения в настройках телефона — там видно название, разрешения и кнопки «Удалить», «Остановить»	Opens the app's page in the phone settings — it shows the name, permissions and the "Uninstall" and "Force stop" buttons
+Открыл на телефоне	Opened on the phone
+Отладка по USB включена	USB debugging is on
+Очень тихо	Very quiet
+Ошибка или идея?	Bug or idea?
+Память телефона не зашифрована	Phone storage isn't encrypted
+Память телефона почти заполнена	Phone storage is almost full
+Параметры звука	Sound settings
+Параметры клавиатуры	Keyboard settings
+Параметры мыши	Mouse settings
+Перегружен	Overloaded
+Перепроверить другими антивирусами — необязательно	Double-check with other antivirus tools — optional
+Перепроверь другими антивирусами — раз есть находки, это стоит сделать	Double-check with other antivirus tools — with findings, it's worth doing
+Подключи телефон кабелем и разреши отладку	Connect the phone with a cable and allow debugging
+Подключён:	Connected:
+Подробный отчёт о системе	Detailed system report
+Помочь автору ScanHub?	Help the ScanHub author?
+После проверки отладку лучше выключить — ScanHub напомнит.	It's better to turn debugging off after the check — ScanHub will remind you.
+Последний патч	Last patch
+Пощёлкай всеми кнопками и покрути колесо в рамке ниже, затем быстро поводи мышью по рамке.	Click all the buttons and scroll the wheel inside the frame below, then quickly move the mouse around the frame.
+Права суперпользователя: любое приложение, получившее их, может всё. Если ставил не ты — это серьёзно.	Superuser rights: any app that gets them can do anything. If you didn't set this up, it's serious.
+Правая	Right
+Предложить улучшение	Suggest an improvement
+При краже данные можно прочитать, подключив память напрямую.	If the phone is stolen, the data can be read by connecting the storage directly.
+При нажатии этих клавиш звучит сигнал — это не поломка.	These keys play a sound when pressed — it's not a fault.
+Приложение не из магазина с опасным доступом:	App not from a store with dangerous access:
+Приложение-следилка:	Stalkerware app:
+Приложений	Apps
+Приложить версию ScanHub и Windows и раздел, где ты сейчас	Attach the ScanHub and Windows version and the section you're in
+Приложить журнал ошибок ScanHub	Attach the ScanHub error log
+Пробел	Space
+Проверить телефон	Check the phone
+Проверка Android-телефона по кабелю: следилки, приложения не из магазина, кто получил опасный доступ, обновления безопасности, батарея и память. На телефон ничего не ставится.	Check an Android phone over a cable: stalkerware, apps not from a store, who got dangerous access, security updates, battery and storage. Nothing is installed on the phone.
+Проверка звука	Sound test
+Проверка камеры	Camera test
+Проверка клавиатуры	Keyboard test
+Проверка микрофона	Microphone test
+Проверка мыши	Mouse test
+Проверка телефона	Phone check
+Проверь	Check
+Проверяю телефон… не отключай кабель	Checking the phone… don't unplug the cable
+Программа для связи с телефоном	Tool for talking to the phone
+Прошивка подписана тестовыми ключами	Firmware is signed with test keys
+Раз в день сообщать автору, что ScanHub запущен: случайный номер этой копии, версия, язык и номер сборки Windows. Без имён, файлов и находок. Так автор узнаёт, сколько людей пользуется ScanHub.	Once a day, tell the author that ScanHub is running: a random number for this copy, the version, language and Windows build number. No names, files or findings. This is how the author learns how many people use ScanHub.
+Раз в день сообщать автору, что ScanHub запущен: случайный номер этой копии, версия, язык и номер сборки Windows. Без имён, файлов и находок. Так автор узнаёт, сколько людей пользуется ScanHub. Изменить можно в ⚙ Настройках.	Once a day, tell the author that ScanHub is running: a random number for this copy, the version, language and Windows build number. No names, files or findings. This is how the author learns how many people use ScanHub. You can change this in ⚙ Settings.
+Разблокируй его — там окно «Разрешить отладку по USB?». Отметь «Всегда разрешать с этого компьютера» и нажми «Разрешить».	Unlock it — there's an "Allow USB debugging?" prompt. Tick "Always allow from this computer" and tap "Allow".
+Разные антивирусы ищут по разным базам — второй находит то, что пропустил первый. Хватит одного-двух.	Different antivirus tools use different databases — a second one finds what the first missed. One or two are enough.
+Разреши его во всплывающем вопросе вверху окна или включи доступ в «Параметры → Конфиденциальность».	Allow it in the pop-up at the top of the window or turn on access in "Settings → Privacy".
+Разрешить	Allow
+Сверено со списком из	Checked against a list of
+Сделай громкость потише — прозвучит короткий сигнал. Должно быть слышно с той стороны, которую нажал.	Turn the volume down — a short beep will play. It should come from the side you pressed.
+Скажи что-нибудь обычным голосом — полоса должна прыгать.	Say something in a normal voice — the bar should jump.
+Скажи что-нибудь…	Say something…
+Скачиваю Platform Tools…	Downloading Platform Tools…
+Слева	Left
+Слушаю	Listening
+Слушаю…	Listening…
+Смотрю, что подключено… пара секунд	Looking at what's connected… a couple of seconds
+Снять доступ	Revoke access
+Снять у	Revoke from
+Спасибо!	Thank you!
+Спец. возможности	Accessibility
+Справа	Right
+Средняя (колесо)	Middle (wheel)
+Ставит другие приложения	Installs other apps
+Старая версия Android	Old Android version
+Стоит посмотреть	Worth a look
+Стоит посмотреть: вылетает регулярно — нажми «Решить»	Worth a look: crashes regularly — press "Fix"
+Так бывает, когда под клавишу попала пыль или крошки, или контакт изнашивается. Продуй клавишу; если не помогло — нужен ремонт.	This happens when dust or crumbs get under the key or the contact wears out. Blow out the key; if that doesn't help, it needs repair.
+Такие приложения никто не проверял. Если среди них есть незнакомые — посмотри их в списке ниже.	Nobody has checked these apps. If any of them are unfamiliar, look at them in the list below.
+Такой доступ нужен немногим приложениям: менеджерам паролей, антивирусам, лаунчерам. Если видишь незнакомое — сними доступ или удали.	Few apps need this kind of access: password managers, antivirus apps, launchers. If you see something unfamiliar, revoke the access or uninstall it.
+Твоя проверка ничего не нашла. Это на случай, если что-то всё равно кажется подозрительным.	Your check found nothing. This is in case something still seems suspicious.
+Телефон	Phone
+Телефон в порядке: следилок и опасного доступа не найдено.	The phone is fine: no stalkerware or dangerous access found.
+Телефон ждёт разрешения.	The phone is waiting for permission.
+Телефон загрузит изменённую систему — так ставят прошивки и root. Если ты этого не делал, это повод насторожиться: так бывает у телефонов, перепроданных с изменённой прошивкой.	The phone will boot a modified system — that's how custom firmware and root get installed. If you didn't do this, be careful: it happens with resold phones that have modified firmware.
+Телефон: снят доступ к спец. возможностям	Phone: accessibility access revoked
+Телефон: удалено приложение	Phone: app uninstalled
+Телефоны, флешки и другие подключённые	Phones, USB drives and other connected devices
+Тишина	Silence
+Только мелочи — компьютеру не вредят	Only minor things — they don't harm the computer
+Туда ScanHub сам записывает свои сбои: что упало и в каком месте кода. Без него автору сложнее найти причину. Твоих файлов и находок в нём нет.	ScanHub writes its own failures there: what broke and where in the code. Without it, it's harder for the author to find the cause. Your files and findings are not in it.
+Удали это приложение.	Uninstall this app.
+Указатель ускоряется при быстром движении. Для работы удобно, в играх прицеливаться точнее без него.	The pointer speeds up when you move fast. Handy for work; in games you aim more precisely without it.
+Установлено не из магазина	Not from a store
+Установлено не из магазина:	Not from a store:
+Устройств вывода звука нет — Windows не видит ни динамиков, ни наушников.	No audio output devices — Windows sees neither speakers nor headphones.
+Устройства: настройка Windows	Devices: Windows setting
+Хорошо, не буду	OK, I won't
+Чего не хватает в ScanHub, что неудобно или непонятно? Любая идея пригодится — автор читает всё. Ты увидишь сообщение целиком до отправки.	What's missing in ScanHub, what's inconvenient or unclear? Any idea helps — the author reads everything. You'll see the whole message before sending.
+Что подключено к компьютеру и работает ли: клавиатура, мышь, микрофон, звук, камера, Bluetooth. Здесь же можно проверить каждое устройство вживую — понажимать клавиши, пощёлкать мышью, сказать что-нибудь в микрофон. Звук и картинка с камеры никуда не уходят и не записываются.	What's connected to the computer and whether it works: keyboard, mouse, microphone, sound, camera, Bluetooth. You can also test each device live — press keys, click the mouse, say something into the microphone. Sound and camera images go nowhere and aren't recorded.
+Что предлагаешь:	Suggestion:
+Что улучшить	What to improve
+Чёрная картинка при этом — закрыта шторка на камере или выключена клавишей (на ноутбуках Lenovo это F8 или переключатель сбоку). Картинка никуда не записывается.	If the image is black, the camera shutter is closed or the camera is turned off with a key (on Lenovo laptops it's F8 or a side switch). The image isn't recorded anywhere.
+Эти приложения поставлены из APK-файла (скачаны в браузере, присланы в мессенджере) — их никто не проверял. Если что-то незнакомо — удали.	These apps were installed from an APK file (downloaded in a browser, sent in a messenger) — nobody has checked them. If something is unfamiliar, uninstall it.
+Это не заводская прошивка (или изменённая).	This isn't factory firmware (or it's modified).
+Этого ультра проверка не может сделать сама: удаление приложений и автозагрузку лучше решать тебе.	The ultra check can't do this by itself: removing apps and startup programs is better decided by you.
+антивирусов.	antivirus engines.
+без установки · бесплатно	no installation · free
+без установки · бесплатно для дома	no installation · free for home use
+боковая «вперёд»	side "forward"
+боковая «назад»	side "back"
+в архиве Platform Tools странные пути — не распаковываю	the Platform Tools archive has odd paths — not unpacking
+видит всё, что на экране, и может нажимать за тебя	sees everything on the screen and can tap for you
+видит журнал звонков	sees the call log
+вирусы и нежелательные программы	viruses and unwanted programs
+вирусы и трояны	viruses and trojans
+вирусы, трояны, руткиты	viruses, trojans, rootkits
+вниз	down
+вредоносное	malicious
+вредоносы и рекламные программы	malware and adware
+все	all
+все файлы	all files
+встроенное	built-in
+вчера	yesterday
+выключена повышенная точность указателя	enhanced pointer precision turned off
+выключена фильтрация ввода	Filter Keys turned off
+выключено в BIOS	disabled in BIOS
+выключено в Диспетчере устройств	disabled in Device Manager
+выключено залипание клавиш	Sticky Keys turned off
+вылетает регулярно	crashes regularly
+доступ выключен — устройство исправно, но ни одна программа его не получит.	access is turned off — the device works, but no program will get it.
+доступ к спец. возможностям? Приложение перестанет видеть экран и нажимать за тебя. Если это нужное приложение (менеджер паролей, лаунчер) — включишь обратно в настройках телефона.	accessibility access? The app will no longer see the screen or tap for you. If it's an app you need (password manager, launcher), turn it back on in the phone settings.
+доступ:	access:
+драйвер выключен	driver is disabled
+драйвер заблокирован: известна несовместимость	driver blocked: known incompatibility
+драйвер не смог запуститься	driver failed to start
+драйвер уже загружен с ошибкой — нужна перезагрузка	driver already loaded with an error — restart needed
+есть подозрения	suspicious
+ещё не нажимал:	not pressed yet:
+жду телефон…	waiting for the phone…
+ждёт перезагрузки	waiting for a restart
+ждёт перезагрузки, чтобы закончить установку	waiting for a restart to finish installing
+зависает регулярно	hangs regularly
+записей	entries
+записи	entries
+запись:	recording:
+запись: 3…	recording: 3…
+заряд	battery
+известная программа для слежки (stalkerware). Она читает переписку, звонки и местоположение и отправляет их тому, кто её поставил. Перед удалением подумай о безопасности: тот, кто её поставил, узнает об удалении.	known spying software (stalkerware). It reads messages, calls and location and sends them to whoever installed it. Think about your safety before removing it: whoever installed it will find out.
+известных приложений-следилок.	known stalkerware apps.
+иногда срабатывает дважды от одного нажатия. Это износ микропереключателя — известная болезнь мышей: помогает замена переключателя или гарантия. Ещё раз пощёлкай медленно, чтобы убедиться.	sometimes fires twice from one press. This is micro-switch wear — a well-known mouse problem: replacing the switch or a warranty claim helps. Click slowly a few more times to make sure.
+ищет:	finds:
+кадров/с	fps
+камера	camera
+камере	camera
+камеру	camera
+клавиатура, мышь или геймпад	keyboard, mouse or gamepad
+клавиша сама «нажимается» дважды	the key "presses" twice by itself
+клавиши сами «нажимаются» дважды	the keys "press" twice by themselves
+компьютер выключился некорректно: села батарея, перегрев или его выключили кнопкой	the computer shut down improperly: the battery died, it overheated or it was turned off with the button
+контакты	contacts
+левая	left
+магазин Transsion	Transsion store
+мес. назад). Проверь обновления системы.	mo. ago). Check for system updates.
+местоположение в фоне	background location
+микрофон	microphone
+микрофону	microphone
+может блокировать экран, стирать данные и мешать своему удалению	can lock the screen, wipe data and prevent its own removal
+напиши хотя бы пару слов	write at least a couple of words
+настроено неправильно	not configured correctly
+настройка Windows изменена — проверь устройство ещё раз	Windows setting changed — test the device again
+наушники или колонка	headphones or speaker
+не из магазина:	not from a store:
+не ставится уже	fails to install for
+не удалилось	not uninstalled
+не хватает ресурсов	not enough resources
+неизвестное исправление	unknown fix
+нет подписи	no signature
+неудачная попытка — Windows попробует ещё раз сама	a failed attempt — Windows will try again by itself
+ни одного микрофона	no microphones
+ни одной камеры	no cameras
+ничего не отправляется; изменить можно в ⚙ Настройках	nothing is sent; you can change this in ⚙ Settings
+номер сборки	build number
+о том, что случилось	about what happened
+обычные мелочи.	minor things.
+они повторяются. Остальные	they repeat. The other
+осталось меньше минуты	less than a minute left
+отключено или не найдено	disconnected or not found
+открой «Что установлено неправильно»	open "What's installed incorrectly"
+открытый код	open source
+отправляет SMS	sends SMS
+патч безопасности	security patch
+патч от	patch from
+перегрев	overheating
+перенапряжение	overvoltage
+подвигай мышью	move the mouse
+подготовлено к безопасному извлечению	prepared for safe removal
+подключалось	last connected
+подпись adb.exe не подтвердилась	adb.exe signature didn't verify
+подпись драйвера не проверена	driver signature not verified
+получает SMS	receives SMS
+получает и отправляет все SMS, включая коды банков	receives and sends all SMS, including bank codes
+посмотреть	look at
+правая	right
+предложение	suggestion
+приложение было открыто во время обновления — Store обновит его сам позже	the app was open during the update — the Store will update it later by itself
+приложение — администратор устройства и мешает удалению. Открой его настройки на телефоне и сними права администратора («Настройки → Пароли и безопасность → Приложения администратора»), затем удали снова	the app is a device administrator and blocks removal. Open its settings on the phone and remove its administrator rights ("Settings → Passwords & security → Device admin apps"), then uninstall again
+принтер или камера	printer or camera
+программа один раз не отвечала, и её закрыли	the program stopped responding once and was closed
+программам разрешена камера	camera allowed for programs
+программам разрешён микрофон	microphone allowed for programs
+прямо сейчас	right now
+работает	works
+раз за 4 недели) — в разделе есть кнопка «Решить»	times in 4 weeks) — there's a "Fix" button in the section
+раз за 4 недели) — обнови или переустанови программу	times in 4 weeks) — update or reinstall the program
+разово, потом удаляет себя · бесплатно	one-off, then removes itself · free
+разовые вылеты и неудачные попытки обновления. Компьютеру они не вредят, разбирать их не нужно.	one-off crashes and failed update attempts. They don't harm the computer, no need to go through them.
+разовый вылет — если не повторяется, можно забыть	a one-off crash — if it doesn't repeat, you can forget about it
+реклама, тулбары, угонщики браузера	ads, toolbars, browser hijackers
+с обеих сторон	from both sides
+с телефона? Приложение и его данные будут удалены. Вернуть можно, только поставив его заново.	from the phone? The app and its data will be deleted. You can only get it back by installing it again.
+самой Windows — их стоит разобрать.	of Windows itself — worth going through.
+сбоев	crashes
+сбоев стоит	crashes are worth a
+сбой	crash
+сбой самой Windows — посмотри «Синие экраны» и «Аппаратные ошибки» в разделе «Сбои и ошибки»	a failure of Windows itself — see "Blue screens" and "Hardware errors" in "Crashes and errors"
+сбой стоит	crash is worth a
+сбоя	crashes
+сбоя стоит	crashes are worth a
+сведения в реестре повреждены	registry information is corrupted
+сведения о телефоне и звонках	phone and call info
+сейчас занят другой программой (Discord, Zoom, Telegram…) или выключен кнопкой на корпусе. Закрой ту программу и попробуй снова.	is busy with another program (Discord, Zoom, Telegram…) or turned off with a button on the case. Close that program and try again.
+сейчас не подключено	not connected right now
+сейчас пуст, ошибок не было	empty right now, no errors
+системное	system
+скрытые майнеры	hidden miners
+слева	left
+следилка:	stalkerware:
+слушаем запись…	playing the recording…
+смотри экран телефона: там страница этого приложения	look at the phone screen: it shows this app's page
+сначала подключи телефон	connect the phone first
+сопряжено	paired
+справа	right
+ставится как программа	installs as a program
+телефон	phone
+телефон не подключён по отладке USB	the phone isn't connected via USB debugging
+телефон не разрешил отладку: разблокируй его и нажми «Разрешить» в окне «Разрешить отладку по USB?»	the phone didn't allow debugging: unlock it and tap "Allow" in the "Allow USB debugging?" prompt
+то же, что Defender, на свежих базах	the same as Defender, with fresh databases
+точное местоположение	precise location
+трояны, шпионы, руткиты	trojans, spyware, rootkits
+установщик	installer
+файл APK (установлен вручную)	APK file (installed manually)
+фото	photos
+холод	cold
+хорошее	good
+циклов	cycles
+частота опроса:	polling rate:
+часть Windows (поиск, клавиатура, меню «Пуск») на секунду не ответила — бывает у всех	part of Windows (search, keyboard, Start menu) didn't respond for a second — happens to everyone
+часы или браслет	watch or fitness band
+через него на телефон попадают APK-файлы	APK files get onto the phone through it
+читает SMS	reads SMS
+читает все уведомления, включая сообщения и коды из SMS	reads all notifications, including messages and SMS codes
+это приложение не из последней проверки телефона — сначала проверь телефон заново	this app isn't from the last phone check — check the phone again first
+✦ Предложить улучшение	✦ Suggest an improvement

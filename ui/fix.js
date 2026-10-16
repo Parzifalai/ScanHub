@@ -105,7 +105,7 @@ function fixRender(){
       ${FIX.plan.finished ? ` · проверка от ${esc(FIX.plan.finished.replace("T", " ").slice(0, 16))}` : ""}</div></div><div class="grow"></div>
       ${FIX.auto ? "" : '<button class="small primary" data-fix-auto title="ScanHub сам пройдёт все шаги, которые умеет">▶ Пройти автоматически</button>'}
       <button class="small" data-fix-reload title="Собрать список заново" ${FIX.auto ? "disabled" : ""}>Обновить</button><button class="small" data-fix-close title="Закрыть — продолжить можно потом">✕</button></div>
-    <div class="progress"><div style="width:${done / cards.length * 100}%"></div></div>
+    <div class="progress" title="${Math.round(done / cards.length * 100)}%"><div style="width:${done / cards.length * 100}%"></div></div>
     <div class="fixw-auto">${FIX.auto ? `<div class="spin"></div><span>${FIX.auto.stop ? "Остановлю после текущего шага…" : `Автопрохождение: шаг ${FIX.auto.k} из ${FIX.auto.n} — ${esc(titleOf(c))}`}</span>
       <div class="grow" style="flex:1"></div>${FIX.auto.stop ? "" : '<button class="small" data-fix-auto-stop>Остановить</button>'}` : ""}</div>
     <div class="fixw-body">

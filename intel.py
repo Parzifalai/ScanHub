@@ -948,8 +948,19 @@ CERT_KNOWN = [
      "info", "фильтрация HTTPS антивирусом или блокировщиком рекламы — нормально, если эта программа у тебя установлена"),
     (r"fiddler|charles|mitmproxy|burp|portswigger|httptoolkit|proxyman|mkcert|development ca|localhost|docker|asp\.net core https",
      "dev", "сертификат инструмента разработчика (прокси-отладчик или локальный HTTPS) — нормально, если ты ставил его сам"),
+    (r"cloudflare|warp|nordvpn|proton|expressvpn|surfshark|windscribe|hotspot shield|psiphon|outline|amnezia|kaspersky vpn", "info",
+     "сертификат VPN или защищённого DNS — нормально, если этот VPN у тебя стоит"),
+    (r"lenovo|hewlett|\bhp\b|\bdell\b|\basus|\bacer\b|\bmsi\b|gigabyte|\bintel\b|nvidia|\bamd\b|realtek|logitech|razer|steelseries", "info",
+     "сертификат производителя ПК или устройства — ставится его фирменными программами, обычно безвреден"),
+    (r"faceit|vanguard|riot|esea|battleye|easy ?anti|xigncode|nprotect", "info", "сертификат античита игры — нормально, если ты играешь в эту игру"),
+    (r"fortinet|fortigate|palo alto|check ?point|cisco|umbrella|forcepoint|netskope|websense|bluecoat|symantec web", "info",
+     "корпоративная фильтрация HTTPS — нормально на рабочем или учебном компьютере, странно на домашнем"),
     (r"microsoft|windows", "info", "сертификат Microsoft, которого нет в публичном списке (тестовый или для разработки)"),
 ]
+# что такое корневой сертификат — одной строкой для итогов проверки
+CERT_EXPLAIN = ("Что это: корневой сертификат — «доверенная печать» для защищённых сайтов (HTTPS). Неизвестные чаще всего ставят VPN, "
+                "антивирусы, программы банков и госуслуг, фирменные утилиты ноутбука или инструменты разработчика — это не вирус. "
+                "Опасен только перехватчик HTTPS (помечен ⚠): через него можно подсматривать пароли на сайтах.")
 
 
 def _sigcheck_rows(exe, args):
@@ -983,7 +994,8 @@ def check_rootcerts(exe, emit=print):
     out = []
     for row in rows:
         subj, issuer = row.get("Subject", ""), row.get("Issuer", "")
-        lvl, why = "warn", "неизвестный корневой сертификат: его нет в списке доверенных Microsoft. Если не знаешь, откуда он, — удали"
+        lvl, why = "warn", ("неизвестный: его нет в списке доверенных Microsoft. Скорее всего его поставила какая-то программа (VPN, банк, "
+                            "утилита ноутбука). Если ни одна такая программа у тебя не стоит — удали его")
         for rx, l, w in CERT_KNOWN:
             if re.search(rx, f"{subj} {issuer}", re.I):
                 lvl, why = l, w

@@ -63,6 +63,52 @@ def appdata_executables(limit=3000):
     return out
 
 
+MS_LOGS = r"C:\_MinerSearchLogs"
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+# мелкие пометки MinerSearch «[!]» — что они значат простыми словами
+MS_MINOR = {
+    "Сертификат подписавшего просрочен": "у подписи файла истёк срок — обычно это просто старая версия программы, не вирус",
+    "Нет доверия корневому сертификату": "подпись выдана центром, которому Windows не доверяет — так у некоторых драйверов и китайских программ; насторожиться, только если программа незнакомая",
+    "В этом объекте нет подписи": "у файла нет цифровой подписи — так у многих бесплатных и самодельных программ, само по себе не опасно",
+    "Файл не найден": "запись ссылается на уже удалённый файл — мусор",
+    "Не удалось вычислить хеш": "файл не удалось прочитать (занят или облачный)",
+    "Подозрительный путь": "программа лежит в необычном месте",
+    "Пустая задача": "задача планировщика без программы — мусор",
+    "Файл или подпись вероятно были повреждены": "файл или его подпись изменены — стоит проверить этот файл",
+}
+
+
+def parse_minersearch(text):
+    """Отчёт MinerSearch → {threats, warn, minor: {вид: [строки]}}. Легенду в начале отчёта пропускаем (в ней нет времени и пути)."""
+    import re as _re
+    threats, warn, minor, cur = [], [], {}, ""
+    for line in text.splitlines():
+        c = _re.search(r"Сканирование: (\S+\.exe)", line)
+        if c:
+            cur = c.group(1)                           # о каком процессе следующая строка «Обнаружен вредоносный процесс»
+        m = _re.search(r"\[(!{1,4})\]\s+(.+)", line)
+        if not m:
+            continue
+        lvl, body = len(m.group(1)), m.group(2).strip()
+        if not _re.search(r"^\[\d\d\.\d\d\.\d{4}", line.strip()) and not _re.search(r"[A-Za-z]:\\|\\\\|PID|HKLM|HKCU|\.exe", body, _re.I):
+            continue                                   # строка легенды: «[!!!]   Обнаружена угроза»
+        body = body.replace("\\\\\\", "").replace("\\\\?\\", "")
+        if lvl >= 3:
+            if "процесс" in body and cur and cur not in body:
+                body = f"{body} — {cur}"
+            if body[:300] not in threats:
+                threats.append(body[:300])
+        elif lvl == 2:
+            if _re.search(r"доступен только онлайн|Сторожевой процесс|Найдено угроз", body):
+                continue
+            if body[:300] not in warn:
+                warn.append(body[:300])
+        else:
+            kind = next((k for k in MS_MINOR if body.startswith(k)), None)
+            minor.setdefault(kind or body.split(" ")[0], []).append(body[:300])
+    return {"threats": threats, "warn": warn, "minor": minor}
+
+
 def run_elevated(ops, timeout=1800, on_started=None, on_progress=None, ctl=None):
     """Выполнить операции от администратора одним запросом UAC. ops: [{"type":"run","cmd":[...]} | {"type":"copy",...}].
 
@@ -343,7 +389,9 @@ def sysfiles_parse(res, sfc=True, disk=False):
     else:
         dism = "unknown"
     low = " ".join(sfc_out.lower().split())
-    if "metadata" in low and "corrupt" in low or "метаданные компонентов повреждены" in low:
+    if "repair pending which requires reboot" in low or "для завершения восстановления системы требуется перезагрузка" in low:
+        sfc = "reboot"                                 # Windows ждёт перезагрузки после обновлений — SFC даже не начинал
+    elif "metadata" in low and "corrupt" in low or "метаданные компонентов повреждены" in low:
         sfc = "violations"
     elif "did not find any integrity violations" in low or "не обнаружила нарушений целостности" in low:
         sfc = "ok"
@@ -356,7 +404,179 @@ def sysfiles_parse(res, sfc=True, disk=False):
     else:
         sfc = "unknown"
     tail = lambda t: "\n".join(l.strip() for l in t.splitlines() if l.strip() and "%" not in l)[-600:]
-    return {**out, "dism": dism, "sfc": sfc, "dism_text": tail(dism_out), "sfc_text": tail(sfc_out)}
+    r = {**out, "dism": dism, "sfc": sfc, "dism_text": tail(dism_out), "sfc_text": tail(sfc_out)}
+    if dism in ("repairable", "broken"):
+        try:
+            r["dism_hist"] = dism_history()
+        except Exception:
+            pass
+        try:
+            r["corrupt"] = corrupt_summary(r.get("dism_hist"))
+        except Exception:
+            pass
+    r["cards"] = sysfiles_cards(r)
+    return r
+
+
+# ---------------------------------------------------------------- системные файлы: история и понятный вывод
+NO_SOURCE = {"0x800f0915": "Windows не нашла исправных копий", "0x800f081f": "Windows не нашла исправных копий",
+             "0x800f0906": "не удалось скачать исправные копии", "0x800f0950": "не удалось скачать исправные копии"}
+
+
+def dism_history(path=r"C:\Windows\Logs\DISM\dism.log"):
+    """Последние запуски восстановления/сканирования из журнала DISM (читается без прав администратора).
+    → {"restore": {"when", "code"}, "scan": "when"}. Берётся последнее восстановление, которое дошло до конца
+    («Ending Dism.exe session»); оборванные (закрыли окно, выключили ПК) пропускаются. code=None — закончилось без ошибки."""
+    import re as _re
+    out, cur = {}, None
+    for l in open(path, encoding="utf-8", errors="replace"):
+        m = _re.match(r"(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d).*Executing command line: (.+)", l)
+        if m:
+            cmd = m.group(2).lower()
+            cur = {"when": m.group(1), "code": None} if "/restorehealth" in cmd else None
+            if "/scanhealth" in cmd:
+                out["scan"] = m.group(1)
+            continue
+        if cur is None:
+            continue
+        e = _re.search(r"hr:(0x[0-9a-f]{8})", l, _re.I)
+        if e and e.group(1).lower() != "0x00000000" and not cur["code"]:
+            cur["code"] = e.group(1).lower()
+        if "Ending Dism.exe session" in l:
+            out["restore"] = cur
+            cur = None
+    return out
+
+
+COMPONENT_KINDS = [  # что за компонент — словами; cosmetic: на работу Windows почти не влияет
+    (r"userexperience|appxmain|oobe|shellexperience|startmenu|cortana|webexperience", "оформление Windows (иконки, меню «Пуск»)", True),
+    (r"windowsappruntime|winappsdk|appsdk", "компоненты для приложений (Windows App SDK)", True),
+    (r"languagepack|lp_|-ru-ru|-en-us", "языковые файлы", True),
+    (r"servicingstack|cbs|wcp|kernel|ntoskrnl|driver|drivers|\.sys", "важные системные файлы", False),
+]
+
+
+def corrupt_summary(hist=None):
+    """Что именно повреждено — по последнему ScanHealth/RestoreHealth в журнале CBS. Журналы старше текущего лежат в CbsPersist_*.cab
+    (имя — время в UTC, когда журнал закрыт): берём один нужный архив. Итог кешируется в data/sysfiles_corrupt.json."""
+    import calendar, glob as _g, re as _re, shutil as _sh, subprocess as _sp, tempfile
+    when = max([x for x in ((hist or {}).get("scan"), ((hist or {}).get("restore") or {}).get("when")) if x] or [""])
+    if not when:
+        return None
+    cache_f = os.path.join(DATA_DIR, "sysfiles_corrupt.json")
+    try:
+        c = json.load(open(cache_f, encoding="utf-8"))
+        if c.get("when") == when and c.get("v") == 2:
+            return c
+    except (OSError, ValueError):
+        pass
+    t = time.mktime(time.strptime(when, "%Y-%m-%d %H:%M:%S"))
+    logs = r"C:\Windows\Logs\CBS"
+    cabs = []
+    for f in _g.glob(os.path.join(logs, "CbsPersist_*.cab")):
+        m = _re.search(r"_(\d{14})\.cab$", f)
+        if m:
+            cabs.append((calendar.timegm(time.strptime(m.group(1), "%Y%m%d%H%M%S")), f))
+    later = sorted(x for x in cabs if x[0] >= t)
+    src, tmp = (later[0][1] if later else os.path.join(logs, "CBS.log")), None
+    try:
+        if src.endswith(".cab"):
+            tmp = tempfile.mkdtemp(prefix="scanhub-cbs-")
+            _sp.run(["expand.exe", src, "-F:*", tmp], capture_output=True, timeout=180, creationflags=NO_WINDOW)
+            got = _g.glob(os.path.join(tmp, "*"))
+            if not got:
+                return None
+            src = got[0]
+        day = when[:10]
+        items = set()
+        with open(src, "rb") as fh:
+            for raw in fh:
+                if b"CSI Payload Corrupt" not in raw or not raw.startswith(day.encode()):
+                    continue
+                l = raw.decode("utf-8", "replace")
+                m = _re.search(r"Payload Corrupt\W+(?:\(n\)\W+)?([^\\\s]+)\\(.+?)\s*$", l)
+                if m:
+                    items.add((m.group(1), m.group(2)))
+    finally:
+        if tmp:
+            _sh.rmtree(tmp, ignore_errors=True)
+    if not items:
+        return None
+    kinds, versions, cosmetic = {}, set(), True
+    for comp, _f in items:
+        v = _re.search(r"_(\d+\.\d+\.\d+\.\d+)_", comp)
+        if v:
+            versions.add(v.group(1))
+        for rx, label, cos in COMPONENT_KINDS:
+            if _re.search(rx, comp, _re.I):
+                kinds[label] = kinds.get(label, 0) + 1
+                cosmetic = cosmetic and cos
+                break
+        else:
+            kinds["другие системные файлы"] = kinds.get("другие системные файлы", 0) + 1
+            cosmetic = False
+    r = {"v": 2, "when": when, "n": len(items), "versions": sorted(versions), "kinds": dict(sorted(kinds.items(), key=lambda x: -x[1])),
+         "cosmetic": cosmetic}
+    try:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        json.dump(r, open(cache_f, "w", encoding="utf-8"), ensure_ascii=False)
+    except OSError:
+        pass
+    return r
+
+
+def _ru_date(when):
+    try:
+        t = time.strptime(when[:10], "%Y-%m-%d")
+        return f"{t.tm_mday} {['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'][t.tm_mon - 1]}"
+    except (ValueError, TypeError):
+        return when or ""
+
+
+def sysfiles_cards(r):
+    """Итог проверки системных файлов — карточки, понятные без знания DISM и SFC: {lvl, title, text, action}.
+    action: "repair" — кнопка «Восстановить» (только когда она может помочь), None — делать ничего не нужно или нельзя."""
+    C = []
+    add = lambda lvl, title, text="", action=None: C.append({"lvl": lvl, "title": title, "text": text, "action": action})
+    dism, sfc = r.get("dism"), r.get("sfc")
+    cor, hist = r.get("corrupt") or {}, (r.get("dism_hist") or {}).get("restore") or {}
+    what = ""
+    if cor.get("n"):
+        top = next(iter(cor["kinds"]), "")
+        what = f"Повреждено файлов: {cor['n']}" + (f", в основном — {top}." if top else ".")
+    if dism == "repairable":
+        code = hist.get("code")
+        if code in NO_SOURCE:
+            add("warn", "Повреждение в хранилище Windows — сейчас его не починить",
+                (what + " " if what else "") +
+                ("На работу компьютера это почти не влияет. " if cor.get("cosmetic") else "") +
+                f"Восстановление уже пробовали {_ru_date(hist.get('when'))}, но {NO_SOURCE[code][0].lower() + NO_SOURCE[code][1:] if not NO_SOURCE[code].startswith('Windows') else NO_SOURCE[code]} — так бывает на тестовых сборках Windows. "
+                "Делать ничего не нужно: починится со следующим обновлением Windows.")
+        elif sfc == "violations":
+            add("bad", "Повреждены системные файлы Windows",
+                (what + " " if what else "") + "Нажми «Восстановить»: Windows скачает исправные копии и заменит испорченные. 15–30 минут, "
+                "нужен интернет, потом перезагрузка. Твои файлы и программы не трогает.", "repair")
+        else:
+            add("warn", "Windows отметила повреждение в хранилище системных файлов",
+                (what + " " if what else "") + "Хранилище — это «склад» исправных копий, через него ставятся обновления. " +
+                ("Сами системные файлы целы. " if sfc == "ok" else "") +
+                "Нажми «Восстановить»: Windows скачает исправные копии — 15–30 минут, нужен интернет. Твои файлы и программы не трогает.", "repair")
+    elif dism == "broken":
+        add("bad", "Хранилище системных файлов повреждено, Windows не чинит его сама",
+            (what + " " if what else "") + "Поможет «восстановление поверх» с официального образа Windows: файлы и программы остаются. "
+            "Если компьютер работает нормально — можно отложить до следующего большого обновления.")
+    elif dism == "ok":
+        add("ok", "Хранилище системных файлов исправно")
+    if sfc == "ok":
+        add("ok", "Системные файлы целы")
+    elif sfc == "violations" and dism != "repairable":
+        add("bad", "Повреждены системные файлы Windows", "Нажми «Восстановить»: 15–30 минут, потом перезагрузка. Твои файлы и программы не трогает.", "repair")
+    elif sfc in ("reboot", "busy"):
+        add("warn", "Системные файлы не проверены: Windows ждёт перезагрузки",
+            "После обновлений Windows нужно перезагрузиться — до этого проверка не запускается. Перезагрузи компьютер и проверь снова.")
+    elif sfc == "error":
+        add("warn", "Проверка системных файлов не получилась", "Перезагрузи компьютер и попробуй снова.")
+    return C
 
 
 DEFENDER_PREFS = ("[Console]::OutputEncoding=[Text.Encoding]::UTF8; Get-MpPreference | Select-Object ExclusionPath, ExclusionProcess, "
@@ -468,8 +688,8 @@ class DeepScan:
     # ------------------------------------------------------------ шаги
     def run(self):
         plan = [
-            ("procs", "Внедрённый код в процессах", "HollowsHunter, с правами администратора", self.s_hollows),
-            ("miners", "Скрытые майнеры", "нагрузка, имена, расположение, подписи", self.s_miners),
+            ("procs", "Внедрённый код в процессах", "HollowsHunter, с правами администратора (в том же окне — MinerSearch)", self.s_hollows),
+            ("miners", "Скрытые майнеры", "MinerSearch (только поиск, ничего не удаляет) и наблюдение за нагрузкой", self.s_miners),
             ("network", "Сеть", "соединения, обращения к майнинг-пулам, подмена hosts, 1,7 млн адресов вредоносов (Maltrail)", self.s_network),
             ("autoruns", "Автозагрузка", "реестр, папки, задачи, службы, WMI, вход в Windows, перехват запуска, экран входа", self.s_autoruns),
             ("drivers", "Уязвимые драйверы", "драйверы, через которые вирусы выключают антивирус (база LOLDrivers)", self.s_drivers),
@@ -516,6 +736,27 @@ class DeepScan:
         code = 1 if worst == "threat" else 2 if worst == "suspicious" else 3 if worst == "error" else 0
         return code, [worst if worst != "unknown" else "clean", label]
 
+    def _minersearch_ops(self):
+        """MinerSearch — в том же окне UAC, что и HollowsHunter: только поиск (--scan-only), без окон, отчёт копируем к себе."""
+        if "miners" in (self.ctx.get("skip") or {}):
+            return []
+        m, ts, exe = self.tool("minersearch")
+        if not exe and self.ctx.get("install"):
+            self.emit("  MinerSearch ещё не скачан — скачиваю (~5 МБ, с проверкой подписи и VirusTotal)…")
+            try:
+                if self.ctx["install"]("minersearch"):
+                    m, ts, exe = self.tool("minersearch")
+            except Exception as e:
+                self.emit(f"  MinerSearch не скачался: {e}")
+        if not exe:
+            return []
+        self.ms_t0 = time.time()
+        self.ms_dir = os.path.join(DATA_DIR, "reports", self.job["id"] + "-minersearch")
+        return [{"type": "run", "cmd": [exe, "--accept-eula", "--console-mode", "--scan-only", "--no-review-interact"],
+                 "cwd": os.path.dirname(exe), "timeout": 1500},
+                {"type": "copy_glob", "src_dir": MS_LOGS, "pattern": "MinerSearch_*.log", "dst_dir": self.ms_dir,
+                 "newer_than": self.ms_t0 - 5, "timeout": 60}]
+
     def s_hollows(self, s):
         m, ts, exe = self.tool("hollowshunter")
         if not exe:
@@ -527,10 +768,16 @@ class DeepScan:
         try:
             self.emit("  запрашиваю права администратора (одно окно UAC)…")
             # в том же окне UAC — исключения и выключенные защиты Defender (без прав администратора Windows их не показывает)
+            ms_ops = self._minersearch_ops()
+            if ms_ops:
+                self.emit("  в том же окне — MinerSearch (поиск майнеров, только проверка, ~3–5 минут)")
             res = run_elevated([{"type": "run", "cmd": args, "cwd": ts["path"], "timeout": 900},
-                                {"type": "run", "cmd": ["powershell", "-NoProfile", "-Command", DEFENDER_PREFS], "timeout": 90}])
+                                {"type": "run", "cmd": ["powershell", "-NoProfile", "-Command", DEFENDER_PREFS], "timeout": 90}] + ms_ops,
+                               timeout=900 + 90 + sum(o["timeout"] for o in ms_ops) + 120)
             out = res[0].get("out", "")
             self.defender_prefs = res[1].get("out", "") if len(res) > 1 and res[1].get("ok") else None
+            if ms_ops:
+                self.ms_res = res[2:4]
         except PermissionError:
             admin = False
             self.emit("  без прав администратора: проверяю только свои процессы")
@@ -598,8 +845,44 @@ class DeepScan:
                 self.suspects.add(p["exe"])
         top = snap["top_cpu"][:3]
         self.emit("  больше всего нагружают: " + ", ".join(f"{p['name']} {p['cpu']}%" for p in top))
-        s.update(verdict="suspicious" if s["findings"] else "clean",
-                 label=f"подозрительных процессов: {len(s['findings'])}" if s["findings"] else "майнеров не видно")
+        ms = self._minersearch_result(s)
+        threat = bool(ms and ms["threats"])
+        s.update(verdict="threat" if threat else "suspicious" if s["findings"] and (not ms or ms["warn"] or snap["suspicious"]) else "clean",
+                 label=(f"MinerSearch: угроз {len(ms['threats'])}" if threat else
+                        f"подозрительных процессов: {len(snap['suspicious'])}" if snap["suspicious"] else
+                        "майнеров не видно" + (" (и MinerSearch ничего не нашёл)" if ms else "")))
+
+    def _minersearch_result(self, s):
+        """Разбор отчёта MinerSearch из того же окна UAC. Мелкие пометки о подписях — одной понятной строкой, не как угроза."""
+        res = getattr(self, "ms_res", None)
+        m, ts, exe = self.tool("minersearch")
+        if not exe:
+            s.setdefault("notes", []).append("MinerSearch не установлен — работал только встроенный поиск майнеров")
+            return None
+        if res is None:
+            if "miners" not in (self.ctx.get("skip") or {}):
+                self.emit("  MinerSearch не запускался: права администратора не выданы")
+            return None
+        files = (res[1].get("files") or []) if len(res) > 1 else []
+        logs = sorted(files, key=os.path.getmtime)
+        if not logs:
+            run = res[0] if res else {}
+            self.emit(f"  MinerSearch не оставил отчёт (код {run.get('code')}): {(run.get('out') or run.get('error') or '')[-300:]}")
+            s.update(problem="MinerSearch не оставил отчёт — поиск майнеров сделан только встроенными средствами", fix={"run": ["minersearch", "scanonly"]})
+            return None
+        raw = open(logs[-1], "rb").read()
+        text = raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8", "replace")
+        r = parse_minersearch(text)
+        self.emit(f"  MinerSearch: угроз {len(r['threats'])}, предупреждений {len(r['warn'])}, мелких пометок {sum(len(v) for v in r['minor'].values())} · отчёт {logs[-1]}")
+        for t in r["threats"][:15]:
+            s["findings"].append("⚠ MinerSearch: " + t)
+        for t in r["warn"][:10]:
+            s["findings"].append("MinerSearch: " + t)
+        if r["minor"]:
+            s["findings"].append("MinerSearch, мелкие пометки (это не угрозы): " + "; ".join(
+                f"{MS_MINOR.get(k, k)} — {len(v)}" for k, v in r["minor"].items()))
+        self.job["minersearch_log"] = logs[-1]
+        return r
 
     def s_network(self, s):
         n = system.network()
@@ -707,6 +990,8 @@ class DeepScan:
         certs = intel.check_rootcerts(exe, self.emit)
         bad = [c for c in certs if c["level"] == "bad"]
         warn = [c for c in certs if c["level"] == "warn"]
+        if bad or warn:
+            s["findings"].append(intel.CERT_EXPLAIN)
         for c in bad + warn:
             s["findings"].append(("⚠ " if c in bad else "") + f"{c['subject']} [{c['store']}] — {c['why']}")
         s.update(verdict="threat" if bad else "suspicious" if warn else "clean",

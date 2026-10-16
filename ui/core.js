@@ -1,5 +1,29 @@
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ---------- ход задачи: «37% · текст» (так пишет сервер) или «… 3 из 10 …» → доля; «осталось» — по скорости с начала
+function progOf(text){
+  const s = String(text || "");
+  let m = s.match(/^(\d{1,3})% · /);
+  if (m) return {f: Math.min(1, +m[1] / 100), t: s.slice(m[0].length)};
+  m = s.match(/(\d+) из (\d+)/);                      // «файл 3 из 10» — третий ещё идёт, поэтому 2,5 из 10
+  if (m && +m[2] > 1) return {f: Math.min(1, Math.max(0, +m[1] - 0.5) / +m[2]), t: s};
+  m = s.match(/(?:скачиваю|загружаю|распаковываю)\D{0,12}(\d{1,3})%/);
+  if (m) return {f: +m[1] / 100, t: s};
+  return {f: null, t: s};
+}
+function etaText(started, f){
+  if (!started || !(f >= 0.04) || f >= 1) return "";
+  const el = (Date.now() - new Date(started)) / 1000;
+  if (!(el >= 8)) return "";
+  const left = el * (1 - f) / f;
+  return left < 50 ? "осталось меньше минуты" : left < 5400 ? `осталось ~${Math.max(1, Math.round(left / 60))} мин` : `осталось ~${Math.round(left / 3600)} ч`;
+}
+const progBar = (f, extra = "") => `<div class="progx"><div class="progress"><div style="width:${Math.max(2, Math.round(f * 100))}%"></div></div><span class="mono">${Math.round(f * 100)}%${extra ? " · " + extra : ""}</span></div>`;
+function progHtml(text, started){
+  const p = progOf(text);
+  return p.f == null ? "" : progBar(p.f, etaText(started, p.f));
+}
 const store = { get(k){ try { return localStorage.getItem("scanhub."+k) } catch { return null } },
                 set(k,v){ try { localStorage.setItem("scanhub."+k, v) } catch {} } };
 let TOOLS = [], LAST = null, CFG = {}, HISTORY = [], active = null, openJobs = [], batches = {}, simpleBatch = null;
@@ -119,6 +143,7 @@ const ICONS = {
   speed: '<path d="M4.6 18.5a9 9 0 1 1 14.8 0"/><path d="m12 13.5 4.2-5"/><circle cx="12" cy="13.5" r="1.4"/>',
   privacy: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/>',
   health: '<path d="M21.5 12h-4l-3 8-5-16-3 8h-4"/>',
+  phone: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/><path d="m9.5 10 2 2 3.5-3.5"/>',
   res: '<path d="M4 4v16h16"/><path d="m7.5 15 3.5-4 3 2.5 5-6.5"/>',
   tools: '<path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/>',
   history: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
@@ -167,6 +192,40 @@ function simpleTileButtons(t){
   if (t.stale || t.update_available) return `<button class="primary small" data-run="${t.id}" data-mode="${runMode.id}">Запустить</button>${fresh}
      <span class="sub" style="flex-basis:100%">${t.stale ? "Встроенные базы старые — лучше сначала обновить." : "Есть новая версия."}</span>`;
   return `<button class="primary small" data-run="${t.id}" data-mode="${runMode.id}">Запустить</button>`;
+}
+
+// ---------- другие антивирусы: спокойный список вместо витрины. Не реклама: без «самых сильных», без ярких кнопок,
+// по делу — что ищет и как работает; когда находок нет — свёрнуто и помечено «необязательно».
+const REC_INFO = {
+  cureit:      {who: "Dr.Web",     g: "virus", what: "вирусы и трояны",                     how: "без установки · бесплатно для дома"},
+  kvrt:        {who: "Kaspersky",  g: "virus", what: "вирусы, трояны, руткиты",             how: "без установки · бесплатно"},
+  eset:        {who: "ESET",       g: "virus", what: "вирусы и нежелательные программы",    how: "разово, потом удаляет себя · бесплатно"},
+  emsisoft:    {who: "Emsisoft",   g: "virus", what: "трояны, шпионы, руткиты",             how: "без установки · бесплатно"},
+  msert:       {who: "Microsoft",  g: "virus", what: "то же, что Defender, на свежих базах", how: "без установки · бесплатно"},
+  malwarebytes:{who: "Malwarebytes", g: "virus", what: "вредоносы и рекламные программы",   how: "ставится как программа"},
+  minersearch: {who: "открытый код", g: "miner", what: "скрытые майнеры",                   how: "без установки · бесплатно"},
+  adwcleaner:  {who: "Malwarebytes", g: "adware", what: "реклама, тулбары, угонщики браузера", how: "без установки · бесплатно"},
+};
+const REC_GROUPS = [["virus", "Второе мнение по вирусам", ""],
+                    ["miner", "Если компьютер шумит и греется без причины", ""],
+                    ["adware", "Если в браузере реклама, чужая стартовая страница или поиск", ""]];
+function recsHtml(ids, {threat = false, title = "", extra = ""} = {}){
+  // Malwarebytes ставится как программа — советуем, только если он уже стоит
+  const list = ids.map(tool).filter(t => t && (t.id !== "malwarebytes" || t.ready));
+  if (!list.length && !extra) return "";
+  const btns = t => simpleTileButtons(t).replace(/class="primary small"/g, 'class="small"');
+  const body = REC_GROUPS.map(([g, name, sub]) => {
+    const ts = list.filter(t => (REC_INFO[t.id]?.g || "virus") === g);
+    if (!ts.length) return "";
+    return `<div class="rec-g"><div class="rec-gh">${esc(name)}</div>${sub ? `<div class="sub">${esc(sub)}</div>` : ""}
+      ${ts.map(t => { const i = REC_INFO[t.id] || {}; return `<div class="rec-row"><span><b>${esc(t.name)}</b>${i.who ? ` <span class="sub-inline">${esc(i.who)}</span>` : ""}
+        <span class="sub">ищет: ${esc(i.what || t.simple || "")} · ${esc(i.how || "")}</span></span><span class="row">${btns(t)}</span></div>` }).join("")}</div>`;
+  }).join("") + extra;
+  const note = `<div class="sub rec-note">ScanHub не связан с этими компаниями и ничего не получает за эти советы. Все сканеры — бесплатные, ScanHub скачивает их только с официальных сайтов и проверяет подпись.</div>`;
+  const head = title || (threat ? "Есть находки — перепроверь дополнительными сканерами" : "Чтобы быть максимально уверенным в чистоте ПК — заверши проверку дополнительными сканерами");
+  const lead = threat ? "Разные антивирусы ловят разное: если два-три из них тоже что-то найдут — это точно стоит убрать, а если нет — находка, скорее всего, ложная."
+    : "ScanHub уже проверил компьютер своими движками. Каждый сканер ниже ищет по собственным базам и даёт второе мнение — достаточно одного-двух. Бесплатно, 10–20 минут.";
+  return `<div class="recs-box${threat ? " threat" : ""}"><div class="recs-h">${esc(head)}</div><div class="sub" style="margin:2px 0 6px">${esc(lead)}</div>${body}${note}</div>`;
 }
 
 // HiJackThis+: подробный отчёт о точках перехвата системы — разбирает его помощник
@@ -359,8 +418,9 @@ function taskToast(name, t, args = {}){
       const C = healthChecks(r), bad = C.filter(c => c.st === "bad").length, warn = C.filter(c => c.st === "warn").length;
       return ["Полная проверка ПК готова", bad ? `нужно исправить: ${bad}, замечаний: ${warn}` : warn ? `замечаний: ${warn}` : "всё в порядке", bad ? "warn" : "ok"];
     },
-    sysfiles: () => [r.sfc === "violations" || r.dism === "repairable" || r.dism === "broken" ? "Найдены повреждённые системные файлы" : "Системные файлы проверены",
-                     r.sfc === "ok" ? "повреждений нет" : "подробности в отчёте", r.sfc === "violations" ? "warn" : "ok"],
+    sysfiles: () => { const w = (r.cards || []).find(c => c.lvl === "bad") || (r.cards || []).find(c => c.lvl === "warn");
+      return w ? [w.title, w.action === "repair" ? "можно восстановить — кнопка в «Полной проверке»" : "подробности — в «Полной проверке»", w.lvl === "bad" ? "warn" : "info"]
+               : ["Системные файлы в порядке", "повреждений нет"] },
     drivers: () => ["Сведения о драйверах обновлены", (r.problems || []).length ? `устройств с ошибками: ${r.problems.length}` : "все устройства работают"],
     driver_updates: () => [(r || []).length ? `Найдено обновлений драйверов: ${r.length}` : "Новых драйверов нет", (r || []).length ? "установить можно в Windows Update" : ""],
     cleanup_scan: () => ["Анализ диска готов", ""],
@@ -390,6 +450,16 @@ async function checkVersion(){
   } catch {}
 }
 setInterval(checkVersion, 5000); checkVersion();
+// пока что-то ставится или обновляется — окно само спрашивает сервер, чтобы кнопки показывали ход, а потом «Запустить»
+let BUSY_T = 0;
+function watchBusy(){
+  if (BUSY_T) return;
+  const t0 = Date.now();
+  BUSY_T = setInterval(async () => {
+    await refresh();
+    if (!TOOLS.some(t => t.busy) || Date.now() - t0 > 20 * 60000) { clearInterval(BUSY_T); BUSY_T = 0 }
+  }, 1500);
+}
 async function refresh(){
   try {
     const [r, h] = await Promise.all([api("/api/tools"), api("/api/history")]);
@@ -406,6 +476,9 @@ async function refresh(){
     }
     const typing = document.activeElement && (document.activeElement.id || "").startsWith("tx-");
     if (!typing) render();
+    // блоки со сканерами есть и в разделах (глубокая, ультра) — их тоже перерисовываем, если что-то поменялось
+    const sig = TOOLS.map(t => t.id + (t.busy || "") + t.ready).join("|");
+    if (sig !== refresh.sig) { refresh.sig = sig; if (typeof viewFor === "function" && viewFor() === "panel" && !typing) redrawPanels() }
   } catch(e) { console.error(e) }
 }
 
@@ -582,8 +655,11 @@ document.addEventListener("click", async e => {
   if (el.dataset.log) return openLog(el.dataset.log);
   if (el.dataset.dismiss) { await api("/api/dismiss", {tool: el.dataset.dismiss}); return refresh() }
   if (el.dataset.install || el.dataset.update) {
-    await api("/api/install", {tool: el.dataset.install || el.dataset.update, update: !!el.dataset.update});
-    return refresh();
+    const id = el.dataset.install || el.dataset.update;
+    el.disabled = true; el.textContent = el.dataset.update ? "Обновляю…" : /Найти|найти/.test(el.textContent) ? "Ищу…" : "Скачиваю…";
+    await api("/api/install", {tool: id, update: !!el.dataset.update});
+    await refresh();
+    return watchBusy();
   }
   if (el.dataset.run) {
     const t = tool(el.dataset.run), m = t.modes.find(x => x.id === el.dataset.mode);
@@ -652,6 +728,7 @@ async function openLog(id){
 }
 
 // ---------- настройки
+let USAGE;                       // анонимная статистика: true/false — ответил, null — ещё не спрашивали, undefined — не загружено
 async function openSettings(){
   CFG = await api("/api/config");
   const f = $("#settingsForm");
@@ -660,6 +737,8 @@ async function openSettings(){
   for (const k of ["vt_files", "fs_files", "smart_mb"]) f[k].value = CFG[k];
   f.folder_full.checked = !!CFG.folder_full;
   f.ctx_menu.checked = !!CFG.ctx_menu;
+  try { USAGE = (await api("/api/usage")).on ?? null } catch {}
+  f.usage_ping.checked = USAGE === true;
   $("#vtState").textContent = CFG.virustotal_key ? "· сохранён ✓" : "· не задан";
   $("#fsState").textContent = CFG.filescan_key ? "· сохранён ✓" : "· не задан";
   $("#mdState").textContent = CFG.metadefender_key ? "· сохранён ✓" : "· не задан";
@@ -699,6 +778,7 @@ $("#settings").addEventListener("close", async () => {
     if (v === "-") body[k] = ""; else if (v) body[k] = v;
   }
   await api("/api/config", body);
+  if (f.usage_ping.checked !== (USAGE === true)) USAGE = (await api("/api/usage", {on: f.usage_ping.checked}).catch(() => ({on: USAGE}))).on;
   if (f.ctx_menu.checked !== !!CFG.ctx_menu) {
     const r = await api("/api/ctxmenu", {enable: f.ctx_menu.checked}).catch(e => ({error: e.message}));
     toast(r.on ? "Пункт «Проверить в ScanHub» добавлен" : r.error ? "Не получилось изменить меню" : "Пункт «Проверить в ScanHub» убран",

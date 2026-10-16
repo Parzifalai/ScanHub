@@ -1,0 +1,106 @@
+(~12 МБ, 1,7 млн адресов вирусов и шпионов) — для проверки сети	(~12 MB, 1.7 million addresses of viruses and spyware) — for the network check
+(и MinerSearch ничего не нашёл)	(and MinerSearch found nothing either)
+ClamAV с базами, Atomdrift, HollowsHunter (код в процессах), MinerSearch (майнеры), Sigcheck (сертификаты), правила YARA	ClamAV with databases, Atomdrift, HollowsHunter (code in processes), MinerSearch (miners), Sigcheck (certificates), YARA rules
+HollowsHunter, с правами администратора (в том же окне — MinerSearch)	HollowsHunter, with administrator rights (MinerSearch in the same window)
+MinerSearch (только поиск, ничего не удаляет) и наблюдение за нагрузкой	MinerSearch (scan only, removes nothing) and load monitoring
+MinerSearch не запускался: права администратора не выданы	MinerSearch didn't run: administrator rights were not granted
+MinerSearch не оставил отчёт (код	MinerSearch left no report (code
+MinerSearch не оставил отчёт — поиск майнеров сделан только встроенными средствами	MinerSearch left no report — miners were searched with built-in checks only
+MinerSearch не установлен — работал только встроенный поиск майнеров	MinerSearch is not installed — only the built-in miner search ran
+MinerSearch, мелкие пометки (это не угрозы):	MinerSearch, minor notes (these are not threats):
+MinerSearch: угроз	MinerSearch: threats
+ScanHub готов	ScanHub is ready
+Антивирусы и сканеры:	Antivirus tools and scanners:
+Базы опасных адресов Maltrail	Maltrail malicious address databases
+Без ключей ScanHub проверяет файлы на твоём компьютере. С ключами он ещё сверяет отпечаток файла (не сам файл) с базами десятков антивирусов. Ключи бесплатные: зарегистрируйся, скопируй ключ со страницы профиля и вставь сюда. Хватит одного VirusTotal.	Without keys, ScanHub checks files on your computer. With keys, it also checks the file's fingerprint (not the file itself) against the databases of dozens of antivirus engines. Keys are free: sign up, copy the key from your profile page and paste it here. VirusTotal alone is enough.
+В этом объекте нет подписи	There is no signature in this object
+Всё скачано и готово	Everything is downloaded and ready
+Где взять ключ	Where to get the key
+Главный: сверяет файл с 70+ антивирусами. Бесплатно — 4 файла в минуту, 500 в день.	The main one: checks a file against 70+ antivirus engines. Free — 4 files per minute, 500 per day.
+Готовлю ScanHub…	Preparing ScanHub…
+Дальше: на главной — «Ультра проверка», она проверит всё по очереди. ИИ-помощник (кнопка «✦ Помощник» вверху) настраивается отдельно, по желанию.	Next: on the home page, "Ultra check" checks everything in turn. The AI assistant ("✦ Assistant" button at the top) is set up separately, if you want it.
+Ещё 20+ антивирусов, частично других, чем в VirusTotal.	20+ more antivirus engines, partly different from VirusTotal's.
+Ключи	Keys
+Ключи для онлайн-проверки	Keys for online checks
+Лицензия Maltrail разрешает их бесплатно для защиты своего компьютера. Отметка — твоё согласие с этим. Без них проверка сети смотрит только майнинг-пулы и файл hosts.	The Maltrail license allows them for free to protect your own computer. Ticking this means you agree. Without them, the network check only looks at mining pools and the hosts file.
+Мастер первого запуска	First-run setup
+Начать подготовку	Start preparing
+Не удалось вычислить хеш	Couldn't compute the hash
+Нет доверия корневому сертификату	The root certificate is not trusted
+Одна тревога при всех остальных «чисто» — обычно ложная.	One alert while all the others say "clean" is usually a false alarm.
+Открыть ScanHub	Open ScanHub
+Открыть ScanHub — подготовка закончится сама	Open ScanHub — preparation will finish by itself
+Песочница CrowdStrike: что файл делал в системе.	CrowdStrike sandbox: what the file did in the system.
+Песочница OPSWAT: как файл ведёт себя при запуске.	OPSWAT sandbox: how the file behaves when run.
+Подготовим ScanHub к работе	Let's get ScanHub ready
+Подготовка закончена, но не всё скачалось	Preparation finished, but not everything downloaded
+Подготовка прервалась:	Preparation was interrupted:
+Подозрительный путь	Suspicious path
+Почти готово — подготовка ещё идёт	Almost done — preparation is still running
+Проверить и сохранить	Check and save
+Пропустить подготовку? Проверки будут неполными, пока не скачаются сканеры и базы. Подготовить можно потом кнопкой на главной.	Skip preparation? Checks will be incomplete until the scanners and databases are downloaded. You can prepare later with the button on the home page.
+Пустая задача	Empty task
+Раз в день сообщать автору, что ScanHub запущен: случайный номер копии, версия, язык. Без имён, файлов и находок. Помогает автору понять, сколько людей пользуется ScanHub.	Once a day, tell the author that ScanHub is running: a random copy number, version, language. No names, files or findings. Helps the author see how many people use ScanHub.
+Регистрация	Sign up
+Сертификат подписавшего просрочен	The signer's certificate has expired
+Списки угроз:	Threat lists:
+Так бывает у взломанных игр и программ: в них часто встраивают рекламу или хуже. Если скачивал не с официального сайта — лучше удали.	This is typical of cracked games and programs: ads or worse are often built into them. If you didn't download it from the official site, better uninstall it.
+Файл или подпись вероятно были повреждены	The file or signature was probably damaged
+Файл не найден	File not found
+Что это: корневой сертификат — «доверенная печать» для защищённых сайтов (HTTPS). Неизвестные чаще всего ставят VPN, антивирусы, программы банков и госуслуг, фирменные утилиты ноутбука или инструменты разработчика — это не вирус. Опасен только перехватчик HTTPS (помечен ⚠): через него можно подсматривать пароли на сайтах.	What it is: a root certificate is a "trusted seal" for secure (HTTPS) sites. Unknown ones are most often installed by VPNs, antivirus tools, banking and government apps, laptop vendor utilities or developer tools — it's not a virus. Only an HTTPS interceptor (marked ⚠) is dangerous: it can be used to spy on passwords on websites.
+Чтобы открывать ScanHub в один клик.	To open ScanHub in one click.
+Чтобы проверки находили вирусы, ScanHub нужны сканеры и свежие базы. Он скачает их сам с официальных сайтов, проверит подписи и контрольные суммы. Это около 1 ГБ и 5–15 минут. Пока идёт загрузка, можно ввести ключи на следующем шаге.	For checks to find viruses, ScanHub needs scanners and fresh databases. It downloads them itself from official sites and checks signatures and checksums. It's about 1 GB and 5–15 minutes. While it downloads, you can enter keys on the next step.
+Ярлык на рабочем столе и в меню «Пуск»	Shortcut on the desktop and in the Start menu
+база вредоносных расширений браузеров	malicious browser extension database
+база уязвимых драйверов (LOLDrivers)	vulnerable driver database (LOLDrivers)
+базы опасных адресов (Maltrail, ~12 МБ)	malicious address databases (Maltrail, ~12 MB)
+в том же окне — MinerSearch (поиск майнеров, только проверка, ~3–5 минут)	MinerSearch in the same window (miner search, scan only, ~3–5 minutes)
+веб-приложение из Chrome	web app from Chrome
+вставь ключ	paste the key
+вставь ключ в поле	paste the key into the field
+доступен только онлайн|Сторожевой процесс|Найдено угроз	-
+задача планировщика без программы — мусор	a scheduled task without a program — junk
+запись ссылается на уже удалённый файл — мусор	the entry points to an already deleted file — junk
+из магазина приложений	from an app store
+ключ верный, но сейчас лимит запросов — это нормально	the key is valid, but the request limit is reached right now — that's normal
+ключ работает	the key works
+ключ сохраню, проверю позже	I'll save the key and check it later
+ключ сохраню, проверю при первой проверке	I'll save the key and check it on the first scan
+ключ уже есть — вставь новый, чтобы заменить	a key is already saved — paste a new one to replace it
+корпоративная фильтрация HTTPS — нормально на рабочем или учебном компьютере, странно на домашнем	corporate HTTPS filtering — normal on a work or school computer, odd on a home one
+мелких пометок	minor notes
+менеджер приложений Facebook (предустановлен)	Facebook app manager (preinstalled)
+можно начинать проверку	you can start a scan
+можно повторить потом кнопкой «Подготовить» на главной	you can retry later with the "Prepare" button on the home page
+начинаю	starting
+не скачалось	didn't download
+неизвестный: его нет в списке доверенных Microsoft. Скорее всего его поставила какая-то программа (VPN, банк, утилита ноутбука). Если ни одна такая программа у тебя не стоит — удали его	unknown: it's not on Microsoft's trusted list. Most likely some program installed it (a VPN, a bank app, a laptop utility). If you have none of these, remove it
+обновление Samsung	Samsung update
+обновление Xiaomi	Xiaomi update
+один антивирус из	one antivirus engine out of
+отчёт	report
+по желанию, но очень советую	optional, but strongly recommended
+подготовка идёт — ход виден на главной	preparation is running — progress is shown on the home page
+подпись выдана центром, которому Windows не доверяет — так у некоторых драйверов и китайских программ; насторожиться, только если программа незнакомая	the signature was issued by an authority Windows doesn't trust — common for some drivers and Chinese programs; worry only if you don't know the program
+поиск майнеров MinerSearch	MinerSearch miner search
+предупреждений	warnings
+предустановлено производителем	preinstalled by the manufacturer
+программа лежит в необычном месте	the program is in an unusual location
+процесс	-
+пустой ключ	empty key
+с компьютера (adb) или другим способом	from a computer (adb) or another way
+с компьютера — отладочная сборка (так ставят свои приложения разработчики)	from a computer — a debug build (this is how developers install their own apps)
+сервис не ответил:	the service didn't respond:
+сервис не принял ключ — проверь, что скопирован целиком	the service rejected the key — check that you copied all of it
+сертификат VPN или защищённого DNS — нормально, если этот VPN у тебя стоит	a VPN or secure DNS certificate — normal if you have this VPN installed
+сертификат античита игры — нормально, если ты играешь в эту игру	a game anti-cheat certificate — normal if you play that game
+сертификат производителя ПК или устройства — ставится его фирменными программами, обычно безвреден	a PC or device vendor certificate — installed by its own utilities, usually harmless
+скачанный файл APK	downloaded APK file
+списки опасных сайтов (FMHY)	malicious site lists (FMHY)
+списки угроз:	threat lists:
+у подписи файла истёк срок — обычно это просто старая версия программы, не вирус	the file's signature has expired — usually just an old version of the program, not a virus
+у файла нет цифровой подписи — так у многих бесплатных и самодельных программ, само по себе не опасно	the file has no digital signature — common for many free and homemade programs, not dangerous by itself
+уязвимые драйверы (LOLDrivers), опасные сайты (FMHY), вредоносные расширения браузеров	vulnerable drivers (LOLDrivers), dangerous sites (FMHY), malicious browser extensions
+файл APK или с компьютера	APK file or from a computer
+файл или его подпись изменены — стоит проверить этот файл	the file or its signature was changed — worth checking this file
+файл не удалось прочитать (занят или облачный)	the file couldn't be read (in use or in the cloud)

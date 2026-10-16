@@ -100,7 +100,7 @@ function ultraRunning(j, dev){
       <div><h3 style="margin:0">Идёт ультра проверка${n ? `… шаг ${Math.min(done + 1, n)} из ${n}` : "…"}</h3>
       <div class="sub">прошло <span data-since="${esc(j.started)}">${elapsedText(j.started)}</span> · можно свернуть окно — проверка продолжится</div></div></div></div><div class="grow"></div>
       <button class="danger" data-stop-job="${esc(j.id)}" data-confirm="Остановить ультра проверку? Уже выполненные шаги сохранятся в итогах.">Остановить</button></div>
-    <div class="progress"><div style="width:${n ? (done + (cur ? 0.5 : 0)) / n * 100 : 3}%"></div></div>
+    ${progBar(n ? (done + (cur ? (progOf(cur.progress).f ?? 0.3) : 0)) / n : 0.03)}
     ${cur?.progress && /UAC/.test(cur.progress) ? `<div class="note warn"><b>Подтверди окно UAC.</b> Windows спрашивает разрешение администратора — без него этот шаг будет ждать.</div>` : ""}
     <ul class="steps">${steps.map((s, i) => {
       const open = s.status === "running" || ULTRA.openStep?.[s.id];
@@ -172,6 +172,8 @@ const RECHECK = [
   {re: /^(Сбоев видеодрайвера|Вылетов программ|Внезапных выключений|Ошибок диска|Синих экранов|Аппаратных ошибок)/, task: "diag", ttl: 900,
    now: (i, r) => Array.isArray(r?.summary) ? (k => ({ok: !r.summary.some(x => ["warn", "bad"].includes(x.lvl) && x.text.startsWith(k))}))(i.t.split(":")[0]) : null},
   {re: /^Хранилище компонентов Windows повреждено/, task: "sysfiles", noRun: true, now: (i, r) => r?.dism ? {ok: r.dism === "ok"} : null},
+  {re: /^(Повреждение в хранилище|Windows отметила повреждение|Хранилище системных файлов повреждено|Повреждены системные файлы|Системные файлы не проверены|Проверка системных файлов не получилась)/,
+   task: "sysfiles", noRun: true, now: (i, r) => r?.cards ? {ok: !r.cards.some(c => c.title === i.t)} : null},
   {re: /^Найдены повреждённые системные файлы/, task: "sysfiles", noRun: true, now: (i, r) => r?.sfc ? {ok: r.sfc === "ok"} : null},
 ];
 const RC = {asked: {}, metrics: null};
@@ -253,7 +255,7 @@ function ultraDone(j, dev){
   const nowLine = i => { const s = stateNow(i); return s && !s.ok && s.text ? `<span class="sub now">${esc(s.text)}</span>` : "" };
   const recs = j.recs || [];
   // Malwarebytes теперь отдельная плитка среди сканеров; в старых итогах он был ссылкой
-  const recTools = recs.filter(r => r.kind === "tools").map(r => ({...r, tools: r.tools.includes("malwarebytes") ? r.tools : [...r.tools, "malwarebytes"]}));
+  const recTools = recs.filter(r => r.kind === "tools");
   const recOther = recs.filter(r => r.kind !== "tools" && r.t !== "Malwarebytes");
   return pnl(`<div class="head"><div class="result" style="padding:0;border:0;background:none"><div class="big"><div class="icon ${icon[0]}">${icon[1]}</div>
       <div><h3 style="margin:0">${esc(title)}</h3><div class="sub">ультра проверка ${j.status === "stopped" ? "остановлена" : "закончена"} ${esc(ago(j.finished))} · ${esc((j.finished || "").replace("T", " "))}</div></div></div></div>
@@ -283,9 +285,8 @@ function ultraDone(j, dev){
         ${!s.items.length ? `<span class="sub">${esc(s.hint)}</span>` : ""}</span>
         <span class="lbl">${solved ? "исправлено" : esc(s.label)}</span></li>`}).join("")}</ul>
     <h2 class="sec" style="margin:8px 0 0">Желательно сделать ещё</h2>
-    <div class="sub" style="margin-top:-6px">Этого ультра проверка не может сделать сама: эти антивирусы работают только своим окном, а удаление приложений и автозагрузку лучше решать тебе.</div>
-    ${recTools.map(r => `<div class="grp">${esc(r.t)}</div><div class="sub" style="margin-top:-4px">${esc(r.s)}</div>
-      <div class="recs">${r.tools.map(tool).filter(Boolean).map(t => `<div class="tile"><b>${esc(t.name)}</b><p>${esc(t.simple || t.description || "")}</p><div class="row">${simpleTileButtons(t)}</div></div>`).join("")}</div>`).join("")}
+    <div class="sub" style="margin-top:-6px">Этого ультра проверка не может сделать сама: удаление приложений и автозагрузку лучше решать тебе.</div>
+    ${recTools.map(r => recsHtml(r.tools, {threat: !!r.threat})).join("")}
     <div class="checks">${recOther.map(r => `<div class="check">${uIcon("info")}<span><b>${esc(r.t)}</b><span class="sub">${esc(r.s)}</span></span><span>${ultraAct(r.a)}</span></div>`).join("")}</div>`);
 }
 

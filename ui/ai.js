@@ -154,7 +154,9 @@ function aiCliHtml(prov){
     <div class="row-tools">${st && st.installed && !st.connected ? `<button class="primary small" data-ai-cli-login="${prov.id}" type="button">Войти</button>` : ""}
       ${st && !st.installed ? `<button class="small" data-link="${esc(prov.get)}" type="button">${esc(prov.get_label)}</button>` : ""}
       <button class="small" data-ai-cli-check="${prov.id}" type="button">Проверить</button></div>
-    ${AI.cliWait === prov.id ? `<div class="sub">Открылось окно входа: войди в браузере и вернись сюда — ScanHub сам заметит вход.</div>` : ""}</div>`;
+    ${AI.cliWait === prov.id ? `<div class="sub">Открылось окно входа: войди в браузере и вернись сюда — ScanHub сам заметит вход.</div>` : ""}
+    <label class="switch"><input type="checkbox" id="aiWeb" ${AI.cfg?.web !== false ? "checked" : ""}> Разрешить искать в интернете
+      <span class="sub">Для справок: что это за программа, что значит код ошибки, есть ли у других такая проблема. В запросы не попадают твои пути и имя. Для «Сделай сам» поиск всегда выключен.</span></label></div>`;
 }
 async function aiCliCheck(id, action){
   try { AI.cli[id] = await api("/api/ai/cli", {provider: id, ...(action ? {action} : {})}) } catch (e) { AI.cli[id] = {installed: false, connected: false, message: e.message} }
@@ -319,6 +321,8 @@ document.addEventListener("change", e => {
     if (pv?.cli) { aiCliCheck(pv.id); return }
     if (!pv?.needs_key || pv?.has_key) aiFindModels() }
   if (e.target.id === "aiModelSel") AI.modelPick = e.target.value;
+  if (e.target.id === "aiWeb") api("/api/ai/config", {web: e.target.checked}).then(c => { AI.cfg = c;
+    toast(c.web ? "Поиск в интернете включён" : "Поиск в интернете выключен", "") }).catch(err => toast("Не сохранилось", err.message, "warn"));
   if (e.target.name === "aiFiles") api("/api/ai/config", {files: e.target.value}).then(c => { AI.cfg = c; aiRender();
     toast("Доступ к файлам изменён", AI_FILES.find(x => x[0] === c.files)?.[1] || "") }).catch(err => toast("Не сохранилось", err.message, "warn"));
 });

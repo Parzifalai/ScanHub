@@ -13,7 +13,7 @@ import tweaks
 
 GROUPS = ["Угрозы", "Система", "Место на диске", "Обновления", "Автозагрузка", "Приватность и защита", "Браузеры", "Сбои и устройства",
           "Сделай сам", "Сторонние сканеры"]
-EXTERNAL = ["cureit", "kvrt", "eset", "emsisoft", "msert", "malwarebytes", "minersearch", "adwcleaner"]
+EXTERNAL = ["cureit", "kvrt", "eset", "emsisoft", "msert", "malwarebytes", "adwcleaner"]     # MinerSearch идёт внутри глубокой проверки
 # необязательные кэши, которые по умолчанию отмечены (создаются заново сами); медиа Telegram и кэши разработки — нет
 DEFAULT_GROUPS = ("Windows", "Браузеры", "Игры и видеокарта")
 
@@ -96,9 +96,13 @@ class Plan:
 
     def system_files(self):
         sf = self.last("sysfiles")
-        broken = (sf and (sf.get("dism") in ("repairable", "broken") or sf.get("sfc") == "violations")) or \
-            any(re.search(r"Хранилище компонентов|повреждённые системные", t["t"]) for t in self.todo)
-        self.cover(r"Хранилище компонентов|повреждённые системные|Системные файлы")
+        if sf and not sf.get("cards"):
+            import deepscan
+            sf = {**sf, "cards": deepscan.sysfiles_cards(sf)}
+        # «Восстановить» — только если оно может помочь (не после ошибки «нет исправных копий» и не при одной лишь перезагрузке)
+        broken = any(c["action"] == "repair" for c in (sf or {}).get("cards") or []) if sf else \
+            any(re.search(r"Хранилище компонентов|повреждённые системные|Повреждены системные", t["t"]) for t in self.todo)
+        self.cover(r"Хранилище компонентов|Хранилище системных|повреждённые системные|Повреждены системные|Системные файлы|повреждение в хранилище|Повреждение в хранилище")
         if broken:
             self.card("sfc", "Система", "bad", "Восстановить системные файлы Windows",
                       "Повреждено хранилище компонентов — «склад» исправных копий системных файлов. Через него ставятся обновления и чинятся "

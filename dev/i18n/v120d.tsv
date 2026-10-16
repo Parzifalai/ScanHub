@@ -1,0 +1,46 @@
+Windows не нашла исправных копий	Windows found no good copies
+Windows отметила повреждение в хранилище системных файлов	Windows has flagged damage in the system file store
+Восстановление уже пробовали	A repair was already tried
+На работу компьютера это почти не влияет.	It hardly affects how the computer works.
+Нажми «Восстановить»: 15–30 минут, потом перезагрузка. Твои файлы и программы не трогает.	Press "Repair": 15–30 minutes, then a restart. Your files and programs are not touched.
+Нажми «Восстановить»: Windows скачает исправные копии и заменит испорченные. 15–30 минут, нужен интернет, потом перезагрузка. Твои файлы и программы не трогает.	Press "Repair": Windows will download good copies and replace the damaged ones. 15–30 minutes, needs internet, then a restart. Your files and programs are not touched.
+Нажми «Восстановить»: Windows скачает исправные копии — 15–30 минут, нужен интернет. Твои файлы и программы не трогает.	Press "Repair": Windows will download good copies — 15–30 minutes, needs internet. Your files and programs are not touched.
+Перезагрузи компьютер и попробуй снова.	Restart the computer and try again.
+Повреждение в хранилище Windows — сейчас его не починить	Damage in the Windows store — it can't be fixed right now
+Повреждено файлов:	Damaged files:
+Повреждены системные файлы Windows	Windows system files are damaged
+Поможет «восстановление поверх» с официального образа Windows: файлы и программы остаются. Если компьютер работает нормально — можно отложить до следующего большого обновления.	An "in-place repair" from the official Windows image will help: files and programs stay. If the computer works fine, it can wait until the next major update.
+После обновлений Windows нужно перезагрузиться — до этого проверка не запускается. Перезагрузи компьютер и проверь снова.	After updates Windows needs a restart — until then the check doesn't run. Restart the computer and check again.
+Проверка системных файлов не получилась	The system file check didn't work
+Сами системные файлы целы.	The system files themselves are intact.
+Системные файлы в порядке	System files are fine
+Системные файлы не проверены: Windows ждёт перезагрузки	System files weren't checked: Windows is waiting for a restart
+Системные файлы целы	System files are intact
+Хранилище компонентов|Хранилище системных|повреждённые системные|Повреждены системные|Системные файлы|повреждение в хранилище|Повреждение в хранилище	-
+Хранилище компонентов|повреждённые системные|Повреждены системные	-
+Хранилище системных файлов исправно	The system file store is intact
+Хранилище системных файлов повреждено, Windows не чинит его сама	The system file store is damaged and Windows can't fix it by itself
+Хранилище — это «склад» исправных копий, через него ставятся обновления.	The store is a "warehouse" of good copies; updates are installed through it.
+августа	August
+апреля	April
+в основном	mostly
+важные системные файлы	important system files
+декабря	December
+для завершения восстановления системы требуется перезагрузка	-
+другие системные файлы	other system files
+июля	July
+июня	June
+компоненты для приложений (Windows App SDK)	app components (Windows App SDK)
+марта	March
+мая	May
+можно восстановить — кнопка в «Полной проверке»	can be repaired — the button is in "Full check"
+не удалось скачать исправные копии	couldn't download good copies
+ноября	November
+октября	October
+оформление Windows (иконки, меню «Пуск»)	Windows visuals (icons, Start menu)
+подробности — в «Полной проверке»	details — in "Full check"
+сентября	September
+так бывает на тестовых сборках Windows. Делать ничего не нужно: починится со следующим обновлением Windows.	this happens on test builds of Windows. Nothing to do: it will be fixed with the next Windows update.
+февраля	February
+языковые файлы	language files
+января	January
