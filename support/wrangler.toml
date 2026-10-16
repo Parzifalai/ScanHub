@@ -1,0 +1,15 @@
+# Посредник ScanHub на Cloudflare Workers. Обновить код: cd support && wrangler deploy
+# Секреты (BOT_TOKEN, STATS_KEY) задаются командой wrangler secret put и в этом файле не хранятся.
+name = "scanhub-reports"
+main = "cloudflare-worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+preview_urls = false
+keep_vars = true            # CHAT_ID задан в настройках Worker на сайте — деплой его не стирает
+
+[[kv_namespaces]]
+binding = "USAGE"           # счётчик запусков (только у тех, кто согласился)
+id = "a9ff1e0837eb4723a069fdf1b6276f67"
+
+[triggers]
+crons = ["0 15 * * *"]      # сводка в Telegram раз в день, в 20:00 по Казахстану (15:00 UTC)
