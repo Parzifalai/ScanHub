@@ -26,6 +26,8 @@ ScanHub **не содержит и не распространяет** пере�
 | Malwarebytes, AdwCleaner | Malwarebytes | условия Malwarebytes |
 | yara-x (pip) | github.com/VirusTotal/yara-x | BSD-3-Clause |
 | psutil (pip) | github.com/giampaolo/psutil | BSD-3-Clause |
+| anthropic (pip, официальный пакет Claude API) и его зависимости (httpx2, pydantic, anyio и др.) | github.com/anthropics/anthropic-sdk-python | MIT (зависимости — MIT / BSD / Apache-2.0) |
+| Claude Code, Codex — не входят в ScanHub: запускаются, если человек сам их установил | claude.ai, developers.openai.com/codex | условия Anthropic и OpenAI |
 
 ## Базы и правила (скачиваются на компьютер пользователя)
 

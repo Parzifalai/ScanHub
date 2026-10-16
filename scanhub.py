@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -117,7 +117,9 @@ def save_json(path, value):
     os.replace(tmp, path)
 
 
-SECRET_KEYS = ("virustotal_key", "filescan_key", "metadefender_key", "hybrid_key", "github_token", "gemini_key", "deepseek_key")
+SECRET_KEYS = ("virustotal_key", "filescan_key", "metadefender_key", "hybrid_key", "github_token", "gemini_key", "deepseek_key",
+               "anthropic_key", "openai_key", "openrouter_key")
+AI_KEYS = ("gemini_key", "deepseek_key", "anthropic_key", "openai_key", "openrouter_key")
 
 
 class _Blob(ctypes.Structure):
@@ -1290,6 +1292,8 @@ def tools_view():
 
 
 assistant.HOOKS["tools"] = tools_view      # помощник видит список сканеров, не импортируя сервер
+assistant.HOOKS["act"] = lambda action, arg: agent_action(action, arg)   # «Сделай сам»: действия из одобренного плана
+assistant.HOOKS["url"] = lambda: f"http://{HOST}:{PORT}"                  # адрес для инструментов агента (mcp_server.py)
 
 
 def pick(kind):
@@ -2020,6 +2024,80 @@ def journal_undo(cid, run_el):
     return {"ok": True, "result": out}
 
 
+def admin_console(what):
+    """Восстановление системных файлов или очистка хранилища компонентов — в видимом окне администратора (UAC)."""
+    hint = ("echo. & echo DISM не нашёл исправных файлов, код 0x800f0915 или 0x800f081f. На тестовых сборках Windows Insider так бывает: "
+            "у Microsoft нет файлов именно для этой сборки. Ничего не испортилось. Попробуй в ScanHub "
+            "«Очистить старые версии компонентов» — или дождись следующей сборки Windows, она заменит хранилище целиком.")
+    line = ("echo Восстановление системных файлов: сначала DISM, затем SFC. Не закрывай окно. & "
+            "DISM /Online /Cleanup-Image /RestoreHealth & (if errorlevel 1 (" + hint + ")) & "
+            "echo. & echo Теперь SFC проверит и починит системные файлы… & sfc /scannow & "
+            "echo. & echo Готово. Перезагрузи компьютер.") if what == "sfc_repair" else \
+        ("echo Очистка хранилища компонентов: Windows удалит старые версии компонентов, которые уже заменены обновлениями. & "
+         "echo Это безопасно и освобождает место; минус — эти обновления нельзя будет удалить. 5–20 минут, не закрывай окно. & echo. & "
+         "DISM /Online /Cleanup-Image /StartComponentCleanup & echo. & "
+         "echo Перепроверяю хранилище (ещё 5–15 минут)… & DISM /Online /Cleanup-Image /ScanHealth & echo. & "
+         "echo Готово. Если выше «Хранилище компонентов подлежит восстановлению» — повреждение в версии, которая ещё используется; "
+         "её починит следующая сборка Windows.")
+    subprocess.run(["powershell", "-NoProfile", "-Command",
+                    "Start-Process cmd.exe -Verb RunAs -ArgumentList ('/k chcp 65001 >nul & ' + $env:SH_LINE)"],
+                   env={**os.environ, "SH_LINE": line}, creationflags=NO_WINDOW)
+
+
+# ---------------------------------------------------------------- «Сделай сам»: действия ИИ-агента
+# Агент (или модель по API) вызывает только действия из плана, который человек одобрил кнопкой. Здесь они идут через те же
+# задачи, что и кнопки окна: с проверкой «только найденное ScanHub», окном UAC, точкой отката и записью в журнал изменений.
+
+def _wait_task(name, args, timeout=900):
+    t = start_task(name, args)
+    t0 = time.time()
+    while t.get("status") == "running" and time.time() - t0 < timeout:
+        time.sleep(1)
+        t = TASKS.get(name) or t
+    if t.get("status") == "error":
+        return {"ok": False, "ошибка": t.get("error")}
+    if t.get("status") == "running":
+        return {"ok": None, "итог": "ещё выполняется — ход видно в окне ScanHub"}
+    res = json.dumps(t.get("result"), ensure_ascii=False, default=str)
+    return {"ok": True, "итог": res[:1500]}
+
+
+def agent_action(action, arg):
+    if action == "update_program":
+        try:
+            start_updates([arg])
+        except RuntimeError as e:
+            return {"ok": False, "ошибка": str(e)}
+        return {"ok": True, "итог": "обновление запущено: ScanHub скачает установщик, проверит его на вирусы и поставит. "
+                                    "Ход — «Программы → Обновления программ»."}
+    if action == "disable_driver":
+        return _wait_task("driver_disable", {"service": arg})
+    if action == "quarantine":
+        return _wait_task("quarantine", {"files": [{"path": arg, "name": "по решению помощника", "engine": "помощник"}]})
+    if action == "startup_off":
+        TASKS["startup"] = {"name": "startup", "status": "done", "result": tweaks.startup_list(), "finished": now()}
+        items = TASKS["startup"]["result"].get("items", [])
+        it = next((i for i in items if i["name"].lower() == arg.lower()), None) or \
+            next((i for i in items if arg.lower() in i["name"].lower()), None)
+        if not it:
+            return {"ok": False, "ошибка": f"в автозагрузке нет записи «{arg}»"}
+        return _wait_task("startup_set", {"id": it["id"], "enable": False})
+    if action == "security_on":
+        return _wait_task("security_apply", {"ids": [arg]})
+    if action == "restore_on":
+        return _wait_task("restore_enable", {})
+    if action == "free_ram":
+        return _wait_task("mem_quick", {})
+    if action == "sfc":
+        admin_console("sfc_repair")
+        return {"ok": True, "итог": "открыто окно администратора с восстановлением системных файлов: 10–30 минут, потом перезагрузка. "
+                                    "Человеку нужно подтвердить UAC и дождаться конца."}
+    if action == "wu_drivers":
+        os.startfile("ms-settings:windowsupdate-optionalupdates")
+        return {"ok": True, "итог": "открыт Windows Update → необязательные обновления (драйверы) — выбрать и установить там"}
+    return {"ok": False, "ошибка": "неизвестное действие"}
+
+
 def start_task(name, args):
     if not system:
         raise RuntimeError("нужен пакет psutil: pip install psutil")
@@ -2326,6 +2404,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if self.headers.get("Host") not in (f"{HOST}:{PORT}", f"localhost:{PORT}"):
             self.send(403, {"error": "bad host"})
             return False
+        if self.path.startswith("/api/agent/"):
+            return True                                # ключ ответа агента проверяется в самом обработчике
         if self.path.startswith("/api/") and self.path not in ("/api/hello", "/api/version") \
                 and self.headers.get("X-Token") != TOKEN:
             self.send(403, {"error": "bad token"})
@@ -2610,24 +2690,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 elif what and what.startswith("winget_one:") and re.fullmatch(r"[\w.\-+]+", what[11:]):
                     subprocess.Popen(["cmd", "/k", "winget", "upgrade", "--id", what[11:], "-e"], creationflags=subprocess.CREATE_NEW_CONSOLE)
                 elif what in ("sfc_repair", "component_cleanup"):
-                    # только по кнопке, в видимом окне администратора
-                    # внутри блока if у cmd нельзя скобок в тексте — они закроют блок
-                    hint = ("echo. & echo DISM не нашёл исправных файлов, код 0x800f0915 или 0x800f081f. На тестовых сборках Windows Insider так бывает: "
-                            "у Microsoft нет файлов именно для этой сборки. Ничего не испортилось. Попробуй в ScanHub "
-                            "«Очистить старые версии компонентов» — или дождись следующей сборки Windows, она заменит хранилище целиком.")
-                    line = ("echo Восстановление системных файлов: сначала DISM, затем SFC. Не закрывай окно. & "
-                            "DISM /Online /Cleanup-Image /RestoreHealth & (if errorlevel 1 (" + hint + ")) & "
-                            "echo. & echo Теперь SFC проверит и починит системные файлы… & sfc /scannow & "
-                            "echo. & echo Готово. Перезагрузи компьютер.") if what == "sfc_repair" else \
-                        ("echo Очистка хранилища компонентов: Windows удалит старые версии компонентов, которые уже заменены обновлениями. & "
-                         "echo Это безопасно и освобождает место; минус — эти обновления нельзя будет удалить. 5–20 минут, не закрывай окно. & echo. & "
-                         "DISM /Online /Cleanup-Image /StartComponentCleanup & echo. & "
-                         "echo Перепроверяю хранилище (ещё 5–15 минут)… & DISM /Online /Cleanup-Image /ScanHealth & echo. & "
-                         "echo Готово. Если выше «Хранилище компонентов подлежит восстановлению» — повреждение в версии, которая ещё используется; "
-                         "её починит следующая сборка Windows.")
-                    subprocess.run(["powershell", "-NoProfile", "-Command",
-                                    "Start-Process cmd.exe -Verb RunAs -ArgumentList ('/k chcp 65001 >nul & ' + $env:SH_LINE)"],
-                                   env={**os.environ, "SH_LINE": line}, creationflags=NO_WINDOW)
+                    admin_console(what)
                 else:
                     return self.send(400, {"error": "неизвестное действие"})
                 return self.send(200, {"ok": True})
@@ -2673,7 +2736,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         c["ai_model"] = str(body["model"])[:120]
                     if body.get("files") in assistant.FILE_MODES:
                         c["ai_files"] = body["files"]
-                    for k in ("gemini_key", "deepseek_key"):
+                    for k in AI_KEYS:
                         if k in body:
                             v = str(body[k]).strip()
                             c[k] = "" if v == "-" else seal(v)
@@ -2707,6 +2770,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 if not cfg_.get("ai_provider"):
                     return self.send(400, {"error": "помощник не настроен"})
                 return self.send(200, {"id": assistant.start(kind, body, cfg_)["id"]})
+            if p in ("/api/agent/tools", "/api/agent/call"):
+                # инструменты ИИ-агента (mcp_server.py): только пока идёт его ответ и только с его одноразовым ключом
+                import hmac
+                job = assistant.JOBS.get(str(body.get("job", "")))
+                key = self.headers.get("X-Agent-Key") or ""
+                if not job or job.get("status") != "running" or not job.get("agent_key") or not hmac.compare_digest(key, job["agent_key"]):
+                    return self.send(403, {"error": "нет доступа"})
+                cfg_ = config()
+                if p == "/api/agent/tools":
+                    return self.send(200, {"tools": assistant.agent_tools(job, cfg_)})
+                text = assistant.agent_call(job, cfg_, str(body.get("name", "")), body.get("args") or {})
+                return self.send(200, {"text": text})
+            if p == "/api/ai/cli":
+                import agents
+                prov = str(body.get("provider", ""))
+                if prov not in agents.CLI:
+                    return self.send(400, {"error": "неизвестная программа"})
+                try:
+                    if body.get("action") == "login":
+                        agents.login(prov)
+                    return self.send(200, agents.status(prov))
+                except agents.AgentError as e:
+                    return self.send(200, {"installed": False, "connected": False, "message": str(e)})
             if p == "/api/ai/stop":
                 j = assistant.JOBS.get(body.get("id"))
                 if j:

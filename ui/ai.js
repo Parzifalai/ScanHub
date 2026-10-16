@@ -1,7 +1,10 @@
 // ============================================================ ИИ-помощник
 // «✦ Как решить» у находок ScanHub и чат «Спроси про свой ПК». Модель сама смотрит журналы через инструменты сервера,
 // которые только читают. Провайдер и модель меняются в настройках помощника (⚙ в его панели).
-const AI = {cfg: null, msgs: [], job: null, setup: false, models: [], modelsFor: "", note: "", busySetup: false};
+const AI = {cfg: null, msgs: [], job: null, setup: false, models: [], modelsFor: "", note: "", busySetup: false, cli: {}};
+const aiPlan = src => { const seen = new Set();
+  return [...String(src || "").matchAll(/\[\[действие:([a-z_]+)(?::([^\]]+))?\]\]/g)].map(m => ({id: m[1], arg: (m[2] || "").trim()}))
+    .filter(a => AI_ACT[a.id] && !seen.has(a.id + a.arg) && seen.add(a.id + a.arg)).slice(0, 6) };
 const stripTags = s => String(s ?? "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
 function aiBtn(title, text = "", extra = {}){
   const data = JSON.stringify({title: stripTags(title).slice(0, 300), text: stripTags(text).slice(0, 1800), ...extra});
@@ -114,7 +117,7 @@ function aiClose(){ aiPanel().hidden = true }
 function aiProviderName(id){ return (AI.cfg?.providers || []).find(p => p.id === id)?.name.split(" —")[0] || id }
 function aiRender(){
   const p = aiPanel(), body = p.querySelector("#aiBody");
-  p.querySelector("#aiModel").textContent = AI.cfg?.enabled ? `${aiProviderName(AI.cfg.provider)} · ${AI.cfg.model}` : "не настроен";
+  p.querySelector("#aiModel").textContent = AI.cfg?.enabled ? `${aiProviderName(AI.cfg.provider)} · ${AI.cfg.model === "auto" ? "по подписке" : AI.cfg.model}${AI.cfg.agent ? " · агент" : ""}` : "не настроен";
   p.querySelector("#aiForm").hidden = AI.setup;
   body.innerHTML = AI.setup ? aiSetupHtml() : aiChatHtml();
   body.scrollTop = body.scrollHeight;
@@ -126,21 +129,38 @@ function aiSetupHtml(){
   const prov = c.providers.find(x => x.id === sel);
   return `<div class="ai-setup">
     <p>Помощник объясняет находки ScanHub и отвечает на вопросы «почему у меня…», сам заглядывая в журналы Windows, сбои, драйверы и питание.
-      <b>Он ничего не меняет</b> — только читает и советует, что нажать.</p>
+      <b>Сам он ничего не меняет</b> — только читает и советует. Действия — по твоей кнопке: «⚡ …» у совета или «✦ Сделай сам», тогда он выполнит предложенное и проверит результат.</p>
     <div class="ai-provs">${c.providers.map(x => `<label class="ai-prov${x.id === sel ? " on" : ""}"><input type="radio" name="aiProv" value="${x.id}" ${x.id === sel ? "checked" : ""}>
-      <span><b>${esc(x.name)}</b>${x.has_key ? ' <span class="chip-ok">ключ сохранён</span>' : ""}<span class="sub">${esc(x.hint)}</span>
-      <a data-link="${esc(x.get)}">${esc(x.get_label)} →</a></span></label>`).join("")}</div>
+      <span><b>${esc(x.name)}</b>${x.has_key ? ' <span class="chip-ok">ключ сохранён</span>' : ""}${x.id === sel ? `<span class="sub">${esc(x.hint)}</span>
+      <a data-link="${esc(x.get)}">${esc(x.get_label)} →</a>` : ""}</span></label>`).join("")}</div>
+    ${prov?.cli ? aiCliHtml(prov) : ""}
     ${prov ? `${prov.needs_key ? `<label class="ai-field">Ключ API ${esc(aiProviderName(prov.id))}
         <input type="password" id="aiKey" autocomplete="off" placeholder="${prov.has_key ? "ключ сохранён — вставь новый, чтобы заменить" : "вставь ключ сюда"}"></label>` : ""}
       <label class="ai-field">Модель
-        <div class="row"><select id="aiModelSel">${AI.modelsFor === prov.id && AI.models.length ? AI.models.map(m => `<option ${m === (AI.modelPick || c.model) ? "selected" : ""}>${esc(m)}</option>`).join("") : `<option value="">${prov.needs_key && !prov.has_key ? "сначала вставь ключ" : "нажми «Найти модели»"}</option>`}</select>
+        <div class="row"><select id="aiModelSel">${AI.modelsFor === prov.id && AI.models.length ? AI.models.map(m => `<option value="${esc(m)}" ${m === (AI.modelPick || c.model) ? "selected" : ""}>${esc(m === "auto" ? "лучшая модель подписки (рекомендую)" : m)}</option>`).join("") : `<option value="">${prov.needs_key && !prov.has_key ? "сначала вставь ключ" : "нажми «Найти модели»"}</option>`}</select>
         <button class="small" id="aiFindModels" type="button" ${AI.busySetup ? "disabled" : ""}>Найти модели</button></div></label>
       <div class="row-tools"><button class="primary" id="aiSave" type="button" ${AI.busySetup ? "disabled" : ""}>Сохранить и проверить</button>
         ${c.enabled ? `<button id="aiOff" type="button">Выключить помощника</button>` : ""}${c.enabled ? `<button id="aiBack" type="button">К разговору</button>` : ""}</div>` : ""}
     ${AI.note ? `<div class="note ${AI.noteKind || "info"}">${esc(AI.note)}</div>` : ""}
     ${aiFilesHtml(c, prov)}
-    ${prov?.cloud ? `<div class="sub">Перед отправкой ScanHub убирает имя пользователя, имя компьютера, личные пути, почту и ключи. Ключ хранится на этом компьютере зашифрованным.</div>` : ""}
+    ${prov?.cloud ? `<div class="sub">Перед отправкой ScanHub убирает имя пользователя, имя компьютера, личные пути, почту и ключи.${prov.needs_key ? " Ключ хранится на этом компьютере зашифрованным." : ""}</div>` : ""}
   </div>`;
+}
+// ---------- программы по подписке: Claude Code и Codex
+function aiCliHtml(prov){
+  const st = AI.cli[prov.id];
+  return `<div class="ai-cli">${!st ? `<div class="sub">Проверяю программу…</div>`
+    : `<div class="note ${st.connected ? (st.method === "api" ? "warn" : "info") : "warn"}">${esc(st.message)}</div>`}
+    <div class="row-tools">${st && st.installed && !st.connected ? `<button class="primary small" data-ai-cli-login="${prov.id}" type="button">Войти</button>` : ""}
+      ${st && !st.installed ? `<button class="small" data-link="${esc(prov.get)}" type="button">${esc(prov.get_label)}</button>` : ""}
+      <button class="small" data-ai-cli-check="${prov.id}" type="button">Проверить</button></div>
+    ${AI.cliWait === prov.id ? `<div class="sub">Открылось окно входа: войди в браузере и вернись сюда — ScanHub сам заметит вход.</div>` : ""}</div>`;
+}
+async function aiCliCheck(id, action){
+  try { AI.cli[id] = await api("/api/ai/cli", {provider: id, ...(action ? {action} : {})}) } catch (e) { AI.cli[id] = {installed: false, connected: false, message: e.message} }
+  if (!AI.setup) return;
+  aiRender();
+  if (AI.cli[id]?.connected && AI.modelsFor !== id) aiFindModels();
 }
 // ---------- доступ к файлам на компьютере
 const AI_FILES = [
@@ -196,7 +216,7 @@ function aiChatHtml(){
   const msgs = AI.msgs.map(m => m.role === "user"
     ? `<div class="ai-msg ai-u">${esc(m.show || m.content)}</div>`
     : m.role === "error" ? `<div class="ai-msg ai-err">${esc(m.content)} <a data-ai-gear>Настройки помощника</a></div>`
-    : `<div class="ai-msg ai-a">${aiMd(m.content)}${aiActions(m.content) || aiButtons(m.content) ? `<div class="row-tools ai-btns">${aiActions(m.content)}${aiButtons(m.content)}</div>` : ""}${m.finding ? `<div class="sub"><a data-ai-more="${esc(JSON.stringify(m.finding))}">Подробнее — что это и насколько серьёзно</a></div>` : ""}${m.cached ? `<div class="sub">ответ из памяти · <a data-ai-fresh="${esc(m.cached)}">спросить заново</a></div>` : ""}</div>`).join("");
+    : `<div class="ai-msg ai-a">${aiMd(m.content)}${!m.act && aiPlan(m.content).length ? `<div class="ai-do"><button class="primary small" data-ai-do="${AI.msgs.indexOf(m)}" title="Помощник сам выполнит эти действия по очереди и проверит результат">✦ Сделай сам</button><span class="sub">${aiPlan(m.content).length > 1 ? `выполнит ${aiPlan(m.content).length} действия по очереди и проверит` : "выполнит и проверит"}; системные — с окном UAC</span></div>` : ""}${aiActions(m.content) || aiButtons(m.content) ? `<div class="row-tools ai-btns">${m.act ? "" : aiActions(m.content)}${aiButtons(m.content)}</div>` : ""}${m.finding ? `<div class="sub"><a data-ai-more="${esc(JSON.stringify(m.finding))}">Подробнее — что это и насколько серьёзно</a></div>` : ""}${m.cached ? `<div class="sub">ответ из памяти · <a data-ai-fresh="${esc(m.cached)}">спросить заново</a></div>` : ""}</div>`).join("");
   const run = j && j.status === "running" ? `<div class="ai-msg ai-a ai-run"><div class="spin"></div><div>${(j.steps || []).length ? `<ul class="ai-steps">${j.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : `<span class="sub">думаю…</span>`}
       <button class="small" id="aiStop" type="button">Остановить</button></div></div>` : "";
   const empty = !AI.msgs.length && !run ? `<div class="ai-empty"><p>Спроси что угодно про этот компьютер — помощник сам посмотрит журналы Windows, сбои, драйверы,
@@ -223,10 +243,19 @@ async function aiStart(body, userMsg, finding = null){
     if (!aiPanel().hidden) aiRender();
   }
   const j = AI.job; AI.job = null;
-  if (j.status === "done") AI.msgs.push({role: "assistant", content: j.answer, cached: j.cached ? JSON.stringify(body.finding || null) : null, finding});
+  if (j.status === "done") AI.msgs.push({role: "assistant", content: j.answer, cached: j.cached ? JSON.stringify(body.finding || null) : null, finding, act: body.kind === "act"});
+  if (body.kind === "act") { try { redrawPanels() } catch {} }
   else AI.msgs.push({role: "error", content: "Помощник не ответил: " + (j.error || "ошибка")});
   aiRender();
   if (aiPanel().hidden && j.status === "done") toast("ИИ-помощник ответил", "открой панель помощника", "info", 6000, () => aiOpen());
+}
+async function aiDoIt(idx){
+  const m = AI.msgs[idx], plan = aiPlan(m?.content);
+  if (!plan.length) return;
+  if (!await modal({title: "Сделать это самому помощнику?", icon: "✦", ok: "Сделай сам", cancel: "Отмена",
+      html: `<p>Помощник выполнит по очереди только эти действия и проверит результат:</p><ul class="mdl-list">${plan.map(a => `<li>${esc(AI_ACT[a.id].label(a.arg))}</li>`).join("")}</ul>
+        <p class="sub">Каждое действие идёт через те же проверки, что и кнопки ScanHub: только найденное проверкой, окно UAC для системных, и всё попадает в «Приватность и защита → Что изменил ScanHub» — там же можно отменить. Ничего сверх списка помощник сделать не может.</p>`})) return;
+  aiStart({kind: "act", plan, context: m.content}, {role: "user", content: "Сделай сам", show: "✦ Сделай сам: " + plan.map(a => AI_ACT[a.id].label(a.arg)).join(", ")});
 }
 function aiAsk(text){
   text = String(text || "").trim();
@@ -243,18 +272,32 @@ function aiExplain(f, fresh = false, kind = "solve"){
 
 // ---------- события
 document.addEventListener("click", async e => {
-  const a = e.target.closest("[data-ai],[data-ai-ask],[data-ai-gear],[data-ai-fresh],[data-ai-launch],[data-ai-act],[data-ai-more],#aiTop,#aiClose,#aiGear,#aiNew,#aiStop,#aiFindModels,#aiSave,#aiOff,#aiBack,#aiAttach");
+  const a = e.target.closest("[data-ai],[data-ai-ask],[data-ai-gear],[data-ai-fresh],[data-ai-launch],[data-ai-act],[data-ai-more],[data-ai-do],[data-ai-cli-login],[data-ai-cli-check],#aiTop,#aiClose,#aiGear,#aiNew,#aiStop,#aiFindModels,#aiSave,#aiOff,#aiBack,#aiAttach");
   if (!a) return;
   e.preventDefault(); e.stopPropagation();
   if (a.dataset.ai) { try { return aiExplain(JSON.parse(a.dataset.ai)) } catch { return } }
   if (a.dataset.aiAsk) { await aiOpen(); return aiAsk(a.dataset.aiAsk) }
   if (a.hasAttribute("data-ai-fresh")) { try { const f = JSON.parse(a.dataset.aiFresh); if (f) return aiExplain(f, true) } catch {} return }
-  if (a.hasAttribute("data-ai-gear") || a.id === "aiGear") { AI.setup = true; AI.pick = AI.cfg?.provider || ""; return aiRender() }
+  if (a.hasAttribute("data-ai-gear") || a.id === "aiGear") { AI.setup = true; AI.pick = AI.cfg?.provider || ""; aiRender();
+    if (AI.cfg?.providers?.find(p => p.id === AI.pick)?.cli) aiCliCheck(AI.pick); return }
   if (a.id === "aiTop") return aiPanel().hidden ? aiOpen() : aiClose();
   if (a.id === "aiClose") return aiClose();
   if (a.id === "aiNew") { if (AI.job?.status !== "running") { AI.msgs = []; aiRender() } return }
   if (a.id === "aiStop") { if (AI.job?.id) api("/api/ai/stop", {id: AI.job.id}).catch(() => {}); return }
   if (a.dataset.aiAct) { try { return aiDoAction(JSON.parse(a.dataset.aiAct)) } catch { return } }
+  if (a.hasAttribute("data-ai-do")) return aiDoIt(+a.dataset.aiDo);
+  if (a.dataset.aiCliCheck) return aiCliCheck(a.dataset.aiCliCheck);
+  if (a.dataset.aiCliLogin) {
+    const id = a.dataset.aiCliLogin;
+    await aiCliCheck(id, "login");
+    AI.cliWait = id; aiRender();
+    for (let i = 0; i < 100 && AI.cliWait === id && AI.setup; i++) {        // ждём вход до ~5 минут
+      await new Promise(r => setTimeout(r, 3000));
+      await aiCliCheck(id);
+      if (AI.cli[id]?.connected) { AI.cliWait = null; toast("Аккаунт подключён", aiProviderName(id)); aiRender(); break }
+    }
+    return;
+  }
   if (a.dataset.aiMore) { try { return aiExplain(JSON.parse(a.dataset.aiMore), false, "explain") } catch { return } }
   if (a.dataset.aiLaunch) return api("/api/launch", {what: a.dataset.aiLaunch}).catch(err => toast("Не удалось открыть", err.message, "bad"));
   if (a.id === "aiFindModels") return aiFindModels();
@@ -271,7 +314,10 @@ document.addEventListener("click", async e => {
   if (a.id === "aiOff") { AI.cfg = await api("/api/ai/config", {provider: "", model: ""}); AI.setup = true; AI.pick = ""; toast("ИИ-помощник выключен", ""); return aiRender() }
 }, true);
 document.addEventListener("change", e => {
-  if (e.target.name === "aiProv") { AI.pick = e.target.value; AI.note = ""; AI.keyDraft = ""; aiRender(); if (!(AI.cfg.providers.find(p => p.id === AI.pick)?.needs_key) || AI.cfg.providers.find(p => p.id === AI.pick)?.has_key) aiFindModels() }
+  if (e.target.name === "aiProv") { AI.pick = e.target.value; AI.note = ""; AI.keyDraft = ""; aiRender();
+    const pv = AI.cfg.providers.find(p => p.id === AI.pick);
+    if (pv?.cli) { aiCliCheck(pv.id); return }
+    if (!pv?.needs_key || pv?.has_key) aiFindModels() }
   if (e.target.id === "aiModelSel") AI.modelPick = e.target.value;
   if (e.target.name === "aiFiles") api("/api/ai/config", {files: e.target.value}).then(c => { AI.cfg = c; aiRender();
     toast("Доступ к файлам изменён", AI_FILES.find(x => x[0] === c.files)?.[1] || "") }).catch(err => toast("Не сохранилось", err.message, "warn"));
