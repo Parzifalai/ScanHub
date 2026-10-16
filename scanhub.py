@@ -3112,14 +3112,67 @@ class Server(http.server.ThreadingHTTPServer):
     # Windows отбрасывает лишние — в окне «Failed to fetch» / ERR_CONNECTION_REFUSED
     request_queue_size = 128
     daemon_threads = True
+    # порт только наш: по умолчанию Python разрешает другим программам сесть на тот же порт, и Windows
+    # раздаёт подключения как попало (окно открывало чужой сервер, а ScanHub запускался по второму разу)
+    allow_reuse_address = False
+
+    def server_bind(self):
+        import socket
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
 
-def already_running():
+PORT_FILE = os.path.join(DATA, "port")
+PORTS = tuple(range(8765, 8776))          # 8765 занят чужой программой — берём следующий свободный
+
+
+def _is_scanhub(port):
     try:
-        with urllib.request.urlopen(f"http://{HOST}:{PORT}/api/hello", timeout=2) as r:
+        with urllib.request.urlopen(f"http://{HOST}:{port}/api/hello", timeout=2) as r:
             return json.load(r).get("app") == "scanhub"
     except Exception:
         return False
+
+
+def already_running():
+    """Уже запущен ли ScanHub: на порту из прошлого запуска или на 8765. Найденный порт становится текущим."""
+    global PORT
+    ports = []
+    try:
+        ports.append(int(open(PORT_FILE, encoding="utf-8").read().strip()))
+    except (OSError, ValueError):
+        pass
+    for p in dict.fromkeys(ports + [8765]):
+        if p in PORTS and _is_scanhub(p):
+            PORT = p
+            return True
+    return False
+
+
+def bind_server(prefer=None, wait=0):
+    """Занять порт ScanHub (по возможности prefer, иначе первый свободный из PORTS) и запомнить его."""
+    global PORT
+    t0 = time.time()
+    while True:
+        for p in ([prefer] if prefer else []) + [x for x in PORTS if x != prefer]:
+            try:
+                srv = Server((HOST, p), Handler)
+            except OSError:
+                if prefer and p == prefer and time.time() - t0 < wait:
+                    break                          # ждём, пока старый ScanHub освободит свой порт
+                continue
+            PORT = p
+            try:
+                os.makedirs(DATA, exist_ok=True)
+                with open(PORT_FILE, "w", encoding="utf-8") as f:
+                    f.write(str(p))
+            except OSError:
+                pass
+            return srv
+        else:
+            return None
+        time.sleep(0.5)
 
 
 def idle_watch():
@@ -3164,20 +3217,21 @@ def main():
                     print(f"  ошибка: {e}")
         return
     if "--after-update" in sys.argv:            # перезапуск после обновления: ждём, пока старый сервер освободит порт
-        server = None
-        for _ in range(40):
-            try:
-                server = Server((HOST, PORT), Handler)
-                break
-            except OSError:
-                time.sleep(0.5)
-        if not server:
-            return
+        try:
+            prev = int(open(PORT_FILE, encoding="utf-8").read().strip())
+        except (OSError, ValueError):
+            prev = PORT
+        server = bind_server(prefer=prev, wait=20)
     else:
         if already_running():
             open_window()
             return
-        server = Server((HOST, PORT), Handler)
+        server = bind_server(prefer=PORT)
+    if not server:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(None, "Все порты ScanHub (8765–8775) заняты другими программами. Перезагрузи компьютер "
+                                               "и открой ScanHub снова.", "ScanHub", 0x10)
+        return
     threading.Thread(target=protect_folder, daemon=True).start()
     threading.Thread(target=updater_loop, daemon=True).start()
     threading.Thread(target=_health_snapshot_later, daemon=True).start()
