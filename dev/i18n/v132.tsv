@@ -1,0 +1,13 @@
+Ватт хватает	Enough power
+Видеокарта берёт	The graphics card is using
+Включи «Производительность» (на Lenovo — Fn+Q, кнопка питания станет красной) — лимит поднимется до	Turn on "Performance" (on Lenovo — Fn+Q, the power button turns red) — the limit will rise to
+Вт (до	W (up to
+Вт и в лимит не упирается — больше мощности игре сейчас не нужно. Если FPS мало, дело в процессоре или в самой игре (ограничение кадров, V-Sync).	W and isn't hitting the limit — the game doesn't need more power right now. If FPS is low, the CPU or the game itself is the bottleneck (frame cap, V-Sync).
+Вт — это нормально.	W is normal.
+Последние ватты до максимума видеокарта получает, только когда процессор нагружен слабо (NVIDIA Dynamic Boost) — это нормально.	The graphics card gets the last watts up to the maximum only when the CPU is lightly loaded (NVIDIA Dynamic Boost) — that's normal.
+Режим «Производительность» включён. Последние	"Performance" mode is on. The last
+Сейчас режим	The current mode is
+Скорее всего, включён тихий или сбалансированный режим.	Most likely a quiet or balanced mode is on.
+видеокарта получает, только когда процессор нагружен слабо: ноутбук делит мощность между ними (NVIDIA Dynamic Boost). Когда игра грузит и процессор	are given to the graphics card only when the CPU is lightly loaded: the laptop splits power between them (NVIDIA Dynamic Boost). When the game also loads the CPU
+режим «Производительность», лимит	"Performance" mode, limit
+режим ноутбука	laptop mode

@@ -16,7 +16,7 @@ async function bugReport(prefill = {}){
   const wrap = document.createElement("div");
   wrap.className = "mdl-back";
   wrap.innerHTML = `<div class="mdl xwide bug-dlg" role="dialog" aria-modal="true" aria-labelledby="bugT">
-    <div class="mdl-top"><span class="mdl-ic" id="bugIc">!</span><h3 id="bugT">Написать автору ScanHub</h3></div>
+    <div class="mdl-top"><span class="mdl-ic" id="bugIc">${icon("bug")}</span><h3 id="bugT">Написать автору ScanHub</h3></div>
     <div class="seg bug-kind" role="tablist"><button data-bug-kind="bug" role="tab">Нашёл ошибку</button><button data-bug-kind="idea" role="tab">Предложить улучшение</button></div>
     <p id="bugLead"></p>
     ${ctx.error ? `<div class="note bad">Ошибка на экране: ${esc(ctx.error)}</div>` : ""}
@@ -44,7 +44,7 @@ async function bugReport(prefill = {}){
     ctx.kind = k;
     const idea = k === "idea";
     wrap.querySelectorAll("[data-bug-kind]").forEach(b => { b.classList.toggle("on", b.dataset.bugKind === k); b.setAttribute("aria-selected", b.dataset.bugKind === k) });
-    $w("#bugIc").textContent = idea ? "✦" : "!";
+    $w("#bugIc").innerHTML = icon(idea ? "idea" : "bug");             // лампочка — идея, жук — ошибка (✦ — это ИИ-помощник)
     $w("#bugLead").textContent = idea ? "Чего не хватает в ScanHub, что неудобно или непонятно? Любая идея пригодится — автор читает всё. Ты увидишь сообщение целиком до отправки."
                                       : "Напиши, что пошло не так — отчёт уйдёт автору ScanHub. Ты увидишь его целиком до отправки.";
     $w("#bugTextH").textContent = idea ? "Что улучшить" : "Что случилось";

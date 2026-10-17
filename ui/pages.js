@@ -90,7 +90,7 @@ function renderNav(){
     if (n && c) c.textContent = n; else if (n) b.insertAdjacentHTML("beforeend", ` <span class="cnt">${n}</span>`); else c?.remove();
   });
   $("#side").innerHTML += `<div class="side-foot">${MODE === "dev" ? "Режим «Разработчик»: видны пути, команды, коды выхода и консоль." : "Простой режим: только главное. Подробности — в режиме «Разработчик»."}<div style="margin-top:6px;opacity:.6">ScanHub ${esc(typeof VERSION === "string" ? VERSION : "")}</div>
-    <div style="margin-top:6px"><a data-idea title="Чего не хватает или что неудобно — автор читает всё">✦ Предложить улучшение</a></div>
+    <div style="margin-top:6px"><a data-idea class="idea-link" title="Чего не хватает или что неудобно — автор читает всё">${icon("idea")}Предложить улучшение</a></div>
     <div class="langsw" data-noi18n><a data-lang="ru" class="${LANG === "ru" ? "on" : ""}">Русский</a> · <a data-lang="en" class="${LANG === "en" ? "on" : ""}">English</a></div></div>`;
 }
 

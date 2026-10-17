@@ -35,7 +35,7 @@ def main():
     root.attributes("-alpha", 0.92)
     root.configure(bg=KEY)
     root.attributes("-transparentcolor", KEY)
-    box = tk.Frame(root, bg=BG, padx=10, pady=6)
+    box = tk.Frame(root, bg=BG, padx=10, pady=4)
     box.pack()
     fps = tk.Label(box, text="—", font=("Bahnschrift SemiBold", 22), fg=GOOD, bg=BG)
     fps.grid(row=0, column=0, rowspan=2, sticky="w", padx=(0, 8))
@@ -66,6 +66,13 @@ def main():
         if d and now - d.get("t", 0) < 6:
             state["seen"] = now
             f = d.get("fps")
+            minimal = d.get("minimal", True)          # «только FPS»: одни цифры, без подписей
+            for w in (l1, l2):
+                if minimal:
+                    w.grid_remove()
+                else:
+                    w.grid()
+            fps.grid_configure(padx=(0, 0) if minimal else (0, 8))
             if d.get("status") == "uac":
                 fps.config(text="…", fg=DIM)
                 l1.config(text="ScanHub: подтверди окно UAC")

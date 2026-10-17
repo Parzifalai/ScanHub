@@ -394,11 +394,16 @@ def check(metrics_snapshot=None, diag_cache=None):
         if n.get("gen_max") and n["gen_max"] < 3:
             add("Видеокарта", "warn", "Шина PCIe ограничена старым поколением",
                 f"{n['name']}: максимум PCIe {n['gen_max']:.0f}.0.", "В BIOS переключи слот видеокарты в режим Auto / Gen4.")
+        fan_mode = ((metrics_snapshot or {}).get("sensors") or {}).get("fan_mode")
         if n.get("power") and n.get("power_max") and n["power"] < n["power_max"] * 0.85:
-            add("Видеокарта", "info", "Видеокарта получает не всю мощность",
-                f"{n['name']}: сейчас лимит {n['power']:.0f} Вт из {n['power_max']:.0f} Вт возможных.",
-                "Это режим питания ноутбука. Для игр включи режим «Производительность» (у Lenovo — Fn+Q или Lenovo Vantage / Legion Space) "
-                "и играй от зарядки — тогда лимит поднимется.")
+            if fan_mode == "Производительность":
+                add("Видеокарта", "ok", f"{n['name']}: режим «Производительность», лимит {n['power']:.0f} из {n['power_max']:.0f} Вт",
+                    "Последние ватты до максимума видеокарта получает, только когда процессор нагружен слабо (NVIDIA Dynamic Boost) — это нормально.")
+            else:
+                add("Видеокарта", "info", "Видеокарта получает не всю мощность",
+                    f"{n['name']}: сейчас лимит {n['power']:.0f} Вт из {n['power_max']:.0f} Вт возможных" + (f", режим ноутбука «{fan_mode}»." if fan_mode else "."),
+                    "Это режим питания ноутбука. Для игр включи режим «Производительность» (у Lenovo — Fn+Q или Lenovo Vantage / Legion Space) "
+                    "и играй от зарядки — тогда лимит поднимется.")
         if n.get("temp") and n["temp"] >= 87:
             add("Видеокарта", "warn", "Видеокарта горячая", f"{n['name']}: {n['temp']:.0f} °C.", "Почисти систему охлаждения, не ставь ноутбук на мягкое.")
         if not any(i["comp"] == "Видеокарта" and i["lvl"] in ("warn", "bad") for i in items):
