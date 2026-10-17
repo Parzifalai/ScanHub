@@ -145,7 +145,7 @@ def _sessions():
 
 def view():
     return {"on": S["on"], "status": S["status"], "error": S["error"], "started": S["started"], "app": S["app"], "fps": S["fps"],
-            "low1": S["low1"], "ft": S["ft"], "sessions": _sessions()[:10], "corner": S.get("corner", "tl")}
+            "low1": S["low1"], "ft": S["ft"], "sessions": _sessions()[:10], "corner": S.get("corner", "tl"), "minimal": S.get("minimal", True)}
 
 
 def start(exe, run_elevated, metrics, corner="tl", overlay=True):
@@ -301,7 +301,8 @@ def _update(now, metrics):
     else:
         S.update(app=None, fps=None, low1=None, ft=None)
     data = {"t": now, "app": S["app"], "fps": S["fps"], "low": S["low1"], "ft": S["ft"], "gpu_temp": g.get("temp"), "gpu_w": g.get("power"),
-            "gpu_util": g.get("util"), "cpu_temp": cpu_t, "corner": S.get("corner", "tl"), "status": S["status"]}
+            "gpu_util": g.get("util"), "cpu_temp": cpu_t, "corner": S.get("corner", "tl"), "status": S["status"],
+            "minimal": S.get("minimal", True)}
     try:
         tmp = OVERLAY + ".tmp"
         json.dump(data, open(tmp, "w", encoding="utf-8"))

@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "1.3.1"
+VERSION = "1.3.2"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -2508,6 +2508,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                                    "keys": {k: bool(c.get(k)) for k in ("virustotal_key", "filescan_key", "metadefender_key", "hybrid_key")}})
         if u.path == "/api/fps":
             import fps
+            fps.S.setdefault("minimal", bool(config().get("fps_minimal", True)))
+            fps.S.setdefault("corner", str(config().get("fps_corner") or "tl")[:2])
             return self.send(200, fps.view())
         if u.path == "/api/usage":
             return self.send(200, {"on": config().get("usage_ping")})
@@ -2663,6 +2665,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 import fps
                 if body.get("action") == "stop":
                     return self.send(200, fps.stop())
+                if body.get("action") == "style":
+                    fps.S["minimal"] = bool(body.get("minimal", True))
+                    _cfg_update({"fps_minimal": fps.S["minimal"]})
+                    return self.send(200, fps.view())
                 if body.get("action") == "corner":
                     fps.S["corner"] = str(body.get("corner") or "tl")[:2]
                     _cfg_update({"fps_corner": fps.S["corner"]})
@@ -2674,6 +2680,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     return self.send(400, {"error": "не получилось скачать счётчик FPS: " + str(ts.get("blocked") or ts.get("error") or "нет связи")})
                 exe = exe or exe_path(m, tool_state(state(), "presentmon"))
                 corner = str(body.get("corner") or config().get("fps_corner") or "tl")[:2]
+                fps.S["minimal"] = bool(config().get("fps_minimal", True))
                 return self.send(200, fps.start(exe, deepscan.run_elevated, metrics.METRICS if metrics else None, corner, body.get("overlay", True) is not False))
             if p == "/api/setup/done":
                 _cfg_update({"setup_done": now()})

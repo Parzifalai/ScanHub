@@ -960,3 +960,6 @@ details.dsec>.checks{margin-top:6px}
 .fps-now{display:flex;gap:10px;align-items:center;margin-top:10px}
 .fps-now b{font-size:34px;font-family:var(--din, inherit);line-height:1}
 .fps-now .sub{display:block}
+.mdl-ic .svg-ic{width:19px;height:19px}
+.idea-link{display:inline-flex;align-items:center;gap:5px}
+.idea-link .svg-ic{width:14px;height:14px}

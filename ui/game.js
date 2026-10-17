@@ -9,10 +9,15 @@ function gpuLiveHtml(){
   const lim = g.power_limit, max = g.power_max, w = g.power;
   const full = lim && max ? lim >= max * 0.95 : null;
   const plugged = bat ? bat.plugged : null;
+  // режим ноутбука Lenovo (Тихий / Баланс / Производительность) — из датчиков, если они включены
+  const mode = M?.sensors?.fan_mode, perf = mode === "Производительность";
+  const headroom = lim && w < lim * 0.85 && (g.util ?? 100) < 95;     // видеокарта не упирается в лимит — ватт ей хватает
   const verdict = !lim || !max ? ""
     : plugged === false ? `${sevChip(["warn", "От батареи"])} Видеокарта ограничена, пока ноутбук не на зарядке. Подключи зарядку — лимит поднимется сам.`
     : full ? `${sevChip(["ok", "Вся мощность"])} Видеокарте разрешено ${Math.round(lim)} Вт — это её максимум.`
-    : `${sevChip(["info", "Не вся мощность"])} Зарядка подключена, но включён тихий или сбалансированный режим. Включи «Производительность» (на Lenovo — Fn+Q) — лимит поднимется до ${Math.round(max)} Вт.`;
+    : headroom && (g.util ?? 0) >= 20 ? `${sevChip(["ok", "Ватт хватает"])} Видеокарта берёт ${Math.round(w)} из ${Math.round(lim)} Вт и в лимит не упирается — больше мощности игре сейчас не нужно. Если FPS мало, дело в процессоре или в самой игре (ограничение кадров, V-Sync).`
+    : perf ? `${sevChip(["ok", "Производительность"])} Режим «Производительность» включён. Последние ${Math.round(max - lim)} Вт (до ${Math.round(max)}) видеокарта получает, только когда процессор нагружен слабо: ноутбук делит мощность между ними (NVIDIA Dynamic Boost). Когда игра грузит и процессор, ${Math.round(lim)} Вт — это нормально.`
+    : `${sevChip(["info", "Не вся мощность"])} ${mode ? `Сейчас режим «${esc(mode)}».` : "Скорее всего, включён тихий или сбалансированный режим."} Включи «Производительность» (на Lenovo — Fn+Q, кнопка питания станет красной) — лимит поднимется до ${Math.round(max)} Вт.`;
   const bars = GPU_HIST.slice(-60).map(v => `<i style="height:${Math.max(3, Math.round(v / (max || 120) * 100))}%"></i>`).join("");
   return `<div class="gpul"><div class="gpul-h"><b>Видеокарта сейчас</b><span class="sub">${esc(g.name || "")}</span><div class="grow"></div>
       <span class="sub">${plugged == null ? "" : plugged ? "⚡ от зарядки" : "🔋 от батареи"}</span></div>
@@ -53,17 +58,20 @@ function fpsBlock(){
       <td class="sub">${s.gpu_temp_max ? `GPU до ${s.gpu_temp_max}°C` : ""}${s.gpu_w_avg ? ` · ${s.gpu_w_avg} Вт` : ""}${s.cpu_temp_max ? `<br>CPU до ${s.cpu_temp_max}°C` : ""}</td></tr>` };
   return `<div class="fpsb"><div class="fpsb-h"><b>FPS в играх</b>${on ? sevChip(["ok", "включено"]) : ""}<div class="grow"></div>
       ${on ? `<button class="danger" data-fps="stop">Выключить показ FPS</button>` : `<button class="primary" data-fps="start">Показывать FPS в игре</button>`}</div>
-    <div class="sub">Маленькое окошко в углу экрана: FPS, просадки, температура и мощность видеокарты. Мышь проходит сквозь него, игре не мешает. После игры здесь появится итог: шла ли игра плавно и что мешало.
+    <div class="sub">Маленькое окошко в углу экрана: цифры FPS (по желанию — ещё просадки, температура и мощность видеокарты). Мышь проходит сквозь него, игре не мешает. После игры здесь появится итог: шла ли игра плавно и что мешало.
       Нужно одно окно UAC: без прав администратора Windows не показывает кадры. Окно ScanHub можно закрыть — счётчик доработает, пока не выключишь.</div>
-    <div class="row" style="margin-top:8px;gap:6px;align-items:center"><span class="sub">Где показывать:</span>${FPS_CORNERS.map(([id, t]) => `<button class="small${(f?.corner || "tl") === id ? " primary" : ""}" data-fps-corner="${id}">${t}</button>`).join("")}</div>
+    <div class="row" style="margin-top:8px;gap:6px;align-items:center"><span class="sub">Что показывать:</span>
+      <button class="small${f?.minimal !== false ? " primary" : ""}" data-fps-style="1">Только FPS</button><button class="small${f?.minimal === false ? " primary" : ""}" data-fps-style="0">FPS и температуры</button></div>
+    <div class="row" style="margin-top:6px;gap:6px;align-items:center"><span class="sub">Где показывать:</span>${FPS_CORNERS.map(([id, t]) => `<button class="small${(f?.corner || "tl") === id ? " primary" : ""}" data-fps-corner="${id}">${t}</button>`).join("")}</div>
     ${f?.error ? `<div class="note warn">${esc(f.error)}</div>` : ""}
     <div id="fpsLive"></div>
     <div class="sub" style="margin-top:6px">Не видно окошка в игре? Поставь в настройках игры режим экрана «Оконный без рамки» (Borderless) — в «Полноэкранном» Windows рисует игру поверх всего.</div>
     ${ses.length ? `<div class="grp" style="margin-top:12px">Последние игры</div><table class="t small">${ses.map(verdictRow).join("")}</table>` : ""}</div>`;
 }
 document.addEventListener("click", async e => {
-  const b = e.target.closest("[data-fps],[data-fps-corner]");
+  const b = e.target.closest("[data-fps],[data-fps-corner],[data-fps-style]");
   if (!b) return;
+  if (b.dataset.fpsStyle) { FPS = await api("/api/fps", {action: "style", minimal: b.dataset.fpsStyle === "1"}); return redrawPanels() }
   if (b.dataset.fpsCorner) { FPS = await api("/api/fps", {action: "corner", corner: b.dataset.fpsCorner}); return redrawPanels() }
   b.disabled = true; b.textContent = b.dataset.fps === "start" ? "Включаю… (подтверди UAC)" : "Выключаю…";
   try { FPS = await api("/api/fps", {action: b.dataset.fps, corner: FPS?.corner}) } catch (err) { toast("Не получилось", err.message, "warn") }
