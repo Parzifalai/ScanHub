@@ -96,10 +96,14 @@ async function ping(req, env){
   if (r?.app !== "scanhub" || !/^[0-9a-f]{32}$/.test(r.id || "")) return json({ok: false}, 400);
   const ip = req.headers.get("CF-Connecting-IP") || "unknown";
   if (await bump("ping:" + ip, 3600) > 30) return json({ok: false}, 429);
-  const key = "u:" + r.id, today = new Date().toISOString().slice(0, 10);
+  // день — местный у человека (ScanHub присылает), если он правдоподобен (±1 день от UTC); иначе — по UTC
+  const utc = new Date().toISOString().slice(0, 10);
+  const today = /^\d{4}-\d{2}-\d{2}$/.test(r.day || "") && Math.abs(Date.parse(r.day) - Date.parse(utc)) <= DAY ? r.day : utc;
+  const key = "u:" + r.id;
   const old = (await env.USAGE.getWithMetadata(key)).metadata;
-  if (old?.last === today) return json({ok: true});
-  const meta = {first: old?.first || today, last: today, v: cut(r.v, 16), lang: cut(r.lang, 5), win: cut(r.win, 8), days: (old?.days || 0) + 1};
+  const v = cut(r.v, 16), lang = cut(r.lang, 5);
+  if (old?.last === today && old.v === v && old.lang === lang) return json({ok: true});   // тот же день и ничего не поменялось
+  const meta = {first: old?.first || today, last: today, v, lang, win: cut(r.win, 8), days: (old?.days || 0) + (old?.last === today ? 0 : 1)};
   await env.USAGE.put(key, "", {metadata: meta});
   return json({ok: true});
 }
@@ -113,12 +117,15 @@ async function usageAll(env){
   } while (cursor);
   return out;
 }
+// «сегодня» для сводки — по времени автора (Казахстан, UTC+5): так «сегодня» совпадает с днём, когда он смотрит
+const TZ_MS = 5 * 3600000;
+const dayStr = n => new Date(Date.now() + TZ_MS - n * DAY).toISOString().slice(0, 10);
 function summary(all){
-  const now = Date.now(), ago = d => Math.floor((now - Date.parse(d + "T12:00:00Z")) / DAY);
+  const now = Date.now(), T = Date.parse(dayStr(0)), ago = d => Math.round((T - Date.parse(d)) / DAY);
   const n = days => all.filter(u => ago(u.last) < days).length;
   const by = (f, days = 30) => Object.entries(all.filter(u => ago(u.last) < days).reduce((m, u) => (m[f(u)] = (m[f(u)] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1]);
   const fresh = all.filter(u => ago(u.first) < 7).length;
-  const perDay = [...Array(30)].map((_, i) => { const d = new Date(now - (29 - i) * DAY).toISOString().slice(0, 10);
+  const perDay = [...Array(30)].map((_, i) => { const d = dayStr(29 - i);
     return [d, all.filter(u => u.first === d).length, all.filter(u => u.last >= d && u.first <= d).length] });
   return {today: n(1), week: n(7), month: n(30), total: all.length, fresh, loyal: all.filter(u => u.days >= 5).length,
           versions: by(u => u.v || "?"), langs: by(u => u.lang || "?"), win: by(u => +u.win >= 22000 ? "Windows 11" : u.win ? "Windows 10" : "?"), perDay};
@@ -129,7 +136,7 @@ const plural = (n, one, few, many) => { const m10 = n % 10, m100 = n % 100;
   return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20) ? few : many };
 const people = n => `${n} ${plural(n, "человек", "человека", "человек")}`;
 function dailyText(all, s, env){
-  const day = d => new Date(Date.now() - d * DAY).toISOString().slice(0, 10);
+  const day = dayStr;
   const today = day(0), yesterday = day(1);
   const newToday = all.filter(u => u.first === today).length, newYest = all.filter(u => u.first === yesterday).length;
   const ranYest = all.filter(u => u.last >= yesterday && u.first <= yesterday).length;

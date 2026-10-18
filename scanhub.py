@@ -1073,10 +1073,33 @@ _LINK_HOSTS = {}
 UPDATE_KEEP = {"data", "apps", "python", "_backup", "dev", ".git"}     # это при обновлении не трогаем
 
 
+UPD_PROG = {}          # ход обновления ScanHub для окна: stage, pct, text, error
+
+
+def _upd(stage, pct, text):
+    UPD_PROG.update(stage=stage, pct=round(pct, 1), text=text, error=None)
+
+
+def self_update_start():
+    """Обновление в фоне — окно спрашивает ход через /api/self_update/progress и рисует проценты."""
+    if UPD_PROG.get("stage") not in (None, "error", "done"):
+        return dict(UPD_PROG)
+    _upd("check", 1, "проверяю, какая версия последняя")
+
+    def work():
+        try:
+            self_update_apply()
+        except Exception as e:
+            UPD_PROG.update(stage="error", error=str(e))
+    threading.Thread(target=work, daemon=True).start()
+    return dict(UPD_PROG)
+
+
 def self_update_apply():
     """Обновление в одну кнопку: скачать архив выпуска с GitHub, сверить SHA-256, поставить поверх и перезапуститься."""
     import hashlib
     import zipfile
+    _upd("check", 2, "проверяю, какая версия последняя")
     info = self_update(force=True)
     if not info.get("newer"):
         raise RuntimeError("новой версии нет — у тебя последняя")
@@ -1092,15 +1115,23 @@ def self_update_apply():
     zpath = os.path.join(up, "update.zip")
     req = urllib.request.Request(url, headers={"User-Agent": f"ScanHub/{VERSION}"})
     h = hashlib.sha256()
+    total, got = a.get("size") or 0, 0
+    _upd("download", 3, f"скачиваю ScanHub {info.get('latest')}")
     with urllib.request.urlopen(req, timeout=120) as r, open(zpath, "wb") as f:
+        total = total or int(r.headers.get("Content-Length") or 0)
         while chunk := r.read(1 << 16):
             h.update(chunk)
             f.write(chunk)
+            got += len(chunk)
+            if total:
+                _upd("download", 3 + 77 * got / total, f"скачиваю: {got / 2 ** 20:.1f} из {total / 2 ** 20:.1f} МБ")
+    _upd("verify", 81, "сверяю контрольную сумму с GitHub")
     want = (a.get("digest") or "").lower()
     if want.startswith("sha256:") and want[7:] != h.hexdigest():
         raise RuntimeError("архив не совпал с контрольной суммой GitHub — не ставлю")
     with zipfile.ZipFile(zpath) as z:
         names = [n for n in z.namelist() if not n.endswith("/")]
+        _upd("install", 84, "ставлю новые файлы")
         top = {n.split("/", 1)[0] for n in names}
         strip = top.pop() + "/" if len(top) == 1 and all("/" in n for n in names) else ""
         if not any(n == strip + "scanhub.py" for n in names):
@@ -1127,7 +1158,10 @@ def self_update_apply():
                 with open(dst, "wb") as f:
                     f.write(data)
             copied += 1
+            if copied % 10 == 0:
+                _upd("install", 84 + 14 * copied / max(1, len(names)), f"ставлю новые файлы: {copied} из {len(names)}")
     shutil.rmtree(up, ignore_errors=True)
+    _upd("restart", 100, "перезапускаю ScanHub")
     # новая копия сервера ждёт, пока освободится порт, и поднимается сама; окно увидит новую версию и перезагрузится
     py = sys.executable.replace("python.exe", "pythonw.exe")
     subprocess.Popen([py, os.path.join(ROOT, "scanhub.py"), "--no-open", "--after-update"], cwd=ROOT,
@@ -1143,7 +1177,9 @@ def self_update(force=False):
         return {"enabled": False, "current": VERSION}
     st = state()
     c = st.get("self_update") or {}
-    if force or c.get("repo") != repo or not c.get("checked") or time.time() - c.get("checked", 0) > 6 * 3600:
+    age = time.time() - c.get("checked", 0)
+    # после неудачи (нет сети, обрыв SSL) — снова через 10 минут, а не через 6 часов
+    if force or c.get("repo") != repo or not c.get("checked") or age > 6 * 3600 or (c.get("error") and age > 600):
         try:
             req = urllib.request.Request(f"https://api.github.com/repos/{repo}/releases/latest",
                                          headers={"User-Agent": f"ScanHub/{VERSION}", "Accept": "application/vnd.github+json"})
@@ -2632,6 +2668,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self.send(200, pcclean.children_of(q.get("path", "")))
             except Exception as e:
                 return self.send(400, {"error": str(e)})
+        if u.path == "/api/self_update/progress":
+            return self.send(200, dict(UPD_PROG))
         if u.path == "/api/replies":
             return self.send(200, report.replies_view())
         if u.path == "/api/history":
@@ -2687,6 +2725,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self.send(200, {"path": out})
             if p == "/api/self_update/apply":
                 try:
+                    if body.get("async"):                     # новое окно: обновление в фоне, ход — через /api/self_update/progress
+                        return self.send(200, self_update_start())
                     return self.send(200, self_update_apply())
                 except Exception as e:
                     return self.send(400, {"error": str(e)})

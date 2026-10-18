@@ -29,11 +29,13 @@ def ping(cfg, save, version):
     """Отправить отметку «запущен сегодня», если человек согласился и сегодня ещё не отправляли. save(dict) — дописать в config."""
     if cfg.get("usage_ping") is not True:
         return False
-    today = time.strftime("%Y-%m-%d")
-    if cfg.get("usage_last") == today:
+    today = time.strftime("%Y-%m-%d")                       # местная дата: «сегодня» у человека, а не по UTC
+    lang = cfg.get("lang") or "ru"
+    mark = f"{today}|{version}|{lang}"                       # обновился или сменил язык в тот же день — отметимся ещё раз
+    if cfg.get("usage_last") == mark:
         return False
     iid = cfg.get("install_id") or uuid.uuid4().hex
-    body = json.dumps({"app": "scanhub", "id": iid, "v": version, "lang": cfg.get("lang") or "ru", "win": _build()}).encode()
+    body = json.dumps({"app": "scanhub", "id": iid, "v": version, "lang": lang, "win": _build(), "day": today}).encode()
     url = (cfg.get("report_url") or report.REPORT_URL).rsplit("/", 1)[0] + "/ping"
     req = urllib.request.Request(url, data=body, method="POST", headers={"Content-Type": "application/json", "User-Agent": f"ScanHub/{version}"})
     try:
@@ -42,7 +44,7 @@ def ping(cfg, save, version):
     except Exception:
         return False                        # нет сети или посредник ещё не умеет /ping — попробуем завтра, без записи в журнал ошибок
     if ok:
-        save({"install_id": iid, "usage_last": today})
+        save({"install_id": iid, "usage_last": mark})
     return bool(ok)
 
 

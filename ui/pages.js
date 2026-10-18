@@ -89,9 +89,9 @@ function renderNav(){
     const n = tabCount(b.dataset.tabGo), c = b.querySelector(".cnt");
     if (n && c) c.textContent = n; else if (n) b.insertAdjacentHTML("beforeend", ` <span class="cnt">${n}</span>`); else c?.remove();
   });
-  $("#side").innerHTML += `<div class="side-foot">${MODE === "dev" ? "Режим «Разработчик»: видны пути, команды, коды выхода и консоль." : "Простой режим: только главное. Подробности — в режиме «Разработчик»."}<div style="margin-top:6px;opacity:.6">ScanHub ${esc(typeof VERSION === "string" ? VERSION : "")}</div>
-    <div style="margin-top:6px"><a data-idea class="idea-link" title="Чего не хватает или что неудобно — автор читает всё">${icon("idea")}Предложить улучшение</a></div>
-    <div class="langsw" data-noi18n><a data-lang="ru" class="${LANG === "ru" ? "on" : ""}">Русский</a> · <a data-lang="en" class="${LANG === "en" ? "on" : ""}">English</a></div></div>`;
+  $("#side").innerHTML += `<div class="side-foot">
+    <div><a data-idea class="idea-link" title="Чего не хватает или что неудобно — автор читает всё">${icon("idea")}Предложить улучшение</a></div>
+    <div class="side-ver" data-noi18n>ScanHub ${esc(typeof VERSION === "string" ? VERSION : "")}</div></div>`;
 }
 
 // ============================================================ «Подготовить ScanHub»: всё, без чего проверки неполные
@@ -121,16 +121,46 @@ document.addEventListener("click", async e => {
   if (!await modal({title: `Обновить ScanHub до ${u.latest}?`, icon: "↑", ok: "Обновить", cancel: "Позже",
       html: `${u.notes ? `<div class="grp">Что нового</div><div class="sub" style="white-space:pre-wrap;max-height:260px;overflow:auto">${esc(u.notes)}</div>` : ""}
         <p class="sub" style="margin-top:10px">ScanHub скачает архив с GitHub (${esc(u.repo || "")}), сверит контрольную сумму, поставит поверх и перезапустится — окно обновится само. Ключи, история и карантин останутся.${u.url ? ` <a data-link="${esc(u.url)}">Страница выпуска</a>` : ""}</p>`})) return;
-  toast("Обновляю ScanHub…", "скачиваю и проверяю архив", "info", 20000);
-  try { await api("/api/self_update/apply", {}) } catch (err) { return toast("Обновить не получилось", err.message, "err", 9000) }
-  document.body.insertAdjacentHTML("beforeend", `<div class="mdl-back"><div class="mdl"><div class="mdl-top"><span class="mdl-ic">↑</span><h3>ScanHub обновлён — перезапускаюсь…</h3></div><p class="sub">Окно перезагрузится само через несколько секунд.</p></div></div>`);
+  selfUpdateRun(u);
+});
+// окно обновления: полоска и проценты — скачивание, проверка контрольной суммы, установка, перезапуск
+async function selfUpdateRun(u){
+  const wrap = document.createElement("div");
+  wrap.className = "mdl-back";
+  wrap.innerHTML = `<div class="mdl upd-dlg" role="dialog" aria-modal="true" aria-labelledby="updT"><div class="mdl-top"><span class="mdl-ic">↑</span><h3 id="updT">Обновляю ScanHub до ${esc(u.latest || "новой версии")}</h3></div>
+    <div class="upd-bar"><div id="updFill" style="width:1%"></div></div>
+    <div class="upd-row"><b id="updPct">0%</b><span class="sub" id="updText">готовлюсь…</span></div>
+    <p class="sub">Не закрывай окно. Ключи, история и карантин останутся; в конце ScanHub перезапустится и окно обновится само.</p>
+    <div class="mdl-btns" id="updBtns" hidden><button data-upd-close>Закрыть</button></div></div>`;
+  document.body.appendChild(wrap);
+  const set = (pct, text) => { wrap.querySelector("#updFill").style.width = Math.max(1, Math.min(100, pct)) + "%";
+    wrap.querySelector("#updPct").textContent = Math.round(pct) + "%"; if (text) wrap.querySelector("#updText").textContent = text };
+  const fail = msg => { wrap.querySelector(".upd-dlg").classList.add("bad"); set(100, "");
+    wrap.querySelector("#updPct").textContent = "Не получилось";
+    wrap.querySelector("#updText").innerHTML = `${esc(msg)}${u.url ? ` · <a data-link="${esc(u.url)}">скачать со страницы выпуска</a>` : ""}`;
+    wrap.querySelector("#updBtns").hidden = false;
+    wrap.querySelector("[data-upd-close]").onclick = () => wrap.remove() };
+  try { await api("/api/self_update/apply", {async: true}) } catch (err) { return fail(err.message) }
+  let last = 0, lost = 0;
+  for (;;) {
+    await new Promise(r => setTimeout(r, 400));
+    let p;
+    try { p = await api("/api/self_update/progress"); lost = 0 }
+    catch { if (last >= 98 || ++lost > 5) break; continue }        // старый сервер закрылся — значит, уже перезапускается
+    if (p.stage === "error") return fail(p.error || "ошибка");
+    last = p.pct || last;
+    set(last, p.text);
+    if (p.stage === "restart") break;
+  }
+  set(100, "перезапускаю ScanHub — окно обновится само");
   const t0 = Date.now();
   const wait = async () => {                       // ждём новый сервер и перезагружаем окно (у нового сервера новый ключ доступа)
     try { const r = await fetch("/api/version"); if (r.ok) return location.reload() } catch {}
     if (Date.now() - t0 < 60000) setTimeout(wait, 1000);
+    else fail("ScanHub не перезапустился сам — открой его ярлыком");
   };
   setTimeout(wait, 2500);
-});
+}
 setTimeout(() => api("/api/self_update").then(r => { SELFUPD = r; if (r.newer && PAGE === "home") renderTodo() }).catch(() => {}), 4000);
 function prepHome(){
   ["restore", "game", "quarantine_list", "diag", "hwcheck", "app_links"].forEach(n => ensureTask(n));
@@ -209,7 +239,7 @@ function renderTodo(){
   const ic = {bad: ["threat", "!"], warn: ["suspicious", "!"], info: ["running", "i"]};
   const html = TODO.length ? `<h2 class="sec">Что стоит сделать</h2><div class="checks">${TODO.map(x => `<div class="check${x.app ? " app" : ""}">
       ${x.app ? `<span class="ic ic-app" title="Это про сам ScanHub, а не про компьютер">S</span>` : `<span class="ic ic-${ic[x.lvl][0]}">${ic[x.lvl][1]}</span>`}<span><b>${esc(x.t)}</b><span class="sub">${esc(x.s)}</span></span>
-      <span class="acts">${x.primary ? "" : aiBtn(x.t, x.s, {source: "Главная · Что стоит сделать"})}${x.b ? `<button class="small${x.lvl === "bad" || x.primary ? " primary" : ""}" ${x.b[1]}>${esc(x.b[0])}</button>` : ""}${x.b2 ? ` <button class="small" ${x.b2[1]}>${esc(x.b2[0])}</button>` : x.lvl === "info" ? ` <button class="small" data-todo-ack="${esc(x.t)}" title="Убрать из списка">Понятно</button>` : ""}</span></div>`).join("")}</div>
+      <span class="acts">${x.primary || x.app ? "" : aiBtn(x.t, x.s, {source: "Главная · Что стоит сделать"})}${x.b ? `<button class="small${x.lvl === "bad" || x.primary ? " primary" : ""}" ${x.b[1]}>${esc(x.b[0])}</button>` : ""}${x.b2 ? ` <button class="small" ${x.b2[1]}>${esc(x.b2[0])}</button>` : x.lvl === "info" ? ` <button class="small" data-todo-ack="${esc(x.t)}" title="Убрать из списка">Понятно</button>` : ""}</span></div>`).join("")}</div>
       ${hidden.length ? `<div class="sub" style="margin-top:6px">Скрыто советов: ${hidden.length}. <a data-todo-unack>Показать снова</a></div>` : ""}`
     : `<h2 class="sec">Что стоит сделать</h2><div class="note info">Сейчас ничего срочного. 👍${hidden.length ? ` <a data-todo-unack>Показать скрытые советы (${hidden.length})</a>` : ""}</div>`;
   if (html === TODO_HTML) return;                // не перерисовывать без изменений (данные приходят каждые 1,5 с)

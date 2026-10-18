@@ -1018,3 +1018,16 @@ details.dsec>.checks{margin-top:6px}
 .rvd-what p{margin:4px 0}
 .rvd-mode{display:grid;gap:4px;margin:6px 0}
 .rvd .mdl-btns .grow{flex:1;text-align:left}
+
+/* окно обновления ScanHub: полоска и проценты */
+.upd-bar{height:10px;border-radius:999px;background:var(--panel2);overflow:hidden;margin:6px 0 8px}
+.upd-bar>div{height:100%;background:var(--accent);border-radius:999px;transition:width .35s ease}
+.upd-dlg.bad .upd-bar>div{background:var(--bad)}
+.upd-row{display:flex;gap:10px;align-items:baseline}
+.upd-row b{font-family:var(--din);font-size:20px;min-width:56px}
+.check.app .acts{align-self:center}
+
+/* подвал сайдбара: версия в самом низу; язык — в ⚙ Настройках */
+.side-ver{margin-top:8px;opacity:.55;font-size:12px}
+.set-lang{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.set-lang .seg button.on{background:var(--accent);color:#fff}
