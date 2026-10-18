@@ -401,7 +401,7 @@ function toast(title, text = "", kind = "ok", ms = 5000, onclick = null){
   el.onclick = () => { if (onclick) onclick(); close() };
   if (onclick) el.title = "Нажми, чтобы открыть подробности";
   box.appendChild(el);
-  while (box.children.length > 4) box.firstChild.remove();
+  while (box.querySelectorAll(".toast:not(.pinned)").length > 4) box.querySelector(".toast:not(.pinned)").remove();   // закреплённые (ход обновления) не трогаем
   if (document.hidden) {
     // окно свёрнуто: системное уведомление Windows, а в окне — показать, когда его откроют
     api("/api/notify", {title, text}).catch(() => {});
