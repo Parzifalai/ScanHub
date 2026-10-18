@@ -104,11 +104,11 @@ function prepMissing(){
 }
 function prepCard(){
   const pt = TASK.prepare;
-  if (pt?.status === "running") return {lvl: "warn", t: "Готовлю ScanHub к работе…", s: pt.progress || "ставлю сканеры и скачиваю базы",
+  if (pt?.status === "running") return {lvl: "warn", app: true, t: "Готовлю ScanHub к работе…", s: pt.progress || "ставлю сканеры и скачиваю базы",
     b: ["Остановить", `data-task-cancel="prepare"`]};
   const miss = prepMissing();
   if (!miss.length) return null;
-  return {lvl: "warn", primary: true, t: "Подготовь ScanHub к работе", b: ["Подготовить", `data-task-run="prepare"`],
+  return {lvl: "warn", app: true, primary: true, t: "Подготовь ScanHub к работе", b: ["Подготовить", `data-task-run="prepare"`],
     s: `Сейчас проверки неполные — не хватает: ${miss.join(", ")}. Одно нажатие — всё скачается и поставится само с официальных сайтов ` +
        `(около 1 ГБ, 5–15 минут, окно можно свернуть).`};
 }
@@ -147,14 +147,14 @@ function computeTodo(){
   const T = [], add = (lvl, t, s, b) => T.push({lvl, t, s, b});
   const prep = prepCard();
   if (prep) T.push(prep);
-  if (USAGE === null) T.push({lvl: "info", t: "Помочь автору ScanHub?", s: "Раз в день сообщать автору, что ScanHub запущен: случайный номер этой копии, версия, язык и номер сборки Windows. Без имён, файлов и находок. Так автор узнаёт, сколько людей пользуется ScanHub. Изменить можно в ⚙ Настройках.",
+  if (USAGE === null) T.push({lvl: "info", app: true, t: "Помочь автору ScanHub?", s: "Раз в день сообщать автору, что ScanHub запущен: случайный номер этой копии, версия, язык и номер сборки Windows. Без имён, файлов и находок. Так автор узнаёт, сколько людей пользуется ScanHub. Изменить можно в ⚙ Настройках.",
     b: ["Разрешить", `data-usage="1"`], b2: ["Не надо", `data-usage="0"`]});
   if (TASK.app_links?.result && !TASK.app_links.result.ok && store.get("links.ack") !== "1")
-    add("info", "Создай ярлык ScanHub", "Ярлык на рабочем столе и в меню «Пуск» — чтобы открывать ScanHub в один клик, не заходя в папку.", ["Создать ярлык", `data-task-run="app_links_create"`]);
-  if (SELFUPD?.newer) add("warn", `Вышла новая версия ScanHub — ${SELFUPD.latest}`, SELFUPD.asset
+    T.push({lvl: "info", app: true, t: "Создай ярлык ScanHub", s: "Ярлык на рабочем столе и в меню «Пуск» — чтобы открывать ScanHub в один клик, не заходя в папку.", b: ["Создать ярлык", `data-task-run="app_links_create"`]});
+  if (SELFUPD?.newer) T.push({lvl: "warn", app: true, t: `Вышла новая версия ScanHub — ${SELFUPD.latest}`, s: SELFUPD.asset
       ? `У тебя ${SELFUPD.current}. «Обновить» скачает её с GitHub, сверит контрольную сумму и поставит поверх — ключи, история и карантин останутся. Что нового — по ссылке «Что нового».`
       : `У тебя ${SELFUPD.current}. Скачай архив новой версии со страницы выпуска и распакуй поверх папки ScanHub (папку data не трогай — там твои ключи и история).`,
-    SELFUPD.asset ? ["Обновить", `data-self-update="1"`] : ["Открыть страницу", `data-link="${esc(SELFUPD.url || "")}"`]);
+    b: SELFUPD.asset ? ["Обновить", `data-self-update="1"`] : ["Открыть страницу", `data-link="${esc(SELFUPD.url || "")}"`]});
   const d = tool("defender")?.system;
   if (d && d.realtime === false) add("bad", "Защита Windows выключена", "Защита в реальном времени Microsoft Defender отключена — включи её.", ["Открыть", `data-launch="defender"`]);
   const c = (M?.now?.disks || []).find(x => x.mount === "C:");
@@ -207,8 +207,8 @@ function renderTodo(){
   const all = computeTodo(), hidden = all.filter(x => x.lvl === "info" && ack.has(x.t));
   TODO = all.filter(x => !hidden.includes(x));
   const ic = {bad: ["threat", "!"], warn: ["suspicious", "!"], info: ["running", "i"]};
-  const html = TODO.length ? `<h2 class="sec">Что стоит сделать</h2><div class="checks">${TODO.map(x => `<div class="check">
-      <span class="ic ic-${ic[x.lvl][0]}">${ic[x.lvl][1]}</span><span><b>${esc(x.t)}</b><span class="sub">${esc(x.s)}</span></span>
+  const html = TODO.length ? `<h2 class="sec">Что стоит сделать</h2><div class="checks">${TODO.map(x => `<div class="check${x.app ? " app" : ""}">
+      ${x.app ? `<span class="ic ic-app" title="Это про сам ScanHub, а не про компьютер">S</span>` : `<span class="ic ic-${ic[x.lvl][0]}">${ic[x.lvl][1]}</span>`}<span><b>${esc(x.t)}</b><span class="sub">${esc(x.s)}</span></span>
       <span class="acts">${x.primary ? "" : aiBtn(x.t, x.s, {source: "Главная · Что стоит сделать"})}${x.b ? `<button class="small${x.lvl === "bad" || x.primary ? " primary" : ""}" ${x.b[1]}>${esc(x.b[0])}</button>` : ""}${x.b2 ? ` <button class="small" ${x.b2[1]}>${esc(x.b2[0])}</button>` : x.lvl === "info" ? ` <button class="small" data-todo-ack="${esc(x.t)}" title="Убрать из списка">Понятно</button>` : ""}</span></div>`).join("")}</div>
       ${hidden.length ? `<div class="sub" style="margin-top:6px">Скрыто советов: ${hidden.length}. <a data-todo-unack>Показать снова</a></div>` : ""}`
     : `<h2 class="sec">Что стоит сделать</h2><div class="note info">Сейчас ничего срочного. 👍${hidden.length ? ` <a data-todo-unack>Показать скрытые советы (${hidden.length})</a>` : ""}</div>`;
@@ -517,13 +517,16 @@ function pJunk(dev){
   const total = all.filter(c => S.has(c.id)).reduce((a, c) => a + (c.size || 0), 0);
   const groups = [...JUNK_GROUPS, "Корзина"].filter(g => all.some(c => c.grp === g));
   const res = run?.result;
-  return pnl(`${head("Мусор и кэши", `На C: свободно ${fmtB(r.c_free)} из ${fmtB(r.c_total)}`, btn)}
+  const RV = "Мусор и кэши";
+  const rvBtn = aiReviewBtn(RV, all.filter(c => c.size > 0).map(c => ({id: c.id, label: `${c.grp}: ${c.label}`, size: c.size, note: c.desc || "", path: (c.paths || []).slice(0, 3).join("; ")})));
+  return pnl(`${head("Мусор и кэши", `На C: свободно ${fmtB(r.c_free)} из ${fmtB(r.c_total)}`, btn + rvBtn)}
+    ${aiReviewBox(RV)}
     ${explain("<b>Что такое кэш.</b> Программы сохраняют копии картинок, страниц и скомпилированных данных, чтобы в следующий раз открываться быстрее. Кэш можно удалять: программа создаст его заново, просто первый запуск будет чуть медленнее. Удаляются только файлы старше суток, а занятые программами — пропускаются. Личные файлы, пароли и настройки не трогаются.")}
     ${busyErr("junk_scan", "Пересчитываю…")}${busyErr("junk_clean", "Удаляю… если появится окно UAC — подтверди (для системных папок)")}
     ${res ? `<div class="note ${res.errors?.length ? "warn" : "info"}">Освобождено <b>${fmtB(res.freed)}</b>${res.skipped ? `, пропущено занятых файлов: ${res.skipped} (их держат открытые программы)` : ""}.${res.errors?.length ? "<br>" + res.errors.map(esc).join("<br>") : ""}
       ${res.freed < 1 << 20 ? `<br>Если освободилось мало — значит, в отмеченных папках только свежие файлы (моложе суток) или занятые открытыми программами. ScanHub их специально не трогает; они удалятся при следующей очистке.` : ""}</div>` : ""}
     ${groups.map(g => `<div class="grp">${g}</div><div class="rows">${all.filter(c => c.grp === g).map(c => `<label class="crow">${cb("junk", c.id, S.has(c.id))}
-        <span><b>${esc(c.label)}</b> ${c.admin ? adminChip : ""}${c.safe ? "" : ` <span class="chip-note">по желанию</span>`}<span class="sub">${esc(c.desc || "")}</span>
+        <span><b>${esc(c.label)}</b> ${c.admin ? adminChip : ""}${c.safe ? "" : ` <span class="chip-note">по желанию</span>`}${aiMark(RV, c.id)}<span class="sub">${esc(c.desc || "")}</span>
           ${c.fresh > 1 << 20 ? `<span class="sub" style="color:var(--muted)">ещё ${fmtB(c.fresh)} — свежие файлы (моложе ${c.older_days >= 2 ? c.older_days + " дн." : "суток"}): их программы могут использовать прямо сейчас, удалятся при следующей очистке</span>` : ""}
           ${dev ? `<span class="sub mono">${c.paths?.map(esc).join("<br>") || ""}</span>` : ""}</span>
         <span class="n">${c.always && !c.size ? "—" : fmtB(c.size)}</span></label>`).join("")}</div>`).join("")}
@@ -538,12 +541,14 @@ function pShortcuts(dev){
   const t = TASK.shortcuts, r = t?.result, rm = TASK.shortcuts_remove?.result;
   const btn = `<button data-task-run="shortcuts" ${t?.status === "running" ? "disabled" : ""}>Проверить снова</button>`;
   const S = r ? sel("lnk", t.finished, r.broken.map(b => b.path)) : new Set();
-  return pnl(`${head("Битые ярлыки", r ? `проверено ярлыков: ${r.total}, битых: ${r.broken.length}` : "Ярлыки в меню «Пуск», на рабочем столе и в панели задач, которые ведут в никуда", btn)}
+  const RV = "Битые ярлыки";
+  const rvBtn = r ? aiReviewBtn(RV, r.broken.slice(0, 60).map(b => ({id: b.path, label: b.name, path: b.path, note: `${b.where}; ведёт на ${b.target} — этого файла нет`}))) : "";
+  return pnl(`${head("Битые ярлыки", r ? `проверено ярлыков: ${r.total}, битых: ${r.broken.length}` : "Ярлыки в меню «Пуск», на рабочем столе и в панели задач, которые ведут в никуда", btn + rvBtn)}${aiReviewBox(RV)}
     ${explain("Ярлык — это ссылка на программу. Когда программу удаляют или переносят, ярлык остаётся и при запуске выдаёт ошибку. Ярлыки на отключённые флешки и диски не считаются битыми. Перед удалением ScanHub сохраняет копии ярлыков в <code>D:\\ScanHub\\data\\backups\\shortcuts</code>.")}
     ${busyErr("shortcuts", "Проверяю ярлыки…")}${busyErr("shortcuts_remove", "Удаляю…")}
     ${rm ? `<div class="note info">Удалено ярлыков: ${rm.removed}. Копии — в <code>${esc(rm.backup)}</code>.${rm.errors?.length ? "<br>" + rm.errors.map(esc).join("<br>") : ""}</div>` : ""}
     ${r ? (r.broken.length ? `<div class="rows">${r.broken.map(b => `<label class="crow">${cb("lnk", b.path, S.has(b.path))}
-        <span><b>${esc(b.name)}</b> <span class="sub-inline">${esc(b.where)}</span> ${b.admin ? adminChip : ""}<span class="sub">ведёт на ${esc(b.target)} — этого файла нет</span>
+        <span><b>${esc(b.name)}</b> <span class="sub-inline">${esc(b.where)}</span> ${b.admin ? adminChip : ""}${aiMark(RV, b.path)}<span class="sub">ведёт на ${esc(b.target)} — этого файла нет</span>
         ${dev ? `<span class="sub mono">${esc(b.path)}</span>` : ""}</span><span></span></label>`).join("")}</div>
       <div class="row-tools"><button class="primary" data-sel-run="shortcuts_remove" data-sel-name="lnk" data-sel-arg="paths" data-confirm="Удалить отмеченные ярлыки? Копии сохранятся в папке резервных копий ScanHub.">Удалить отмеченные</button></div>`
       : `<div class="note info">Битых ярлыков нет. 👍</div>`) : ""}`);
@@ -569,12 +574,14 @@ function pDrvStore(dev){
   const btn = `<button data-task-run="drvstore" ${t?.status === "running" ? "disabled" : ""}>Проверить снова</button>`;
   const S = r ? sel("drv", t.finished, r.old.map(p => p.oem)) : new Set();
   const tot = (r?.old || []).filter(p => S.has(p.oem)).reduce((a, p) => a + (p.size || 0), 0);
-  return pnl(`${head("Старые драйверы", r ? `пакетов в хранилище: ${r.packages}, старых неиспользуемых: ${r.old.length} (${fmtB(r.size)})` : "", btn)}
+  const RV = "Старые драйверы";
+  const rvBtn = r ? aiReviewBtn(RV, r.old.slice(0, 60).map(p => ({id: p.oem, label: `${p.provider} · ${p.cls} · ${p.orig}`, size: p.size, note: `версия ${p.version}, установлена новее ${p.newest}`}))) : "";
+  return pnl(`${head("Старые драйверы", r ? `пакетов в хранилище: ${r.packages}, старых неиспользуемых: ${r.old.length} (${fmtB(r.size)})` : "", btn + rvBtn)}${aiReviewBox(RV)}
     ${explain("Когда драйвер обновляется, Windows оставляет старую версию в хранилище драйверов — на случай отката. Со временем там копятся сотни мегабайт. Здесь показаны только старые версии, для которых уже установлена новая и которые не использует ни одно устройство. Удаляет сама Windows (pnputil) — используемый драйвер она удалить не даст. Минус: откатить драйвер на эту старую версию потом будет нельзя.")}
     ${busyErr("drvstore", "Читаю хранилище драйверов…")}${busyErr("drvstore_remove", "Удаляю… подтверди окно UAC")}
     ${rm ? `<div class="note ${rm.failed?.length ? "warn" : "info"}">Удалено пакетов: ${rm.removed}.${rm.failed?.length ? "<br>Не удалось:<br>" + rm.failed.map(esc).join("<br>") : ""}${rpNote(rm)}</div>` : ""}
     ${r ? (r.old.length ? `<table class="t small">${r.old.map(p => `<tr><td style="width:1%">${cb("drv", p.oem, S.has(p.oem))}</td>
-        <td><b>${esc(p.provider)}</b> · ${esc(p.cls)}<div class="sub">${esc(p.orig)} · версия ${esc(p.version)} → установлена ${esc(p.newest)}</div>${dev ? `<div class="sub mono">${esc(p.oem)} · ${esc(p.folder || "")}</div>` : ""}</td>
+        <td><b>${esc(p.provider)}</b> · ${esc(p.cls)}${aiMark(RV, p.oem)}<div class="sub">${esc(p.orig)} · версия ${esc(p.version)} → установлена ${esc(p.newest)}</div>${dev ? `<div class="sub mono">${esc(p.oem)} · ${esc(p.folder || "")}</div>` : ""}</td>
         <td class="n">${p.size ? fmtB(p.size) : "—"}</td></tr>`).join("")}</table>
       ${rpBox()}<div class="row-tools"><button class="primary" data-sel-run="drvstore_remove" data-sel-name="drv" data-sel-arg="oems" data-rp data-confirm="Удалить отмеченные старые пакеты драйверов? Windows попросит права администратора.">Удалить отмеченные (${fmtB(tot)})</button></div>`
       : `<div class="note info">Старых пакетов драйверов нет. 👍</div>`) : ""}`);
@@ -597,28 +604,30 @@ function pDisk(dev){
   const maxT = Math.max(...r.types.map(x => x.size), 1), maxK = Math.max(...v.items.map(x => x.size), 1);
   const S = sel("big", t.finished, []);
   const u = r.usage;
-  const crumbs = [];
-  for (let p = v.path; p && p.toLowerCase().startsWith(r.root.toLowerCase()); p = p.includes("\\") && p.replace(/\\[^\\]*$/, "") !== p ? p.replace(/\\[^\\]*$/, "") : null) {
-    crumbs.unshift(p);
-    if (p.length <= r.root.length) break;
-  }
-  return pnl(`${head("Что занимает место", `${esc(r.root)} · ${fmtB(r.size)} в ${r.files.toLocaleString(LOC)} файлах · посчитано за ${r.seconds} с${r.denied ? ` · без доступа: ${r.denied} папок` : ""}`)}
-    ${top}
+  // путь от корня проверки до текущей папки: корень (например D:\) + каждая папка по пути
+  const crumbs = [r.root], base = r.root.replace(/\\+$/, "");
+  const rest = v.path.toLowerCase().startsWith(base.toLowerCase()) ? v.path.slice(base.length).split("\\").filter(Boolean) : [];
+  rest.forEach((seg, i) => crumbs.push(base + "\\" + rest.slice(0, i + 1).join("\\")));
+  const RV = "Место на диске";
+  const rvBtn = aiReviewBtn(RV, [...r.big.slice(0, 40).map(f => ({id: f.path, label: f.path, size: f.size, note: "файл · " + f.kind})),
+    ...v.items.slice(0, 15).map(k => ({id: "d:" + k.path, label: "папка " + k.path, size: k.size, note: `папка, файлов: ${k.files}`}))], "✦ Что можно удалить?");
+  return pnl(`${head("Что занимает место", `${esc(r.root)} · ${fmtB(r.size)} в ${r.files.toLocaleString(LOC)} файлах · посчитано за ${r.seconds} с${r.denied ? ` · без доступа: ${r.denied} папок` : ""}`, rvBtn)}
+    ${top}${aiReviewBox(RV)}
     ${u ? `<div><div class="bar big-bar" title="занято ${fmtB(u.used)}"><div class="${u.free / u.total < 0.1 ? "crit" : ""}" style="width:${u.used / u.total * 100}%"></div></div>
       <div class="sub">занято ${fmtB(u.used)} из ${fmtB(u.total)} · свободно <b>${fmtB(u.free)}</b></div></div>` : ""}
     <div class="two">
       <div><div class="grp">Типы файлов</div><div class="typelist">${r.types.sort((a, b) => b.size - a.size).map(x => `<div class="trow"><span>${x.icon} ${esc(x.name)}<span class="sub"> · ${x.count.toLocaleString(LOC)} файлов</span></span>
         <span class="n">${fmtB(x.size)}</span>${sizeBar(x.size, maxT)}</div>`).join("")}</div></div>
       <div><div class="grp">Папки</div>
-        <div class="crumbs">${crumbs.map(p => `<a data-dir="${esc(p)}">${esc(p === r.root ? p : p.split("\\").pop())}</a>`).join(" › ")}</div>
+        <div class="crumbs">${crumbs.length > 1 ? `<a data-dir="${esc(crumbs[crumbs.length - 2])}" title="На уровень выше">← назад</a> · ` : ""}${crumbs.map((p, i) => i === crumbs.length - 1 ? `<b>${esc(i ? p.split("\\").pop() : p)}</b>` : `<a data-dir="${esc(p)}">${esc(i ? p.split("\\").pop() : p)}</a>`).join(" › ")}</div>
         ${v.hint ? `<div class="note warn" style="margin:6px 0">${esc(v.hint)}</div>` : ""}
-        <div class="typelist">${v.items.map(k => `<div class="trow"><span>${k.has_kids ? `<a data-dir="${esc(k.path)}">📁 ${esc(k.name)}</a>` : `📁 ${esc(k.name)}`}<span class="sub"> · ${k.files.toLocaleString(LOC)} файлов</span></span>
+        <div class="typelist">${v.items.map(k => `<div class="trow"><span>${k.has_kids ? `<a data-dir="${esc(k.path)}">📁 ${esc(k.name)}</a>` : `📁 ${esc(k.name)}`}<span class="sub"> · ${k.files.toLocaleString(LOC)} файлов</span>${aiMark(RV, "d:" + k.path)}</span>
           <span class="n">${fmtB(k.size)} <a data-open="${esc(k.path)}" class="sub">открыть</a></span>${sizeBar(k.size, maxK)}</div>`).join("")}
           ${v.own_files_size > 0 ? `<div class="trow"><span class="sub">файлы прямо в этой папке</span><span class="n">${fmtB(v.own_files_size)}</span>${sizeBar(v.own_files_size, maxK)}</div>` : ""}
           ${v.more ? `<div class="sub">…и ещё ${v.more} папок поменьше</div>` : ""}</div></div>
     </div>
     <div class="grp">Самые большие файлы</div>
-    <table class="t small">${r.big.slice(0, dev ? 300 : 60).map(f => `<tr><td style="width:1%">${cb("big", f.path, S.has(f.path))}</td><td class="mono" title="${esc(f.path)}">${esc(pathShort(f.path))}</td>
+    <table class="t small">${r.big.slice(0, dev ? 300 : 60).map(f => `<tr><td style="width:1%">${cb("big", f.path, S.has(f.path))}</td><td><span class="mono" title="${esc(f.path)}">${esc(pathShort(f.path))}</span>${aiMark(RV, f.path)}</td>
       <td class="sub">${esc(f.kind)}</td><td class="n">${fmtB(f.size)}</td><td class="acts"><a data-open="${esc(f.path)}">папка</a></td></tr>`).join("")}</table>
     <div class="row-tools"><button class="danger" data-sel-run="recycle" data-sel-name="big" data-sel-arg="paths" data-confirm="Отправить отмеченные файлы в Корзину? Их можно будет восстановить из Корзины.">Удалить отмеченные в Корзину</button></div>
     ${busyErr("recycle", "Удаляю…")}`);
@@ -634,10 +643,12 @@ function pDups(dev){
   const def = r.groups.flatMap(g => g.paths.slice(1));
   const S = sel("dups", t.finished, def);
   const free = r.groups.reduce((a, g) => a + g.paths.filter(p => S.has(p)).length * g.size, 0);
-  return pnl(`${head("Дубликаты", `${esc(r.root)} · просмотрено файлов: ${r.files.toLocaleString(LOC)} · групп: ${r.groups.length} · лишнего: ${fmtB(r.waste)}`)}
-    ${top}${busyErr("recycle", "Удаляю…")}
+  const RV = "Дубликаты";
+  const rvBtn = aiReviewBtn(RV, r.groups.slice(0, 20).flatMap((g, gi) => g.paths.map((p, i) => ({id: p, label: p, size: g.size, note: `группа ${gi + 1} одинаковых файлов${i === 0 ? ", самый старый" : ""}`}))).slice(0, 60));
+  return pnl(`${head("Дубликаты", `${esc(r.root)} · просмотрено файлов: ${r.files.toLocaleString(LOC)} · групп: ${r.groups.length} · лишнего: ${fmtB(r.waste)}`, rvBtn)}
+    ${top}${aiReviewBox(RV)}${busyErr("recycle", "Удаляю…")}
     ${r.groups.length ? r.groups.slice(0, dev ? 400 : 120).map((g, gi) => `<div class="dupg"><div class="sub">${g.paths.length} одинаковых файла по ${fmtB(g.size)}</div>
-      ${g.paths.map((p, i) => `<label class="crow tight">${cb("dups", p, S.has(p), `data-dupg="${gi}"`)}<span class="mono" title="${esc(p)}">${esc(pathShort(p))}${i === 0 ? ` <span class="chip-note">самый старый</span>` : ""}</span><span class="acts"><a data-open="${esc(p)}">папка</a></span></label>`).join("")}</div>`).join("")
+      ${g.paths.map((p, i) => `<label class="crow tight">${cb("dups", p, S.has(p), `data-dupg="${gi}"`)}<span class="mono" title="${esc(p)}">${esc(pathShort(p))}${i === 0 ? ` <span class="chip-note">самый старый</span>` : ""}${aiMark(RV, p)}</span><span class="acts"><a data-open="${esc(p)}">папка</a></span></label>`).join("")}</div>`).join("")
       + `<div class="stickybar"><span>Освободится: <b>${fmtB(free)}</b> (после очистки Корзины)</span><div class="grow"></div>
           <button class="danger" data-dups-go>Удалить отмеченные в Корзину</button></div>`
       : `<div class="note info">Дубликатов не найдено. 👍</div>`}`);
@@ -645,12 +656,14 @@ function pDups(dev){
 function pEmpty(dev){
   const t = TASK.empty, r = t?.result, rm = TASK.empty_remove?.result;
   const S = r ? sel("empty", t.finished, r.folders.map(f => f.path)) : new Set();
-  return pnl(`${head("Пустые папки", r ? `${esc(r.root)} · пустых папок: ${r.total}` : "Папки, в которых нет ни одного файла")}
+  const RV = "Пустые папки";
+  const rvBtn = r ? aiReviewBtn(RV, r.folders.slice(0, 60).map(f => ({id: f.path, label: f.path, note: f.nested ? `+${f.nested} вложенных пустых` : ""}))) : "";
+  return pnl(`${head("Пустые папки", r ? `${esc(r.root)} · пустых папок: ${r.total}` : "Папки, в которых нет ни одного файла", rvBtn)}${aiReviewBox(RV)}
     ${explain("Пустые папки остаются после удаления программ и распаковки архивов. Места почти не занимают, но засоряют проводник. Системные папки и AppData не трогаются — некоторые программы ждут, что их пустая папка существует.")}
     <div class="row-tools"><button class="primary" data-pick-run="empty">Выбрать папку…</button></div>
     ${busyErr("empty", "Ищу пустые папки…")}${busyErr("empty_remove", "Удаляю…")}
     ${rm ? `<div class="note info">Удалено папок: ${rm.removed}.</div>` : ""}
-    ${r ? (r.folders.length ? `<div class="rows">${r.folders.map(f => `<label class="crow tight">${cb("empty", f.path, S.has(f.path))}<span class="mono" title="${esc(f.path)}">${esc(pathShort(f.path))}${f.nested ? ` <span class="sub-inline">+${f.nested} вложенных</span>` : ""}</span><span class="acts"><a data-open="${esc(f.path)}">открыть</a></span></label>`).join("")}</div>
+    ${r ? (r.folders.length ? `<div class="rows">${r.folders.map(f => `<label class="crow tight">${cb("empty", f.path, S.has(f.path))}<span class="mono" title="${esc(f.path)}">${esc(pathShort(f.path))}${f.nested ? ` <span class="sub-inline">+${f.nested} вложенных</span>` : ""}${aiMark(RV, f.path)}</span><span class="acts"><a data-open="${esc(f.path)}">открыть</a></span></label>`).join("")}</div>
       <div class="row-tools"><button class="primary" data-sel-run="empty_remove" data-sel-name="empty" data-sel-arg="paths" data-confirm="Удалить отмеченные пустые папки?">Удалить отмеченные</button></div>`
       : `<div class="note info">Пустых папок нет. 👍</div>`) : ""}`);
 }
@@ -678,8 +691,11 @@ function pUninst(dev){
        ${L.retry_admin ? `<div class="note warn">Удаляльщик этой программы не смог закончить без прав администратора (так бывает, если он — скрипт .bat).
           <div style="margin-top:6px"><button class="small primary" data-task-run="uninstall" data-args="${attr({key: L.key, elevated: true})}">Удалить с правами администратора 🛡</button></div></div>` : ""}
        ${L.backup ? `<div class="sub">Запись из реестра сохранена: <code>${esc(L.backup)}</code></div>` : ""}
-       ${L.leftovers.length ? `<div class="sub">Найдены остатки. Папки уйдут в Корзину, ключи реестра перед удалением сохраняются в резервную копию.</div>
-         <div class="rows">${L.leftovers.map(i => `<label class="crow tight">${cb("left", i.path, S.has(i.path))}<span><b>${i.kind === "folder" ? "📁" : i.kind === "service" ? "⚙ служба" : "🔑"} ${esc(i.kind === "service" ? (i.label || i.path) : i.path)}</b> ${i.admin ? adminChip : ""}${i.data ? ` <span class="chip-warn" title="Сохранения игр, настройки, переписка — загляни в папку, прежде чем удалять">могут быть твои данные</span>` : ""}
+       ${L.leftovers.length ? `<div class="sub">Найдены остатки. Папки уйдут в Корзину, ключи реестра перед удалением сохраняются в резервную копию.
+           ${aiReviewBtn("Остатки программы", L.leftovers.slice(0, 60).map(i => ({id: i.path, label: i.kind === "service" ? (i.label || i.path) : i.path, size: i.size,
+             note: `остаток удалённой программы ${L.name}; ${i.kind === "folder" ? "папка" : i.kind === "service" ? "служба " + (i.exe || "") : "ключ реестра"}${i.data ? "; ScanHub думает, что тут могут быть данные пользователя" : ""}`})))}</div>
+         ${aiReviewBox("Остатки программы")}
+         <div class="rows">${L.leftovers.map(i => `<label class="crow tight">${cb("left", i.path, S.has(i.path))}<span><b>${i.kind === "folder" ? "📁" : i.kind === "service" ? "⚙ служба" : "🔑"} ${esc(i.kind === "service" ? (i.label || i.path) : i.path)}</b> ${i.admin ? adminChip : ""}${i.data ? ` <span class="chip-warn" title="Сохранения игр, настройки, переписка — загляни в папку, прежде чем удалять">могут быть твои данные</span>` : ""}${aiMark("Остатки программы", i.path)}
              ${i.kind === "service" ? `<span class="sub">работает в фоне от удалённой программы · ${esc(i.exe || "")}</span>` : ""}${i.why ? `<span class="sub" style="color:var(--warn)">не удалилось: ${esc(i.why)}</span>` : ""}</span><span class="n">${i.size ? fmtB(i.size) : ""}</span></label>`).join("")}</div>
          ${rpBox()}<div class="row-tools"><button class="primary" data-left-go="${lname}" data-rp>Удалить отмеченные остатки</button>
            ${L.leftovers.some(i => i.why && i.kind === "folder") ? `<button data-left-delay="${lname}">Удалить занятое при перезагрузке 🛡</button>` : ""}
@@ -719,7 +735,7 @@ function pDebloat(dev){
 }
 // ---------- безопасное обновление программ: скачать → проверить на вирусы → тихо поставить
 let UPD = {id: store.get("upd") || null, data: null, polling: false};
-const UPD_IC = {wait: ["pending", "…"], download: ["running", ""], scan: ["running", ""], install: ["running", ""], ready: ["pending", "i"],
+const UPD_IC = {kept: ["pending", "i"], wait: ["pending", "…"], download: ["running", ""], scan: ["running", ""], install: ["running", ""], ready: ["pending", "i"],
   done: ["clean", "✓"], held: ["threat", "!"], error: ["error", "!"], skipped: ["skipped", "–"], stopped: ["skipped", "–"]};
 async function pollUpd(){
   if (UPD.polling || !UPD.id) return;
@@ -743,7 +759,7 @@ async function startUpdates(ids, force){
 }
 function pWinget(dev){
   const t = TASK.winget, all = t?.result?.apps, j = UPD.data, running = j?.status === "running";
-  const apps = all && all.filter(a => !a.ghost), ghosts = (all || []).filter(a => a.ghost);
+  const apps = all && all.filter(a => !a.ghost && !a.ignored), ghosts = (all || []).filter(a => a.ghost), hiddenUpd = (all || []).filter(a => a.ignored && !a.ghost);
   const ghostBox = ghosts.length && !running ? `<div class="note warn"><b>Уже удалены — осталась только запись в списке Windows: ${ghosts.length}.</b>
       Файлов этих программ нет, поэтому winget и предлагает их «обновить». Обновлять не нужно — убери запись, тогда они пропадут и отсюда, и из «Удаления программ».
       ${ghosts.length > 1 ? `<div class="row-tools" style="margin-top:8px"><button class="small primary" data-task-run="force_remove_many" data-args="${attr({keys: ghosts.map(a => a.ghost.key)})}"
@@ -763,7 +779,8 @@ function pWinget(dev){
       <div class="checks">${(j.apps || []).map(a => `<div class="check">${stIcon(a.state)}
         <span><b>${esc(a.name)}</b> <span class="sub-inline">${esc(a.version)} → ${esc(a.available)}${a.scope === "machine" ? " · для всех" : a.scope === "user" ? " · для тебя" : ""}</span>
           <span class="sub">${esc(a.label)}${a.notes?.length ? " · " + a.notes.map(esc).join(" · ") : ""}</span></span>
-        <span>${a.state === "held" && !running ? `<button class="small" data-upd-force="${esc(a.id)}" data-confirm="Обновить ${esc(a.name)}, несмотря на предупреждение? Делай это, только если доверяешь программе и источнику.">Всё равно обновить</button>` : ""}</span></div>`).join("")}</div>
+        <span>${a.state === "held" && !running ? `<button class="small" data-upd-force="${esc(a.id)}" data-confirm="Обновить ${esc(a.name)}, несмотря на предупреждение? Делай это, только если доверяешь программе и источнику.">Всё равно обновить</button>` : ""}
+          ${a.state === "error" && !running ? aiBtn(`Не обновилась программа ${a.name}`, `${a.version} → ${a.available}: ${a.label}`, {source: "Обновления программ"}) : ""}</span></div>`).join("")}</div>
       ${dev ? `<div><a data-show-deep="${esc(j.id)}">Открыть полный ход в консоли</a></div>` : ""}</div>` : "";
   return pnl(`${head("Обновления программ", apps ? `устарело программ: ${apps.length}` : "", `<button data-task-run="winget" ${t?.status === "running" || running ? "disabled" : ""}>${apps ? "Проверить снова" : "Проверить"}</button>`)}
     ${explain("Устаревшие программы — частая дыра в безопасности. ScanHub обновляет их через winget (менеджер программ Windows) так: " +
@@ -774,11 +791,15 @@ function pWinget(dev){
     ${progress}${ghostBox}
     ${apps == null && t?.result ? `<div class="note warn">winget не найден. Установи «Установщик приложений» из Microsoft Store.</div>` : ""}
     ${apps?.length && !running ? `<div class="rows">${apps.map(a => `<label class="crow tight">${cb("upd", a.id, S.has(a.id))}
-        <span><b>${esc(a.name)}</b> <span class="sub-inline">${esc(a.version)} → <b>${esc(a.available)}</b></span>${dev ? `<span class="sub mono">${esc(a.id)}${a.source ? " · " + esc(a.source) : ""}</span>` : ""}</span><span></span></label>`).join("")}</div>
+        <span><b>${esc(a.name)}</b> <span class="sub-inline">${esc(a.version)} → <b>${esc(a.available)}</b></span>${dev ? `<span class="sub mono">${esc(a.id)}${a.source ? " · " + esc(a.source) : ""}</span>` : ""}</span>
+        <span><button class="small ghost" data-task-run="upd_ignore" data-args="${attr({id: a.id})}" title="Спрятать это обновление. Когда выйдет ещё более новая версия — программа появится снова">Не предлагать</button></span></label>`).join("")}</div>
       <div class="stickybar"><span>Выбрано: <b>${S.size}</b> из ${apps.length}</span><div class="grow"></div>
         <button data-upd-all="1">Все</button><button data-upd-all="0">Ни одной</button>
         <button class="primary" data-upd-go ${S.size ? "" : "disabled"}>Проверить и обновить выбранные (${S.size})</button></div>`
-      : apps && !apps.length ? `<div class="note info">${ghosts.length ? "Обновлять нечего: остались только записи удалённых программ." : "Все программы обновлены. 👍"}</div>` : ""}`);
+      : apps && !apps.length ? `<div class="note info">${ghosts.length ? "Обновлять нечего: остались только записи удалённых программ." : "Все программы обновлены. 👍"}</div>` : ""}
+    ${hiddenUpd.length ? `<details class="upd-hidden"><summary class="sub">Скрытые обновления: ${hiddenUpd.length} — ScanHub решил их не ставить или ты попросил не предлагать</summary>
+      <div class="checks">${hiddenUpd.map(a => `<div class="check"><span class="ic ic-pending">i</span><span><b>${esc(a.name)}</b> <span class="sub-inline">${esc(a.version)} → ${esc(a.available)}</span>
+        <span class="sub">${esc(a.ignored)}</span></span><span><button class="small" data-task-run="upd_ignore" data-args="${attr({id: a.id})}">Вернуть в список</button></span></div>`).join("")}</div></details>` : ""}`);
 }
 
 // ============================================================ скорость
@@ -879,7 +900,8 @@ function pBrowsers(dev){
       `<button data-task-run="browsers" ${t?.status === "running" ? "disabled" : ""}>Проверить снова</button>`)}
     ${explain("Расширение с доступом «ко всем сайтам» видит всё, что ты открываешь: почту, банк, пароли на страницах. Магазины расширений проверяют их, но не всегда. " +
       "Опаснее всего расширения, поставленные <b>не из магазина</b> или <b>принудительно через политики</b> — так действуют угонщики браузера и рекламный мусор. " +
-      "Здесь только проверка: удалить расширение можно в самом браузере — меню → «Расширения». Политики и прокси без твоего ведома — повод для глубокой проверки.")}
+      "Кнопка «Удалить» откроет страницу расширения в самом браузере — там нажми «Удалить» ещё раз, и браузер его уберёт. Политики и прокси без твоего ведома — повод для глубокой проверки.")}
+    ${taskErr("ext_open")}
     ${busyErr("browsers", "Читаю профили браузеров…")}
     ${(r?.failed || []).length ? `<div class="note warn"><b>Не получилось прочитать: ${esc(r.failed.map(f => f.browser).join(", "))}</b> — расширения ${r.failed.length > 1 ? "этих браузеров" : "этого браузера"} не проверены. Закрой браузер и нажми «Проверить снова».${dev ? `<br><span class="mono">${esc(r.failed.map(f => f.browser + ": " + f.error).join("; "))}</span>` : ""}</div>` : ""}
     ${(r?.policies || []).map(p => `<div class="note warn"><b>${esc(p.browser)}: браузером управляют политики</b> (${esc(p.key)})<br>${p.items.map(i => `• ${esc(i.what)}: <span class="mono">${esc(i.value)}</span>`).join("<br>")}
@@ -891,7 +913,11 @@ function pBrowsers(dev){
       <span><b>${esc(e.name)}</b> <span class="sub-inline">${esc(e.browser)}${e.profile ? " · " + esc(e.profile) : ""}${e.enabled ? "" : " · выключено"}</span>
         <span class="sub">${e.flags.length ? esc(e.flags.join("; ")) : "из магазина, без опасных прав"}</span>
         ${dev ? `<span class="sub mono">${esc(e.id)} · ${esc(e.version)} · ${esc(e.path)}</span>` : ""}</span>
-      <span>${e.path ? `<a data-open="${esc(e.path)}">папка</a>` : ""}</span></div>`).join("")}</div>` : r ? `<div class="note info">Расширений с замечаниями нет. 👍</div>` : ""}
+      <span class="acts">${e.policy ? `<span class="sub" title="Его поставила политика — браузер не даст удалить. Убери политику (выше) или запусти AdwCleaner">поставлено политикой</span>`
+          : `<button class="small${e.level === "bad" ? " danger" : ""}" data-task-run="ext_open" data-args="${attr({browser: e.browser, id: e.id, profile_dir: e.profile_dir || ""})}"
+            title="Откроет страницу расширения в ${esc(e.browser)} — нажми там «Удалить»">Удалить</button>`}
+        ${e.path && dev ? ` <a data-open="${esc(e.path)}">папка</a>` : ""}</span></div>`).join("")}</div>` : r ? `<div class="note info">Расширений с замечаниями нет. 👍</div>` : ""}
+    ${TASK.ext_open?.result && TASK.ext_open.status !== "running" ? `<div class="note info">Открыл ${esc(TASK.ext_open.result.opened)}: на странице расширения нажми <b>«Удалить»</b> и подтверди. Потом вернись сюда и нажми «Проверить снова».</div>` : ""}
     ${r && !dev ? `<label class="switch"><input type="checkbox" id="brAll" ${store.get("brall") === "1" ? "checked" : ""}> показать все расширения</label>` : ""}`);
 }
 function pCtx(dev){
@@ -914,12 +940,17 @@ function pFirewall(dev){
   for (const x of r?.rules || []) (groups[x.name + "|" + x.prog] ||= {...x, ids: []}).ids.push(x.id);
   const G = Object.values(groups);
   const warn = G.filter(g => g.level === "warn");
+  const ORPHAN = "программы больше нет — правило осталось от удалённого приложения";
+  const orphan = G.filter(g => g.flags.includes(ORPHAN)), orphanIds = orphan.flatMap(g => g.ids), rm = TASK.firewall_remove?.result;
   return pnl(`${head("Брандмауэр", r ? `правил для программ: ${G.length} · с замечаниями: ${warn.length} · встроенных правил Windows: ${r.builtin} (не показаны)` : "", `<button data-task-run="firewall">Проверить снова</button>`)}
     ${explain("Брандмауэр не пускает к компьютеру подключения из сети. <b>Входящее правило</b> — исключение: «этой программе можно принимать подключения». Опасно, когда правило осталось от удалённой программы, разрешено программе из временной папки или открывает всё подряд в публичных сетях (кафе, вокзал). Выключенное правило не удаляется — его можно включить обратно.")}
-    ${busyErr("firewall", "Читаю правила…")}${busyErr("firewall_set", "Сохраняю… подтверди окно UAC")}
+    ${busyErr("firewall", "Читаю правила…")}${busyErr("firewall_set", "Сохраняю… подтверди окно UAC")}${busyErr("firewall_remove", "Удаляю… подтверди окно UAC")}
+    ${rm ? `<div class="note info">✓ Удалено правил: ${rm.removed}. Если какую-то из этих программ поставишь снова, Windows сама спросит, пускать ли её в сеть.</div>` : ""}
+    ${r && orphan.length ? `<div class="note info"><b>Почему тут есть программы, которых уже нет.</b> Когда программа впервые выходит в сеть, Windows создаёт для неё правило. После удаления программы (или переноса в другую папку, или обновления, которое меняет папку — как у Telegram из Microsoft Store) правило остаётся. Само по себе оно не опасно: файла нет — разрешать некому. Но если на это место положат другой файл с тем же именем, он получит доступ из сети без вопросов. Поэтому такие правила лучше удалить — у тебя их ${orphanIds.length} (${orphan.length} программ).
+      <div class="row-tools" style="margin-top:6px"><button class="primary small" data-task-run="firewall_remove" data-args="${attr({ids: orphanIds})}" data-confirm="Удалить ${orphanIds.length} правил брандмауэра от программ, которых больше нет на компьютере? Попросит права администратора. Если программу поставить снова, Windows спросит разрешение заново.">Удалить правила от удалённых программ (${orphanIds.length})</button></div></div>` : ""}
     ${r ? `<div class="rows">${G.map(g => `<div class="crow">${tgl(g.enabled, `data-fw="${attr(g.ids)}"`)}
       <span><b>${esc(g.name)}</b> ${g.public ? `<span class="sub-inline">публичные сети</span>` : ""}${g.ids.length > 1 ? ` <span class="sub-inline">правил: ${g.ids.length}</span>` : ""}
-        ${g.flags.map(f => ` <span class="chip-warn">${esc(f)}</span>`).join("")}
+        ${g.flags.map(f => ` <span class="${g.enabled ? "chip-warn" : "chip-note"}"${g.enabled ? "" : ` title="Правило выключено — сейчас оно ничего не разрешает"`}>${esc(f)}</span>`).join("")}${!g.enabled && g.flags.length ? ` <span class="chip-ok">выключено — не опасно</span>` : ""}
         <span class="sub mono">${esc(dev ? g.prog : pathShort(g.prog))}${g.port ? " · " + esc(g.port) : ""}</span></span><span></span></div>`).join("")}</div>
       <div class="row-tools"><button data-launch="firewall">Брандмауэр Windows (подробно)</button></div>` : ""}`);
 }
@@ -1408,7 +1439,15 @@ function pAlerts(dev){
     ${ALERTS.length ? `<div class="checks">${ALERTS.slice(0, 50).map(a => `<div class="check"><span class="ic ic-${a.level === "bad" ? "threat" : "suspicious"}">!</span>
       <span><b>${esc(a.title)}</b><span class="sub">${esc(a.text)}</span></span><span class="sub">${esc(a.t.slice(11, 16))}</span></div>`).join("")}</div>`
       : `<div class="sub">Пока ничего не случилось.</div>`}
-    ${w?.alerts?.length ? `<div class="grp">Срабатывания «Сторожа»</div><div class="checks">${w.alerts.slice(0, 10).map(a => `<div class="check"><span class="ic ic-suspicious">!</span><span><b>${esc(a.time)}</b><span class="sub">${a.found.map(esc).join("<br>")}</span></span><span></span></div>`).join("")}</div>` : ""}`);
+    ${w?.alerts?.length ? `<div class="grp">Срабатывания «Сторожа»</div>
+      <div class="sub" style="margin:-4px 0 8px">Нажми на строку, чтобы увидеть, что это и что делать.</div>
+      <div class="checks">${w.alerts.slice(0, 10).flatMap(a => (a.items || a.found.map(f => ({text: f, count: 1, lvl: "warn", title: f}))).map(x => `<details class="check watch-it">
+        <summary><span class="ic ic-${x.lvl === "bad" ? "threat" : x.lvl === "ok" ? "clean" : "suspicious"}">${x.lvl === "ok" ? "i" : "!"}</span>
+          <span><b>${esc(x.title)}</b>${x.count > 1 ? ` <span class="sub-inline">×${x.count}</span>` : ""} ${sevChip([x.lvl === "ok" ? "ok" : x.lvl, x.lvl === "bad" ? "Важно" : x.lvl === "ok" ? "Не страшно" : "Стоит посмотреть"])}
+            <span class="sub">${esc(a.time)}</span></span><span class="more">Подробнее ›</span></summary>
+        <div class="watch-body">${x.what ? `<p><b>Что это.</b> ${esc(x.what)}</p>` : ""}${x.todo ? `<p><b>Что делать.</b> ${esc(x.todo)}</p>` : ""}
+          ${dev ? `<div class="sub mono">${esc(x.text)}</div>` : ""}
+          <div class="row-tools">${x.go ? `<button class="small" data-go-page="${esc(x.go)}">${esc(x.go_label || "Открыть")}</button>` : ""}${aiBtn(x.title, `${x.text}. ${x.what || ""}`, {source: "Сторож"})}</div></div></details>`)).join("")}</div>` : ""}`);
 }
 async function pollAlerts(){
   try {
@@ -1553,6 +1592,7 @@ function afterTask(name, args, t){
   const r = t?.result;
   const again = n => runTask(n, undefined, true);
   if (name === "hosts_set") again("hosts");
+  if (name === "upd_ignore" && r?.apps && TASK.winget) TASK.winget.result = r;
   if (name === "watch_set") again("watch");
   if (name === "junk_clean") again("junk_scan");
   if (name === "empty_remove" && TASK.empty?.args?.path) runTask("empty", {path: TASK.empty.args.path}, true);

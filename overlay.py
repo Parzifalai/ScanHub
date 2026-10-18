@@ -17,6 +17,13 @@ BG, FG, DIM = "#101418", "#e8edf3", "#93a1b3"
 GOOD, MID, BAD = "#4ade80", "#facc15", "#f87171"
 
 
+def near(color):
+    """Цвет на единицу отличается от цвета цифр — его Windows делает прозрачным. Сглаженные края цифр смешиваются
+    с почти тем же цветом, поэтому вокруг цифр нет тёмной каймы (с чёрным ключом она была бы)."""
+    r, g, b = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
+    return f"#{r:02x}{g:02x}{b + 1 if b < 255 else b - 1:02x}"
+
+
 def click_through(win):
     hwnd = ctypes.windll.user32.GetParent(win.winfo_id()) or win.winfo_id()
     GWL_EXSTYLE, WS_EX_LAYERED, WS_EX_TRANSPARENT, WS_EX_TOOLWINDOW, WS_EX_NOACTIVATE = -20, 0x80000, 0x20, 0x80, 0x08000000
@@ -73,6 +80,7 @@ def main():
                 else:
                     w.grid()
             fps.grid_configure(padx=(0, 0) if minimal else (0, 8))
+            box.configure(padx=0 if minimal else 10, pady=0 if minimal else 4)
             if d.get("status") == "uac":
                 fps.config(text="…", fg=DIM)
                 l1.config(text="ScanHub: подтверди окно UAC")
@@ -91,6 +99,16 @@ def main():
                 if d.get("cpu_temp"):
                     parts.append(f"CPU {d['cpu_temp']:.0f}°C")
                 l2.config(text="  ·  ".join(parts))
+            # «только FPS» — одни цифры: без подложки, без рамки и без каймы
+            col = fps.cget("fg")
+            bg = near(col) if minimal else BG
+            if state.get("bg") != bg:
+                state["bg"] = bg
+                root.attributes("-alpha", 1.0 if minimal else 0.92)
+                root.configure(bg=bg if minimal else KEY)
+                root.attributes("-transparentcolor", bg if minimal else KEY)
+                for w in (box, fps, l1, l2):
+                    w.configure(bg=bg)
             if d.get("corner") != state["corner"]:
                 state["corner"] = d.get("corner")
                 place(state["corner"] or "tl")

@@ -38,7 +38,7 @@ function gpuLiveTick(){
 let FPS = null, FPS_T = 0;
 async function fpsPoll(){
   if (!(PAGE === "speed" && SUB === "game") || document.hidden) return;
-  try { const was = FPS?.on; FPS = await api("/api/fps"); if (was !== FPS.on || !document.getElementById("fpsLive")) redrawPanels(); else fpsLiveDraw() } catch {}
+  try { const was = FPS?.on; FPS = await api("/api/fps"); qaFpsDraw(); if (was !== FPS.on || !document.getElementById("fpsLive")) redrawPanels(); else fpsLiveDraw() } catch {}
 }
 setInterval(fpsPoll, 1000);
 function fpsLiveDraw(){
@@ -68,6 +68,27 @@ function fpsBlock(){
     <div class="sub" style="margin-top:6px">Не видно окошка в игре? Поставь в настройках игры режим экрана «Оконный без рамки» (Borderless) — в «Полноэкранном» Windows рисует игру поверх всего.</div>
     ${ses.length ? `<div class="grp" style="margin-top:12px">Последние игры</div><table class="t small">${ses.map(verdictRow).join("")}</table>` : ""}</div>`;
 }
+// плитка «Показать FPS» на главной: включает и выключает счётчик без перехода в «Игровой режим»
+function qaFpsDraw(){
+  const b = document.getElementById("qaFps");
+  if (!b) return;
+  b.querySelector("b").textContent = FPS?.on ? "Скрыть FPS" : "Показать FPS";
+  b.querySelector("span:last-child").textContent = FPS?.on ? "Счётчик кадров сейчас включён — нажми, чтобы выключить" : "Цифры кадров в углу экрана поверх игры";
+  b.classList.toggle("on", !!FPS?.on);
+}
+setTimeout(() => api("/api/fps").then(r => { FPS = r; qaFpsDraw() }).catch(() => {}), 1500);
+document.addEventListener("click", async e => {
+  const q = e.target.closest("[data-fps-quick]");
+  if (!q) return;
+  e.preventDefault();
+  if (q.disabled) return;
+  q.disabled = true;
+  const on = !!FPS?.on;
+  q.querySelector("span:last-child").textContent = on ? "Выключаю…" : "Включаю… подтверди окно UAC";
+  try { FPS = await api("/api/fps", {action: on ? "stop" : "start", corner: FPS?.corner}) } catch (err) { toast("Не получилось", err.message, "warn") }
+  q.disabled = false; qaFpsDraw();
+  if (!on && FPS?.on) toast("FPS включён", "запусти игру — цифры появятся в углу экрана. Настройки — «Скорость → Игровой режим»", "ok", 7000);
+});
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-fps],[data-fps-corner],[data-fps-style]");
   if (!b) return;
@@ -76,5 +97,5 @@ document.addEventListener("click", async e => {
   b.disabled = true; b.textContent = b.dataset.fps === "start" ? "Включаю… (подтверди UAC)" : "Выключаю…";
   try { FPS = await api("/api/fps", {action: b.dataset.fps, corner: FPS?.corner}) } catch (err) { toast("Не получилось", err.message, "warn") }
   if (b.dataset.fps === "stop" && FPS?.sessions?.length) toast("Итог игры готов", "смотри «Последние игры» в «Игровом режиме»");
-  redrawPanels();
+  qaFpsDraw(); redrawPanels();
 });

@@ -36,6 +36,7 @@ async function bugReport(prefill = {}){
     <details class="bug-prev" id="bugPrevBox"><summary>Что уйдёт автору</summary><pre id="bugPrev" class="mono">…</pre>
       <div class="sub">Имя пользователя, имя компьютера, почта и ключи убраны. Больше ничего не отправляется: ни файлы, ни история проверок.</div></details>
     <div class="note warn" id="bugNote" hidden></div>
+    <div class="sub bug-mine"><a data-replies>Мои сообщения и ответы автора</a>${REPLIES.unread ? ` <span class="chip-ok">новых ответов: ${REPLIES.unread}</span>` : ""}</div>
     <div class="mdl-btns"><button data-bug-x>Отмена</button><button class="ghost" data-bug-copy hidden>Скопировать отчёт</button><button class="primary" data-bug-send>Отправить</button></div>
   </div>`;
   document.body.appendChild(wrap);
@@ -174,3 +175,33 @@ window.addEventListener("unhandledrejection", e => {
   if (/Failed to fetch|NetworkError|Load failed|перезагружаю окно/i.test(String(r?.message || r))) return;   // связь с сервером оборвалась (выход, перезапуск) — не ошибка кода
   bugLog(r?.message || r, "promise", "", r?.stack);
 });
+
+// ============================================================ ответы автора на мои сообщения
+// Автор отвечает в Telegram на сообщение с отчётом — ScanHub забирает ответ (по номеру сообщения и секрету, который есть только здесь).
+const REPLIES = {tickets: [], unread: 0};
+async function repliesLoad(action){
+  try { Object.assign(REPLIES, await api("/api/replies", action ? {action} : undefined)) } catch {}
+  const b = document.getElementById("bugBtn");
+  if (b) { b.dataset.unread = REPLIES.unread || ""; b.classList.toggle("has-reply", !!REPLIES.unread) }
+  return REPLIES;
+}
+let REPLIES_SEEN = 0;
+async function repliesPoll(){
+  await repliesLoad();
+  if (REPLIES.unread > REPLIES_SEEN) toast("Автор ScanHub ответил тебе", "нажми, чтобы прочитать", "info", 12000, () => repliesOpen());
+  REPLIES_SEEN = REPLIES.unread;
+}
+setTimeout(repliesPoll, 25000); setInterval(repliesPoll, 5 * 60000);
+async function repliesOpen(){
+  await repliesLoad("check");
+  const t = REPLIES.tickets;
+  const body = t.length ? t.map(x => `<div class="rep-t"><div class="sub">${x.kind === "idea" ? "Твоя идея" : "Твоё сообщение об ошибке"} · ${esc(new Date(x.sent).toLocaleDateString(LOC, {day: "numeric", month: "long"}))}</div>
+      <div class="rep-mine">${esc(x.text)}</div>
+      ${(x.replies || []).length ? x.replies.map(r => `<div class="rep-a"><b>Автор ScanHub</b> <span class="sub">${esc(new Date(r.t).toLocaleString(LOC, {day: "numeric", month: "long", hour: "2-digit", minute: "2-digit"}))}</span><div>${esc(r.text)}</div></div>`).join("")
+        : `<div class="sub">Ответа пока нет. ScanHub сам проверяет раз в полчаса, пока открыт.</div>`}</div>`).join("")
+    : `<p>Ты ещё ничего не писал автору — или писал до версии 1.4.0, когда ответы ещё не приходили в ScanHub.</p>`;
+  await modal({title: "Мои сообщения автору", icon: "✉", wide: true, ok: "Закрыть", cancel: null,
+    html: `<p class="sub">Когда автор ответит на твоё сообщение, ответ появится здесь, а ScanHub пришлёт уведомление. Ответ видишь только ты: у каждого сообщения свой секретный ключ, он хранится только на этом компьютере.</p>${body}${REPLIES.error ? `<div class="note warn">${esc(REPLIES.error)}</div>` : ""}`});
+  if (REPLIES.unread) { await repliesLoad("read"); REPLIES_SEEN = 0 }
+}
+document.addEventListener("click", e => { if (e.target.closest("[data-replies]")) { e.preventDefault(); repliesOpen() } });

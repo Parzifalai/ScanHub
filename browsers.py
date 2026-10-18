@@ -1,6 +1,7 @@
 """Браузеры: расширения, политики и прокси — частый способ закрепиться у угонщиков браузера, рекламного мусора и стилеров.
 
-Только чтение: ничего не удаляет. Расширения удаляются в самом браузере, политики — в разделе реестра Policies.
+Проверка только читает. Удалить расширение: open_extension открывает его страницу в самом браузере (там кнопка «Удалить») —
+так браузер удаляет его по-честному, без правки его файлов (их защищают контрольные суммы).
 """
 import glob
 import json
@@ -108,12 +109,48 @@ def _chromium(browser, root):
                 hosts += [m for m in cs.get("matches") or [] if isinstance(m, str)]
             upd = man.get("update_url") or ""
             from_store = st.get("from_webstore") or any(s in upd for s in STORES)
-            exts.append({"browser": browser, "profile": pname, "id": eid, "name": _msg(folder or "", man, man.get("name") or eid),
+            exts.append({"browser": browser, "profile": pname, "profile_dir": os.path.basename(prof) if prof != root else "", "id": eid, "name": _msg(folder or "", man, man.get("name") or eid),
                          "version": man.get("version", ""), "enabled": not st.get("disable_reasons") and st.get("state", 1) != 0,
                          "store": bool(from_store), "unpacked": loc in LOC_UNPACKED, "policy": loc in LOC_POLICY,
                          "external": loc in LOC_EXTERNAL, "all_sites": any(h in ALL_SITES or h.startswith("*://*/") for h in hosts),
                          "risky": sorted({p for p in perms if p in RISKY_PERMS}), "path": folder or ""})
     return exts
+
+
+# браузер → (exe в «App Paths», адрес страницы расширения)
+EXT_PAGE = {"Google Chrome": ("chrome.exe", "chrome://extensions/?id={id}"), "Microsoft Edge": ("msedge.exe", "edge://extensions/?id={id}"),
+            "Brave": ("brave.exe", "brave://extensions/?id={id}"), "Яндекс Браузер": ("browser.exe", "browser://tune/?id={id}"),
+            "Vivaldi": ("vivaldi.exe", "vivaldi://extensions/?id={id}"), "Opera": ("opera.exe", "opera://extensions/?id={id}"),
+            "Opera GX": ("opera.exe", "opera://extensions/?id={id}"), "Firefox": ("firefox.exe", "about:addons")}
+
+
+def _exe(name):
+    for hive in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        try:
+            with winreg.OpenKey(hive, rf"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{name}") as k:
+                v = os.path.expandvars(winreg.QueryValueEx(k, "")[0]).strip('"')
+                if os.path.isfile(v):
+                    return v
+        except OSError:
+            pass
+    for guess in (os.path.join(LA, r"Yandex\YandexBrowser\Application\browser.exe"), os.path.join(LA, r"Programs\Opera\opera.exe"),
+                  os.path.join(LA, r"Programs\Opera GX\opera.exe")):
+        if os.path.basename(guess) == name and os.path.isfile(guess):
+            return guess
+    return None
+
+
+def open_extension(e):
+    """Открыть страницу расширения в его браузере и профиле — там кнопка «Удалить» (браузер спросит подтверждение)."""
+    exe_name, url = EXT_PAGE.get(e.get("browser"), (None, None))
+    exe = _exe(exe_name) if exe_name else None
+    if not exe:
+        raise RuntimeError(f"не нашёл {e.get('browser')} — открой его и зайди в меню → «Расширения»")
+    if not re.fullmatch(r"[\w.@{}\-]{1,128}", e.get("id") or ""):
+        raise RuntimeError("неверный идентификатор расширения")
+    cmd = [exe] + ([f"--profile-directory={e['profile_dir']}"] if e.get("profile_dir") and e["browser"] != "Firefox" else []) + [url.format(id=e["id"])]
+    subprocess.Popen(cmd, creationflags=NO_WINDOW, close_fds=True)
+    return {"opened": e.get("browser"), "policy": bool(e.get("policy"))}
 
 
 def _firefox():

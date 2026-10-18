@@ -123,12 +123,12 @@ function fixRender(){
 }
 function renderFixPill(){
   let p = $("#fixpill");
-  const show = !FIX.open && FIX.min && FIX.plan;
+  const show = !FIX.open && FIX.min && FIX.plan && !FIX.pillHidden;
   if (!show) { if (p) p.remove(); return }
-  if (!p) { p = document.createElement("button"); p.id = "fixpill"; p.className = "primary fixpill"; document.body.appendChild(p) }
+  if (!p) { p = document.createElement("div"); p.id = "fixpill"; p.className = "fixpill"; document.body.appendChild(p) }
   const cards = FIX.plan.cards, done = cards.filter(x => ["done", "skip"].includes(FIX.st[x.id]?.status)).length;
-  p.innerHTML = `↩ Вернуться к исправлению · ${done} из ${cards.length}`;
-  p.dataset.fixOpen = "1";
+  p.innerHTML = `<button class="primary" data-fix-open="1">↩ Вернуться к исправлению · ${done} из ${cards.length}</button>
+    <button class="fixpill-x" data-fix-pill-hide title="Убрать кнопку. Вернуться к исправлению можно кнопкой «Исправить по шагам» в итогах ультра проверки">✕</button>`;
 }
 
 function fixMsg(name, r){
@@ -282,12 +282,13 @@ async function fixApply(auto){
 }
 
 document.addEventListener("click", e => {
+  if (e.target.closest("[data-fix-pill-hide]")) { FIX.pillHidden = true; renderFixPill(); return toast("Кнопка убрана", "вернуться к исправлению — «Исправить по шагам» в итогах ультра проверки", "info", 6000) }
   const el = e.target.closest("[data-fix-auto],[data-fix-auto-stop],[data-fix-open],[data-fix-close],[data-fix-reload],[data-fix-go],[data-fix-step],[data-fix-mark],[data-fix-do],[data-fix-all],#fixw [data-go-page],#fixw [data-ultra-deep]");
   if (!el) return;
   if (el.hasAttribute("data-fix-auto")) return FIX.auto ? null : fixAuto();
   if (el.hasAttribute("data-fix-auto-stop")) { if (FIX.auto) FIX.auto.stop = true; return fixRender() }
   if (FIX.auto && el.closest("#fixw") && !el.hasAttribute("data-fix-close")) return;     // пока идёт автопрохождение — шаги не трогаем
-  if (el.dataset.fixOpen) return openFix();
+  if (el.dataset.fixOpen) { FIX.pillHidden = false; return openFix() }
   if (el.hasAttribute("data-fix-close")) return fixClose(true);
   if (el.hasAttribute("data-fix-reload")) return openFix(true);
   if (el.dataset.goPage || el.dataset.ultraDeep) { fixClose(true); return }      // раздел приложения — мастер сворачивается в кнопку

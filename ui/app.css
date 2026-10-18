@@ -461,7 +461,9 @@ details.ud summary{cursor:pointer;display:list-item;margin-top:2px}
 .fixw-wait{display:grid;place-items:center;align-content:center;gap:10px;text-align:center;padding:30px}
 .fixw-wait .spin{width:34px;height:34px}
 .fixw-foot{display:flex;gap:10px;align-items:center;padding:12px 18px;border-top:1px solid var(--line)}
-.fixpill{position:fixed;left:16px;bottom:16px;z-index:45;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.fixpill{position:fixed;left:16px;bottom:16px;z-index:45;display:flex;gap:4px;align-items:stretch}
+.fixpill>button{box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.fixpill-x{padding:0 10px;min-width:0}
 @media (max-width:760px){.fixw-body{grid-template-columns:1fr}.fixw-list{display:none}.fixw-card{padding:16px}}
 .fixw-list,.fixw-card{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 details.ulog{background:var(--panel2);border-radius:10px;padding:8px 12px}
@@ -963,3 +965,36 @@ details.dsec>.checks{margin-top:6px}
 .mdl-ic .svg-ic{width:19px;height:19px}
 .idea-link{display:inline-flex;align-items:center;gap:5px}
 .idea-link .svg-ic{width:14px;height:14px}
+
+/* ✦ оценка помощника перед удалением */
+.chip-bad{display:inline-block;font-size:11.5px;border-radius:999px;padding:0 8px;margin-left:4px;font-weight:500;line-height:1.6;background:var(--bad-bg);color:var(--bad)}
+.ai-why{display:block;font-size:12px}
+.ai-review{margin:8px 0}
+.ai-review p{margin:6px 0}
+.ai-review ul,.ai-review ol{margin:4px 0 4px 18px;padding:0}
+
+/* напоминания про сам ScanHub (статистика, ярлык, обновление) — отдельным цветом, чтобы не путать с проблемами ПК */
+.check.app{background:color-mix(in srgb,var(--accent) 10%,var(--panel2));box-shadow:inset 3px 0 0 var(--accent)}
+.ic-app{background:var(--accent);color:#fff;border-radius:5px!important;font-family:var(--din,inherit)}
+.qa.on{box-shadow:inset 0 0 0 2px var(--ok)}
+/* проверка клавиатуры на весь экран (вместе с блокировкой системных клавиш) */
+.kbd-fs:fullscreen{background:var(--bg);padding:48px 6vw;overflow:auto;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.kbd-fs:fullscreen .kbd{font-size:1.15em}
+
+/* срабатывания Сторожа: строка раскрывается — что это и что делать */
+.watch-it{display:block}
+.watch-it>summary{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:start;cursor:pointer;list-style:none}
+.watch-it>summary::-webkit-details-marker{display:none}
+.watch-it .more{color:var(--accent);font-size:12.5px;white-space:nowrap}
+.watch-it[open] .more{visibility:hidden}
+.watch-body{margin:8px 0 2px 34px}
+.watch-body p{margin:4px 0}
+
+/* ответы автора */
+#bugBtn.has-reply{position:relative}
+#bugBtn.has-reply::after{content:attr(data-unread);position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--ok);color:#fff;font-size:11px;line-height:16px;text-align:center}
+.rep-t{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}
+.rep-mine{margin:4px 0 8px;white-space:pre-wrap}
+.rep-a{background:var(--accent-soft);border-radius:8px;padding:8px 10px;margin-top:6px}
+.rep-a>div{white-space:pre-wrap;margin-top:2px}
+.bug-mine{margin:6px 0 -4px}

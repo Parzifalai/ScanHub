@@ -863,12 +863,17 @@ def live_driver(h, r):
     """Уязвимый драйвер реально опасен, если он работает или стартует с Windows и его не блокирует целостность памяти.
     Загруженный сейчас — опасен всегда: раз загрузился, значит, защита его не остановила."""
     if h["loaded"]:
-        return True
+        return h["start"] != 4                  # отключён (Start=4), но ещё в памяти — исчезнет после перезагрузки
     return bool(h["service"] and h["start"] != 4) and not (r["hvci"] and not h["loads_despite_hvci"])
 
 
+def pending_driver(h):
+    """Отключён ScanHub или вручную, но ещё загружен: уйдёт после перезагрузки."""
+    return bool(h["loaded"] and h["start"] == 4 and h["category"] != "malicious")
+
+
 def _drv_text(h, r):
-    where = "загружен сейчас" if h["loaded"] else f"служба {h['service']}" + (" (выключена)" if h["start"] == 4 else "") if h["service"] else "лежит на диске, не загружен"
+    where = "уже отключён, работает до перезагрузки" if h["loaded"] and h["start"] == 4 else "загружен сейчас" if h["loaded"] else f"служба {h['service']}" + (" (выключена)" if h["start"] == 4 else "") if h["service"] else "лежит на диске, не загружен"
     who = " · ".join(x for x in (h["product"], h["company"]) if x)
     if h["category"] == "malicious":
         return f"ВРЕДОНОСНЫЙ драйвер {h['name'] or os.path.basename(h['path'])} — {where}" + (f" · {who}" if who else "")
@@ -1061,6 +1066,8 @@ def run(builtin, mode_id, target, emit, stopped, details):
             return 1, ["threat", f"Вредоносные драйверы: {len(mal)}"]
         if live:
             return 2, ["suspicious", f"Уязвимые драйверы в работе: {len(live)}"]
+        if any(pending_driver(h) for h in r["hits"]):
+            return 0, ["unknown", "Уязвимый драйвер отключён — перезагрузи компьютер, чтобы он выгрузился"]
         if r["hits"]:
             return 0, ["unknown", f"Уязвимые драйверы на диске (не работают): {len(r['hits'])}"]
         return 0, ["clean", f"Проверено драйверов: {r['checked']}, известных уязвимых нет"]

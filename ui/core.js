@@ -150,6 +150,7 @@ const ICONS = {
   file: '<path d="M14 3.5H6.5a1 1 0 0 0-1 1v15a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V8z"/><path d="M14 3.5V8h4.5"/>',
   folder: '<path d="M3.5 6.5a1 1 0 0 1 1-1h4.8l2 2h8.2a1 1 0 0 1 1 1v9.5a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/>',
   quick: '<path d="M13 2.5 4.5 14h7l-1 7.5L19 10h-7z"/>',
+  fps: '<rect x="3" y="4.5" width="18" height="13" rx="2"/><path d="M7 14.5v-6h3M7 11.5h2.5M12.5 14.5v-6h2a1.5 1.5 0 0 1 0 3h-2"/><path d="M9 21h6M12 17.5V21"/>',
   game: '<path d="M7.5 7h9a4.5 4.5 0 0 1 4.4 5.4l-.9 4.2a2.2 2.2 0 0 1-3.8 1L14.5 15.5h-5l-1.7 2.1a2.2 2.2 0 0 1-3.8-1l-.9-4.2A4.5 4.5 0 0 1 7.5 7z"/><path d="M8 10v3M6.5 11.5h3"/><circle cx="15.5" cy="10.8" r=".7"/><circle cx="17.3" cy="12.6" r=".7"/>',
   chip: '<rect x="6.5" y="6.5" width="11" height="11" rx="1.5"/><rect x="9.5" y="9.5" width="5" height="5" rx=".5"/><path d="M9.5 3v3.5M14.5 3v3.5M9.5 17.5V21M14.5 17.5V21M3 9.5h3.5M3 14.5h3.5M17.5 9.5H21M17.5 14.5H21"/>',
   fan: '<circle cx="12" cy="12" r="1.8"/><path d="M12 10.2c-1.4-3.8-.6-6.9 2.4-7 2.6-.1 3.3 3 .9 5"/><path d="M13.6 12.9c3.9 1 6.1 3.4 4.7 6-1.2 2.2-4.2 1.3-4.4-1.8"/><path d="M10.3 12.9c-2.7 3-5.8 3.8-7.1 1.3-1.2-2.3 1.2-4.3 3.9-3.1"/>',
@@ -240,9 +241,11 @@ function hjtTile(){
     ${last ? `<span class="sub">последний отчёт: ${esc(ago(last.started))}</span>` : ""}</div>`;
 }
 
+const IN_DEEP = new Set(["minersearch"]);
 function renderSimple(){
   renderHero();
-  $("#sTiles").innerHTML = TOOLS.filter(t => t.section === "downloadable").map(t => `
+  // MinerSearch и так запускается внутри глубокой и ультра проверки — второй раз вручную его не предлагаем
+  $("#sTiles").innerHTML = TOOLS.filter(t => t.section === "downloadable" && !IN_DEEP.has(t.id)).map(t => `
     <div class="tile"><b>${esc(t.name)}</b><p>${esc(t.simple || t.description)}</p>
       <div class="row">${simpleTileButtons(t)}</div></div>`).join("") + hjtTile();
   const online = TOOLS.filter(t => t.section === "online");

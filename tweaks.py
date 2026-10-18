@@ -899,7 +899,7 @@ Get-NetFirewallRule -Direction Inbound -Action Allow | ForEach-Object {
         port = (r.get("port") or "").strip()
         flags = []
         if prog not in ("Any", "System") and not os.path.exists(prog):
-            flags.append("программы больше нет — правило осталось от удалённого приложения")
+            flags.append(ORPHAN_FLAG)
         if system.in_user_dir(prog) and "\\appdata\\local\\programs\\" not in prog.lower():
             flags.append("разрешено программе из папки пользователя или TEMP")
         if prog == "Any" and port.endswith(" Any") and not builtin:
@@ -936,6 +936,36 @@ def firewall_set(rule_ids, enable, run_elevated):
     if m and int(m.group(1)) == 0:
         raise RuntimeError("эти правила уже удалены — обнови список")
     return True
+
+
+ORPHAN_FLAG = "программы больше нет — правило осталось от удалённого приложения"
+
+
+def firewall_remove(rule_ids, run_elevated):
+    """Удалить правила брандмауэра, которые остались от удалённых программ (файла программы нет).
+    Описание правил перед удалением сохраняется в data\\backups\\firewall_removed.json — если программу поставить снова,
+    Windows сама спросит разрешение заново."""
+    ids = list(rule_ids or [])
+    if not ids or not all(isinstance(i, str) and i and "\n" not in i and "\r" not in i and len(i) < 600 for i in ids):
+        raise RuntimeError("неверный идентификатор правила")
+    lit = ",".join("'" + i.replace("'", "''") + "'" for i in ids)
+    ps = (f"$ids = @({lit}); $r = @(Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object {{ $ids -ccontains $_.Name }}); "
+          f"if ($r.Count) {{ $r | Remove-NetFirewallRule -ErrorAction Stop }}; 'FOUND=' + $r.Count")
+    try:
+        audit = {r["id"]: r for r in firewall_audit()["rules"]}
+        bak = os.path.join(DATA, "backups", "firewall_removed.json")
+        old = load(bak, [])
+        old.append({"when": datetime.now().isoformat(timespec="seconds"), "rules": [audit.get(i, {"id": i}) for i in ids]})
+        os.makedirs(os.path.dirname(bak), exist_ok=True)
+        save(bak, old[-50:])
+    except Exception:
+        pass
+    res = run_elevated([{"type": "run", "cmd": ["powershell", "-NoProfile", "-Command", ps], "timeout": 180}])
+    out = res[0].get("out") or res[0].get("error") or ""
+    if not res[0].get("ok") or res[0].get("code"):
+        raise RuntimeError(out[-300:] or "не удалось")
+    m = re.search(r"FOUND=(\d+)", out)
+    return {"removed": int(m.group(1)) if m else len(ids)}
 
 
 # ================================================================ автозагрузка и время загрузки

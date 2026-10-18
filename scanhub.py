@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "1.3.2"
+VERSION = "1.4.0"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -1564,6 +1564,9 @@ def _only_found(name, args):
     elif name == "firewall_set":
         ids = a.get("ids") or a.get("id")
         keep(ids if isinstance(ids, list) else [ids], [r["id"] for r in (_last("firewall") or {}).get("rules", [])], "правило брандмауэра")
+    elif name == "firewall_remove":            # удалять — только правила, у которых проверка не нашла программу
+        keep(a.get("ids") or [], [r["id"] for r in (_last("firewall") or {}).get("rules", []) if tweaks.ORPHAN_FLAG in r.get("flags", [])],
+             "правило от удалённой программы")
     elif name == "ctx_set" and not str(a.get("id", "")).startswith("classic|"):
         keep([a.get("id")], [i["id"] for i in (_last("ctx") or {}).get("items", [])], "пункт меню")
     elif name == "startup_set":
@@ -1616,7 +1619,8 @@ def _task_fn(name, args):
         "leftovers_delay": lambda: uninstall.delete_on_reboot(list(args.get("items", [])), run_el),
         "appx": tweaks.appx_list,
         "appx_remove": lambda: tweaks.appx_remove(list(args.get("fulls", []))),
-        "winget": lambda: {"apps": system.winget_upgrades()},
+        "winget": lambda: _winget_list(),
+        "upd_ignore": lambda: _upd_ignore(str(args.get("id", ""))),
         # ---- приватность и система
         "privacy": tweaks.privacy_status,
         "privacy_apply": _with_rp("настройки приватности", lambda: {"items": tweaks.privacy_apply(list(args.get("ids", [])), run_el)}, args),
@@ -1633,6 +1637,8 @@ def _task_fn(name, args):
         "game_off": lambda: tweaks.game_off(run_el),
         "firewall": tweaks.firewall_audit,
         "firewall_set": lambda: {"ok": tweaks.firewall_set(args.get("ids") or args["id"], bool(args.get("enable")), run_el)},
+        "firewall_remove": lambda: tweaks.firewall_remove(args.get("ids") or [], run_el),
+        "ext_open": lambda: __import__("browsers").open_extension(_find_ext(args)),
         "startup": tweaks.startup_list,
         "startup_set": lambda: {"ok": tweaks.startup_set(args["id"], bool(args.get("enable")), run_el)},
         "boot_trace": lambda: tweaks.boot_trace(run_el),
@@ -1694,6 +1700,41 @@ def _task_fn(name, args):
         "change_undo": lambda: journal_undo(str(args.get("id", "")), run_el),
         "sensors_set": lambda: _sensors_set(bool(args.get("enable"))),
     }[name]
+
+
+def _winget_list():
+    """Устаревшие программы; версии, которые ScanHub или человек решили не ставить, помечены ignored (окно прячет их в «Скрытые»)."""
+    import updates
+    apps = system.winget_upgrades()
+    for a in apps or []:
+        if updates.ignored(a):
+            a["ignored"] = (updates.ignore_list().get(a["id"]) or {}).get("why") or "ты попросил не предлагать"
+    return {"apps": apps}
+
+
+def _upd_ignore(pid):
+    """«Больше не предлагать» / «Вернуть»: только для программы из последнего списка winget."""
+    import updates
+    a = next((x for x in (_last("winget") or {}).get("apps") or [] if x["id"] == pid), None)
+    if not a:
+        raise RuntimeError("этой программы нет в списке — нажми «Проверить снова»")
+    d = updates.ignore_list()
+    if updates.ignored(a):
+        d.pop(pid, None)
+        json.dump(d, open(updates.IGNORE, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        a.pop("ignored", None)
+    else:
+        updates.ignore_add(pid, a["available"], "ты попросил не предлагать это обновление")
+        a["ignored"] = "ты попросил не предлагать это обновление"
+    return {"apps": (_last("winget") or {}).get("apps")}
+
+
+def _find_ext(a):
+    """Открыть можно только расширение из последней проверки браузеров."""
+    for e in (_last("browsers") or {}).get("extensions", []):
+        if e.get("browser") == a.get("browser") and e.get("id") == a.get("id") and (e.get("profile_dir") or "") == (a.get("profile_dir") or ""):
+            return e
+    raise RuntimeError("этого расширения нет в последней проверке — нажми «Проверить снова»")
 
 
 def _driver_toggle(service, disable, run_el):
@@ -1780,7 +1821,7 @@ CHANGE_TASKS = {
     "privacy_apply": "Приватность: выключено", "privacy_revert": "Приватность: возвращено как было",
     "security_apply": "Защита Windows: включено", "security_revert": "Защита Windows: возвращено как было",
     "ctx_set": "Меню правой кнопки", "game_on": "Игровой режим включён", "game_off": "Игровой режим выключен",
-    "firewall_set": "Брандмауэр", "startup_set": "Автозагрузка", "driver_disable": "Отключён уязвимый драйвер",
+    "firewall_set": "Брандмауэр", "firewall_remove": "Брандмауэр: удалены правила от удалённых программ", "startup_set": "Автозагрузка", "driver_disable": "Отключён уязвимый драйвер",
     "driver_restore": "Драйвер включён обратно", "hosts_set": "Блокировка майнинг-сайтов (файл hosts)",
     "watch_set": "Сторож (проверка раз в 15 минут)", "memclean_set": "Полная очистка памяти", "sensors_set": "Датчики Lenovo",
     "device_fix": "Устройства: настройка Windows",
@@ -2343,7 +2384,7 @@ def start_updates(ids=None, force=()):
     if known is None:
         known = system.winget_upgrades() or []
         _set_task("winget", {"apps": known})
-    want = set(ids) if ids is not None else {a["id"] for a in known}
+    want = set(ids) if ids is not None else {a["id"] for a in known if not a.get("ignored")}
     apps = [a for a in known if a["id"] in want and not a.get("ghost")]   # только то, что winget сам показал устаревшим; удалённые — не ставим
     if not apps:
         raise RuntimeError("нечего обновлять — обнови список программ и выбери снова")
@@ -2586,6 +2627,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self.send(200, pcclean.children_of(q.get("path", "")))
             except Exception as e:
                 return self.send(400, {"error": str(e)})
+        if u.path == "/api/replies":
+            return self.send(200, report.replies_view())
         if u.path == "/api/history":
             return self.send(200, {"history": load_json(HISTORY_FILE, [])})
         if u.path == "/api/config":
@@ -2657,6 +2700,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 r = report.build(body, VERSION, config())
                 return self.send(200, {"text": report.preview_text(r), "ready": bool(config().get("report_url") or report.REPORT_URL),
                                        "log": report.log_info()})
+            if p == "/api/replies":
+                if body.get("action") == "check":
+                    try:
+                        report.check_replies(config())
+                    except Exception as e:
+                        return self.send(200, {**report.replies_view(), "error": f"не получилось проверить: {e}"})
+                if body.get("action") == "read":
+                    return self.send(200, report.replies_read())
+                return self.send(200, report.replies_view())
             if p == "/api/report/send":
                 report.send(report.build(body, VERSION, config()), config())
                 return self.send(200, {"ok": True})
@@ -2878,7 +2930,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 except assistant.AIError as e:
                     return self.send(200, {"ok": False, "error": str(e)})
             if p == "/api/ai/ask":
-                kind = body.get("kind") if body.get("kind") in ("explain", "solve") else "chat"
+                kind = body.get("kind") if body.get("kind") in ("explain", "solve", "act", "review") else "chat"
                 cfg_ = config()
                 if not cfg_.get("ai_provider"):
                     return self.send(400, {"error": "помощник не настроен"})
@@ -2927,7 +2979,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self.send(200, {"removed": n})
             if p == "/api/link":
                 url = str(body["url"])
-                if urllib.parse.urlsplit(url).scheme == "https" and (urllib.parse.urlsplit(url).hostname or "").lower() in link_hosts():
+                if urllib.parse.urlsplit(url).scheme == "https" and ((urllib.parse.urlsplit(url).hostname or "").lower() in link_hosts()
+                                                                     or (body.get("ai") and url in assistant.ANSWER_LINKS)):
                     webbrowser.open(url)
                 else:
                     return self.send(400, {"error": "эту ссылку ScanHub не открывает"})
@@ -3361,6 +3414,19 @@ def _health_snapshot_later():
         report.record("история здоровья", e)
 
 
+def _replies_loop():
+    """Ответы автора на мои сообщения: через 20 с после запуска и раз в 30 минут, пока ScanHub открыт."""
+    time.sleep(20)
+    while True:
+        try:
+            n = report.check_replies(config())
+            if n:
+                _notify("автор ответил на твоё сообщение", "Открой ScanHub → «Написать автору» → «Мои сообщения»")
+        except Exception:
+            pass                               # нет интернета или посредник старый — попробуем позже
+        time.sleep(1800)
+
+
 def main():
     if "--elevated-b64" in sys.argv:
         deepscan.elevated_main(sys.argv[sys.argv.index("--elevated-b64") + 1])
@@ -3403,6 +3469,7 @@ def main():
     threading.Thread(target=protect_folder, daemon=True).start()
     threading.Thread(target=updater_loop, daemon=True).start()
     threading.Thread(target=_health_snapshot_later, daemon=True).start()
+    threading.Thread(target=_replies_loop, daemon=True).start()
     threading.Thread(target=lambda: __import__("usage").loop(config, _cfg_update, VERSION), daemon=True).start()
     threading.Thread(target=ctxmenu_startup, daemon=True).start()
     threading.Thread(target=lambda: ultra_report.seed(load_json(ULTRA_FILE, None)), daemon=True).start()

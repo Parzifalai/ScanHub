@@ -1,0 +1,148 @@
+(.+?\.exe) аварийно завершилась	-
+(Помощник не поставил оценки пунктам — нажми ещё раз или выбери другую модель.)	(The assistant didn't rate the items — press again or pick another model.)
+(запись была тихой — ScanHub усилил её в	(the recording was quiet — ScanHub boosted it
+8) { j = {status: "error", error: "ScanHub перезапустился — попробуй ещё раз"}; break } continue	-
+AI.msgs.push({role: "user", content: "Проверь, нет ли важного: " + area, show: "✦ Есть ли тут важное: " + area}, {role: "assistant", content: rv.answer})	-
+FPS включён	FPS is on
+ScanHub думает, что тут могут быть данные пользователя	ScanHub thinks there may be user data here
+ScanHub решил их не ставить или ты попросил не предлагать	ScanHub decided not to install them, or you asked not to offer them
+toast("Помощник проверил список", "метки — у каждого пункта", "info", 5000)	-
+«Удалить»	"Remove"
+Автор ScanHub	ScanHub author
+Автор ScanHub ответил тебе	The ScanHub author replied to you
+Без блокировки	Not locked
+Безопасное он отметил галочками	He ticked the safe ones
+Битые ярлыки": "lnk", "Старые драйверы": "drv", "Шредер": null	-
+Блокировка снята	Lock released
+Брандмауэр: удалены правила от удалённых программ	Firewall: removed rules of uninstalled programs
+Включаю… подтверди окно UAC	Turning on… confirm the UAC window
+Выйти — кнопка «Закончить проверку», Shift+Esc или удерживай Esc 2 секунды.	To exit — the "Finish test" button, Shift+Esc, or hold Esc for 2 seconds.
+ГБ. Когда места почти нет, Windows тормозит и не может поставить обновления.	GB. When space is almost gone, Windows slows down and can't install updates.
+Для ноутбука под нагрузкой (игра, сборка, видео)	For a laptop under load (gaming, compiling, video)
+Драйвер отключён — перезагрузи компьютер, чтобы он выгрузился из памяти	Driver disabled — restart the computer to unload it from memory
+Драйвер отключён. Он ещё в памяти — перезагрузи компьютер, и он перестанет работать.	Driver disabled. It's still in memory — restart the computer and it will stop working.
+Если выключал кнопкой или садилась батарея — не страшно. Если сам — открой «Сбои и ошибки».	If you turned it off with the button or the battery ran out — no worries. If it did it by itself — open "Crashes and errors".
+Если какую-то из этих программ поставишь снова, Windows сама спросит, пускать ли её в сеть.	If you install any of these programs again, Windows will ask whether to let it on the network.
+Если не замечал проблем — ничего делать не надо. Если вылетает часто или мешает — открой «Сбои и ошибки»: там видно, как часто и почему.	If you didn't notice problems — nothing to do. If it crashes often or bothers you — open "Crashes and errors": it shows how often and why.
+Запись нигде не сохранилась.	The recording wasn't saved anywhere.
+Запись пустая — микрофон ничего не передал.	The recording is empty — the microphone sent nothing.
+Запусти глубокую проверку — она найдёт и уберёт майнер. Если это твой собственный майнер — всё в порядке.	Run a deep scan — it will find and remove the miner. If it's your own miner — all good.
+Кнопка «Удалить» откроет страницу расширения в самом браузере — там нажми «Удалить» ещё раз, и браузер его уберёт. Политики и прокси без твоего ведома — повод для глубокой проверки.	The "Remove" button opens the extension's page in the browser itself — press "Remove" there again and the browser will remove it. Policies and proxies you didn't set are a reason for a deep scan.
+Кнопка убрана	Button hidden
+Когда автор ответит на твоё сообщение, ответ появится здесь, а ScanHub пришлёт уведомление. Ответ видишь только ты: у каждого сообщения свой секретный ключ, он хранится только на этом компьютере.	When the author replies to your message, the reply appears here and ScanHub sends a notification. Only you see the reply: each message has its own secret key stored only on this computer.
+Когда программа впервые выходит в сеть, Windows создаёт для неё правило. После удаления программы (или переноса в другую папку, или обновления, которое меняет папку — как у Telegram из Microsoft Store) правило остаётся. Само по себе оно не опасно: файла нет — разрешать некому. Но если на это место положат другой файл с тем же именем, он получит доступ из сети без вопросов. Поэтому такие правила лучше удалить — у тебя их	When a program first goes online, Windows creates a rule for it. After the program is removed (or moved to another folder, or updated into a new folder — like Telegram from the Microsoft Store) the rule stays. By itself it isn't dangerous: there's no file to allow. But if another file with the same name is put there, it gets network access without asking. So it's better to delete such rules — you have
+Компьютер выключился неправильно	The computer shut down improperly
+Мои сообщения автору	My messages to the author
+Мои сообщения и ответы автора	My messages and the author's replies
+На уровень выше	One level up
+Нажимай клавиши по очереди — нажатые подсветятся. Те, что не загораются, не работают. На время проверки окно разворачивается на весь экран и клавиши ничего не делают — ни в ScanHub, ни в Windows (Win, Alt+Tab, Alt+F4 и другие).	Press the keys one by one — pressed ones light up. Those that don't light up don't work. During the test the window goes full screen and keys do nothing — neither in ScanHub nor in Windows (Win, Alt+Tab, Alt+F4 and others).
+Нажми на строку, чтобы увидеть, что это и что делать.	Click a row to see what it is and what to do.
+Не закрывай решётки вентиляции (не ставь ноутбук на кровать или колени), поставь на подставку. Если греется в простое — посмотри «Почему шумит»: кто грузит процессор. Раз в 1–2 года ноутбуку нужна чистка от пыли и замена термопасты.	Don't block the vents (don't put the laptop on a bed or your lap), use a stand. If it heats up when idle — check "Why is it noisy": who loads the processor. Every 1–2 years a laptop needs dust cleaning and new thermal paste.
+Не обновилась программа	Program didn't update
+Не получилось воспроизвести запись:	Couldn't play the recording:
+Не получилось развернуть окно — Win и Alt+Tab сработают как обычно.	Couldn't go full screen — Win and Alt+Tab will work as usual.
+Не предлагать	Don't offer
+Ничего не слышно? Проверь, куда выводится звук (динамики или наушники) и громкость.	Hear nothing? Check where sound goes (speakers or headphones) and the volume.
+Одиночный вылет программы — не опасно для компьютера: она просто закрылась с ошибкой.	A single program crash isn't dangerous for the computer: it just closed with an error.
+Окно вышло из полного экрана — системные клавиши снова работают.	The window left full screen — system keys work again.
+Остатки программы	Program leftovers
+Ответа пока нет. ScanHub сам проверяет раз в полчаса, пока открыт.	No reply yet. ScanHub checks every half hour while it's open.
+Откроет страницу расширения в	Opens the extension's page in
+Открой ScanHub → «Написать автору» → «Мои сообщения»	Open ScanHub → "Write to the author" → "My messages"
+Открой «Сбои и ошибки» — там причина и что сделать.	Open "Crashes and errors" — the cause and what to do are there.
+Открываются своим окном. Запускай их, если проверка что-то нашла или компьютер ведёт себя странно: тормозит, сам открывает сайты, греется в простое. Здесь только те, что глубокая и ультра проверка не запускают сами (MinerSearch, ClamAV, YARA, HollowsHunter и Atomdrift уже входят в них).	They open in their own window. Run them if a scan found something or the computer acts strange: lags, opens sites by itself, heats up when idle. Only scanners that the deep and ultra scans don't run themselves are listed here (MinerSearch, ClamAV, YARA, HollowsHunter and Atomdrift are already part of them).
+Открыл	Opened
+Очисти мусор и Корзину, потом посмотри, что занимает место.	Clean junk and the Recycle Bin, then see what takes up space.
+Подробности — в «Сбоях и ошибках».	Details — in "Crashes and errors".
+Показать FPS	Show FPS
+Помощник посмотрит каждый пункт (а если непонятно — поищет в интернете) и скажет, что можно удалять смело, а что лучше оставить	The assistant will look at each item (and search the web if unclear) and say what's safe to delete and what's better to keep
+Послушать ещё раз	Listen again
+Похоже на скрытый майнер	Looks like a hidden miner
+Почему тут есть программы, которых уже нет.	Why programs that are gone are listed here.
+Правило выключено — сейчас оно ничего не разрешает	The rule is off — it doesn't allow anything now
+Программа нагружала компьютер или обращалась к майнинг-пулу — так ведут себя скрытые майнеры (тайно «добывают» криптовалюту на чужом ПК).	A program loaded the computer or contacted a mining pool — that's how hidden miners behave (secretly "mining" crypto on someone else's PC).
+Серьёзный сбой Windows	Serious Windows failure
+Системные клавиши отключены	System keys disabled
+Скрытые обновления:	Hidden updates:
+Скрыть FPS	Hide FPS
+Спрятать это обновление. Когда выйдет ещё более новая версия — программа появится снова	Hide this update. When an even newer version comes out, the program will show up again
+Счётчик кадров сейчас включён — нажми, чтобы выключить	The frame counter is on — click to turn it off
+Твоя идея	Your idea
+Твоё сообщение об ошибке	Your bug report
+Ты ещё ничего не писал автору — или писал до версии 1.4.0, когда ответы ещё не приходили в ScanHub.	You haven't written to the author yet — or wrote before version 1.4.0, when replies didn't come into ScanHub.
+Удалено правил:	Rules removed:
+Удалить правила от удалённых программ	Delete rules of uninstalled programs
+Уязвимый драйвер отключён — перезагрузи компьютер, чтобы он выгрузился	Vulnerable driver disabled — restart the computer to unload it
+Цифры кадров в углу экрана поверх игры	Frame numbers in the screen corner over the game
+Что делать.	What to do.
+Что это.	What it is.
+автор ответил на твоё сообщение	the author replied to your message
+вернуться к исправлению — «Исправить по шагам» в итогах ультра проверки	to return to fixing — "Fix step by step" in the ultra scan results
+верхняя граница нормы	the upper limit of normal
+вложенных пустых	nested empty
+выключ|Kernel-Power	-
+выключено — не опасно	off — not dangerous
+выше нормы	above normal
+группа	group
+запусти игру — цифры появятся в углу экрана. Настройки — «Скорость → Игровой режим»	start a game — numbers will appear in the screen corner. Settings — "Speed → Game mode"
+и подтверди. Потом вернись сюда и нажми «Проверить снова».	and confirm. Then come back and press "Check again".
+играет запись	playing the recording
+ищу в интернете	searching the web
+ищу официальный сайт	looking for the official site
+ключ реестра	registry key
+майнинг|майнер	-
+на странице расширения нажми	on the extension page press
+нагрелся до	reached
+нажми там «Удалить»	press "Remove" there
+нажми, чтобы прочитать	click to read
+назад	back
+не нашёл	didn't find
+неверный идентификатор расширения	invalid extension ID
+новых ответов:	new replies:
+нужна программам, которые с ней работают, поэтому ScanHub оставил её как есть и больше не будет предлагать это обновление. Понадобится новая — поставь её с сайта программы.	is needed by programs that use it, so ScanHub left it as is and won't offer this update again. If you need the new one — install it from the program's site.
+одинаковых файлов	identical files
+окно не развернулось	the window didn't go full screen
+она ставится рядом со старой, а не вместо неё. Установленная	it installs next to the old one, not instead of it. The installed
+опасное снял.	unticked the risky ones.
+оставлено как есть	left as is
+остаток удалённой программы	leftover of a removed program
+открой его и зайди в меню → «Расширения»	open it and go to menu → "Extensions"
+папка, файлов:	folder, files:
+поставлено политикой	installed by policy
+правил брандмауэра от программ, которых больше нет на компьютере? Попросит права администратора. Если программу поставить снова, Windows спросит разрешение заново.	firewall rules of programs no longer on the computer? Will ask for administrator rights. If you install the program again, Windows will ask for permission again.
+правило от удалённой программы	rule of a removed program
+программ).	programs).
+раза, чтобы было слышно)	times so you can hear it)
+с)…	s)…
+сам снижает частоту, чтобы не перегреться, — отсюда бывают просадки FPS. Опасно, если так горячо в простое или часто.	lowers its own speed to avoid overheating — that's where FPS drops come from. It's dangerous if it's this hot when idle or often.
+синий экран|BugCheck|аппаратн|WHEA	-
+ты попросил не предлагать	you asked not to offer it
+ты попросил не предлагать это обновление	you asked not to offer this update
+у новой версии нет установщика под твою установку (другая разрядность или установлена «для всех»/«для тебя» иначе). Обновить поверх нельзя, поэтому ScanHub оставил программу как есть и больше не будет предлагать эту версию. Нужна новая — удали старую в «Удалении программ» и скачай новую с официального сайта.	the new version has no installer matching your installation (different bitness, or installed "for everyone"/"for you" differently). It can't be updated in place, so ScanHub left the program as is and won't offer this version again. Need the new one — remove the old one in "Uninstall programs" and download the new one from the official site.
+уже отключён, работает до перезагрузки	already disabled, runs until restart
+установлена новее	newer installed
+уязвимый драйвер отключён — перезагрузи компьютер	vulnerable driver disabled — restart the computer
+читаю страницу	reading the page
+это новая отдельная версия (линейка	is a new separate version (line
+этого расширения нет в последней проверке — нажми «Проверить снова»	this extension isn't in the last check — press "Check again"
+этой программы нет в списке — нажми «Проверить снова»	this program isn't in the list — press "Check again"
+✦ Помощник смотрит…	✦ Assistant is looking…
+✦ Что можно удалить?	✦ What can I delete?
+✦ Есть ли тут важное?	✦ Anything important here?
+Можно удалить	Safe to delete
+Сначала посмотри	Look first
+Не удаляй	Don't delete
+Помощник посмотрел:	The assistant checked:
+можно удалить —	safe to delete —
+сначала посмотри —	look first —
+не удаляй —	don't delete —
+Скрыть оценку	Hide the rating
+Помощник проверяет пункты…	The assistant is checking the items…
+Помощник проверил список	The assistant checked the list
+метки — у каждого пункта	labels are next to each item
+Метки — у каждого пункта, причина — при наведении.	Labels are next to each item; hover for the reason.
+Сначала подключи ИИ-помощника	Connect the AI assistant first
+Интернет	Internet
+Разрешить искать в интернете	Allow web search
+Помощник сможет узнать, что это за программа или ошибка, знают ли о проблеме другие, и найти официальный сайт, чтобы дать безопасную ссылку на скачивание. В запросы не попадают твои пути и имя. Для «Сделай сам» поиск всегда выключен.	The assistant can find out what a program or error is, whether others know the problem, and find the official site to give a safe download link. Your paths and name never go into queries. For "Do it for me" search is always off.
+Открыть ссылку в браузере?	Open the link in the browser?
