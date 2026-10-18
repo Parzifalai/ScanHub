@@ -9,6 +9,7 @@
 """
 import glob
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -27,7 +28,34 @@ WINGET = os.path.join(os.environ.get("LOCALAPPDATA", ""), r"Microsoft\WindowsApp
 COMMON = ["--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity"]
 NOISE = re.compile(r"^[\s\-\\|/█▒▓░]*$|\d+(\.\d+)?\s*[KMG]B\s*/|^\s*\d+%\s*$")
 STATE = {"wait": "ждёт", "download": "скачивается", "scan": "проверяется", "ready": "проверено, ждёт установки", "install": "ставится",
-         "done": "обновлено", "held": "придержано", "skipped": "пропущено", "error": "не получилось", "stopped": "остановлено"}
+         "done": "обновлено", "held": "придержано", "skipped": "пропущено", "error": "не получилось", "stopped": "остановлено",
+         "kept": "оставлено как есть"}
+IGNORE = os.path.join(DATA, "updates_ignore.json")      # {id: версия} — эту версию больше не предлагать (решил ScanHub или человек)
+
+
+def ignore_list():
+    try:
+        return json.load(open(IGNORE, encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def ignore_add(pid, version, why=""):
+    d = ignore_list()
+    d[pid] = {"version": version, "why": why, "when": time.strftime("%Y-%m-%d")}
+    os.makedirs(DATA, exist_ok=True)
+    json.dump(d, open(IGNORE, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
+
+def ignored(a):
+    """Скрыть, если ровно эта новая версия уже отклонена. Вышла ещё новее — покажем снова."""
+    v = ignore_list().get(a.get("id"))
+    return bool(v) and v.get("version") == a.get("available")
+
+
+def _major(v):
+    m = re.match(r"\D*(\d+)", v or "")
+    return int(m.group(1)) if m else None
 
 
 def winget_exe():
@@ -140,7 +168,7 @@ class Updater:
         except OSError:
             pass
         n = {k: sum(1 for a in apps if a["state"] == k) for k in STATE}
-        parts = [f"обновлено {n['done']} из {len(apps)}"] + [f"{STATE[k]}: {n[k]}" for k in ("held", "error", "skipped", "stopped") if n[k]]
+        parts = [f"обновлено {n['done']} из {len(apps)}"] + [f"{STATE[k]}: {n[k]}" for k in ("held", "kept", "error", "skipped", "stopped") if n[k]]
         self.emit("\n" + " · ".join(parts))
         v = "threat" if n["held"] else "error" if n["error"] and not n["done"] else "clean"
         return (1 if n["held"] else 0), [v, ("Остановлено · " if self.stopped() else "") + " · ".join(parts)]
@@ -271,6 +299,8 @@ class Updater:
         text = " ".join(out[-8:]).lower()
         if code == 0 or "успешно установлено" in text or "successfully installed" in text:
             return self.set(a, "done", f"обновлено до {a['available']}")
+        if "применимый установщик не найден" in text or "no applicable installer" in text:
+            return self.decide_no_installer(a)
         hint = ("установщик просит перезагрузку — обновится после неё" if code in (3010, 1641, -1978335135) else
                 "программа сейчас открыта — закрой её и обнови снова" if "используется" in text or "in use" in text or code == -1978334962 else
                 "winget не нашёл подходящего обновления" if code == -1978335189 else
@@ -279,6 +309,25 @@ class Updater:
                 if "применимый установщик не найден" in text or "no applicable installer" in text else
                 f"код {code}")
         self.set(a, "done" if code in (3010, 1641) else "error", hint if code in (3010, 1641) else f"не установилось: {hint}")
+
+    def decide_no_installer(self, a):
+        """У новой версии нет установщика, который подходит к установленной. ScanHub решает сам, что с этим делать."""
+        old_m, new_m = _major(a["version"]), _major(a["available"])
+        if old_m is not None and new_m is not None and old_m != new_m:
+            # другая основная версия (OLE DB Driver 18 → 19, Python 3.12 → 3.13): это отдельная программа, ставится рядом,
+            # а старую используют другие программы — обновлять поверх нельзя, ставить вторую копию без нужды не стоит
+            why = (f"{a['available']} — это новая отдельная версия (линейка {new_m}), она ставится рядом со старой, а не вместо неё. "
+                   f"Установленная {a['version']} нужна программам, которые с ней работают, поэтому ScanHub оставил её как есть "
+                   "и больше не будет предлагать это обновление. Понадобится новая — поставь её с сайта программы.")
+            ignore_add(a["id"], a["available"], why)
+            self.emit("    ScanHub: " + why)
+            return self.set(a, "kept", why)
+        why = ("у новой версии нет установщика под твою установку (другая разрядность или установлена «для всех»/«для тебя» иначе). "
+               "Обновить поверх нельзя, поэтому ScanHub оставил программу как есть и больше не будет предлагать эту версию. "
+               "Нужна новая — удали старую в «Удалении программ» и скачай новую с официального сайта.")
+        ignore_add(a["id"], a["available"], why)
+        self.emit("    ScanHub: " + why)
+        return self.set(a, "kept", why)
 
     def cleanup(self, a):
         """Скачанный установщик больше не нужен — место на диске важнее."""

@@ -49,6 +49,7 @@ function dtestStop(){
   if (DT.rec?.state === "recording") try { DT.rec.stop() } catch {}
   DT.rec = null;
   document.removeEventListener("keydown", kbdDown, true); document.removeEventListener("keyup", kbdUp, true);
+  kbdUnlock();
   document.querySelectorAll(".dtest").forEach(el => { el.innerHTML = ""; el.classList.remove("on") });
   DT.cur = null; DT.el = null;
 }
@@ -125,21 +126,37 @@ async function micRecord(){
   const st = document.getElementById("micRecSt");
   const chunks = [];
   DT.rec = new MediaRecorder(DT.stream);
-  DT.rec.ondataavailable = e => chunks.push(e.data);
-  DT.rec.onstop = () => {
+  DT.rec.ondataavailable = e => { if (e.data?.size) chunks.push(e.data) };
+  DT.rec.onstop = async () => {
     DT.rec = null;
-    if (!chunks.length) return;
-    const url = URL.createObjectURL(new Blob(chunks, {type: chunks[0].type}));
-    const a = new Audio(url);
-    if (st) st.textContent = "▶ слушаем запись…";
-    a.onended = () => { if (st) st.textContent = "Готово. Запись нигде не сохранилась."; URL.revokeObjectURL(url) };
-    a.play().catch(() => { if (st) st.textContent = "Не получилось воспроизвести запись." });
+    if (!chunks.length) { if (st) st.textContent = "Запись пустая — микрофон ничего не передал."; return }
+    // проигрываем через звук страницы с усилением: тихий микрофон иначе почти не слышно в динамиках
+    try {
+      const ctx = DT.ctx && DT.ctx.state !== "closed" ? DT.ctx : (DT.ctx = new AudioContext());
+      await ctx.resume();
+      const audio = await ctx.decodeAudioData(await new Blob(chunks, {type: chunks[0].type}).arrayBuffer());
+      let pk = 0;
+      for (let c = 0; c < audio.numberOfChannels; c++) for (const v of audio.getChannelData(c)) pk = Math.max(pk, Math.abs(v));
+      DT.recBuf = audio; DT.recGain = pk > 0.001 ? Math.min(20, 0.8 / pk) : 1;
+      micPlay();
+    } catch (e) { if (st) st.textContent = "Не получилось воспроизвести запись: " + (e.message || e) }
   };
   DT.rec.start();
   let n = 3;
   if (st) st.textContent = "● запись: 3…";
   const step = () => { n--; if (n > 0) { if (st) st.textContent = `● запись: ${n}…`; DT.timers.push(setTimeout(step, 1000)) } else DT.rec?.stop() };
   DT.timers.push(setTimeout(step, 1000));
+}
+function micPlay(){
+  const st = document.getElementById("micRecSt"), ctx = DT.ctx, buf = DT.recBuf;
+  if (!ctx || !buf) return;
+  const src = ctx.createBufferSource(), g = ctx.createGain();
+  src.buffer = buf; g.gain.value = DT.recGain || 1;
+  src.connect(g).connect(ctx.destination);
+  src.onended = () => { if (st) st.innerHTML = `Готово${DT.recGain > 1.5 ? ` (запись была тихой — ScanHub усилил её в ${DT.recGain.toFixed(1)} раза, чтобы было слышно)` : ""}. Запись нигде не сохранилась. <button class="small" data-mic-play>▶ Послушать ещё раз</button>
+    <div class="sub">Ничего не слышно? Проверь, куда выводится звук (динамики или наушники) и громкость. <button class="small ghost" data-launch="sound">Параметры звука</button></div>` };
+  if (st) st.textContent = `▶ играет запись (${buf.duration.toFixed(1)} с)…`;
+  src.start();
 }
 
 // динамики: тон слева, справа, по очереди
@@ -180,15 +197,39 @@ const kLbl = c => KBD_LBL[c] || c.replace(/^Key|^Digit/, "");
 function kbdTest(box){
   DT.kbd = {seen: new Set(), down: {}, up: {}, chatter: {}, n: 0};
   box.innerHTML = `<div class="dt-h"><b>Проверка клавиатуры</b><div class="grow"></div>${dclose}</div>
-    <div class="sub">Нажимай клавиши по очереди — нажатые подсветятся. Те, что не загораются, не работают. Пока идёт проверка, клавиши ничего не делают в ScanHub.</div>
+    <div class="sub">Нажимай клавиши по очереди — нажатые подсветятся. Те, что не загораются, не работают. На время проверки окно разворачивается на весь экран и клавиши ничего не делают — ни в ScanHub, ни в Windows (Win, Alt+Tab, Alt+F4 и другие).</div>
+    <div class="sub" id="kbdLock"></div>
     <div class="kbd">${KBD_ROWS.map(r => `<div class="kr">${r.map(c => `<span class="kk k-${c}${c === "Space" ? " wide" : /Shift|Enter|Backspace|Caps|Tab|Control/.test(c) ? " mid" : ""}" data-k="${c}">${esc(kLbl(c))}</span>`).join("")}</div>`).join("")}</div>
     <div class="sub" id="kbdSt">Нажато клавиш: 0</div>`;
   document.addEventListener("keydown", kbdDown, true); document.addEventListener("keyup", kbdUp, true);
+  kbdLock(box);
 }
+// полноэкранный режим + Keyboard Lock: тогда браузер сам забирает системные клавиши (Win, Alt+Tab, Alt+F4…), и Windows на них не реагирует.
+// Ctrl+Alt+Del и Fn перехватить нельзя никому. Выйти: «Закончить проверку», Shift+Esc или удерживать Esc.
+async function kbdLock(box){
+  const note = t => { const el = document.getElementById("kbdLock"); if (el) el.innerHTML = t };
+  try {
+    if (!document.fullscreenElement) await Promise.race([box.requestFullscreen({navigationUI: "hide"}),
+      new Promise((_, no) => setTimeout(() => no(new Error("окно не развернулось")), 3000))]);
+    box.classList.add("kbd-fs");
+    if (navigator.keyboard?.lock) { await navigator.keyboard.lock(); DT.kbdLocked = true }
+    note(`${sevChip(["ok", "Системные клавиши отключены"])} Выйти — кнопка «Закончить проверку», Shift+Esc или удерживай Esc 2 секунды.`);
+  } catch (e) {
+    note(`${sevChip(["info", "Без блокировки"])} Не получилось развернуть окно — Win и Alt+Tab сработают как обычно.`);
+  }
+}
+function kbdUnlock(){
+  try { navigator.keyboard?.unlock() } catch {}
+  DT.kbdLocked = false;
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  document.querySelectorAll(".kbd-fs").forEach(el => el.classList.remove("kbd-fs"));
+}
+document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && DT.kbdLocked) { kbdUnlock(); const el = document.getElementById("kbdLock"); if (el) el.innerHTML = `${sevChip(["info", "Блокировка снята"])} Окно вышло из полного экрана — системные клавиши снова работают.` } });
 function kbdDown(e){
   const K = DT.kbd;
   if (!K || e.code === "") return;
-  if (!(e.code === "Escape" && e.shiftKey)) { e.preventDefault(); e.stopPropagation() }
+  if (e.code === "Escape" && e.shiftKey) { e.preventDefault(); return dtestStop() }
+  e.preventDefault(); e.stopPropagation();
   const now = performance.now();
   if (!e.repeat && K.up[e.code] && now - K.up[e.code] < 35) K.chatter[e.code] = (K.chatter[e.code] || 0) + 1;     // отпустил и «нажалось» снова за 35 мс — так пальцем не успеть
   if (!e.repeat) { K.down[e.code] = now; K.n++ }
@@ -272,11 +313,12 @@ async function camTest(box){
 }
 
 document.addEventListener("click", async e => {
-  const t = e.target.closest("[data-dtest],[data-dtest-stop],[data-mic-rec],[data-spk],[data-dfix]");
+  const t = e.target.closest("[data-dtest],[data-dtest-stop],[data-mic-rec],[data-mic-play],[data-spk],[data-dfix]");
   if (!t) return;
   if (t.dataset.dtest) return dtestOpen(t.dataset.dtest);
   if (t.hasAttribute("data-dtest-stop")) return dtestStop();
   if (t.hasAttribute("data-mic-rec")) return micRecord();
+  if (t.hasAttribute("data-mic-play")) return micPlay();
   if (t.dataset.spk) return spkPlay(t.dataset.spk);
   if (t.dataset.dfix) { await runTask("device_fix", {kind: t.dataset.dfix}); runTask("devices") }
 });

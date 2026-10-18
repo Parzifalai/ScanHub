@@ -2,6 +2,9 @@
 //   POST /report — «Нашёл ошибку?» / «Предложить улучшение»: принимает сообщение и пересылает автору в Telegram.
 //   POST /ping   — анонимная отметка «ScanHub запущен сегодня» (только у тех, кто согласился): случайный номер копии, версия, язык.
 //   GET  /stats?key=…  — страница для автора: сколько копий запускалось сегодня, за неделю, за месяц, всего; версии и языки.
+//   POST /tg     — вебхук Telegram: автор отвечает (Reply) на сообщение с отчётом — ответ сохраняется для того, кто писал.
+//   POST /replies — ScanHub спрашивает ответы на свои сообщения: номер сообщения + секретный ключ (он есть только у отправителя).
+//   GET  /setup?key=…  — один раз: подключить вебхук Telegram (ключ — STATS_KEY).
 // Ключ бота хранится только здесь (секрет BOT_TOKEN в настройках Worker), в открытом коде ScanHub его нет.
 //
 // Настройки Worker (Settings → Variables and Secrets / Bindings):
@@ -35,6 +38,53 @@ async function tg(env, method, body){
   const j = await r.json().catch(() => ({}));
   if (!j.ok) throw new Error(j.description || `Telegram ответил ${r.status}`);
   return j;
+}
+
+// ---------- ответы автора: сообщение ↔ номер обращения (в KV USAGE, ключи t:… и m:…, хранятся 180 дней)
+const TICKET_TTL = 180 * 86400;
+const hex = async s => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)))].map(b => b.toString(16).padStart(2, "0")).join("");
+const hookSecret = async env => (await hex("scanhub-hook:" + env.BOT_TOKEN)).slice(0, 48);
+async function setup(url, env){
+  if (!env.STATS_KEY || url.searchParams.get("key") !== env.STATS_KEY) return new Response("Нет доступа", {status: 403});
+  const j = await tg(env, "setWebhook", JSON.stringify({url: url.origin + "/tg", secret_token: await hookSecret(env), allowed_updates: ["message"]}))
+    .catch(e => ({ok: false, description: e.message}));
+  return json(j);
+}
+async function hook(req, env){
+  if (req.headers.get("X-Telegram-Bot-Api-Secret-Token") !== await hookSecret(env)) return new Response("no", {status: 403});
+  const u = await req.json().catch(() => ({}));
+  const m = u.message;
+  if (!m || String(m.chat?.id) !== String(env.CHAT_ID)) return json({ok: true});        // отвечать может только автор
+  const to = m.reply_to_message?.message_id;
+  const text = String(m.text || m.caption || "").trim();
+  if (!to || !text) return json({ok: true});
+  const ticket = env.USAGE && await env.USAGE.get("m:" + to);
+  if (!ticket) {
+    await tg(env, "sendMessage", JSON.stringify({chat_id: env.CHAT_ID, reply_to_message_id: m.message_id,
+      text: "Не нашёл, кому это ответ: отвечай (Reply) на само сообщение с отчётом из ScanHub, отправленное после обновления до 1.4.0."})).catch(() => {});
+    return json({ok: true});
+  }
+  const t = JSON.parse(await env.USAGE.get("t:" + ticket) || "null");
+  if (!t) return json({ok: true});
+  t.replies = [...(t.replies || []), {text: cut(text, 3000), t: new Date().toISOString()}].slice(-20);
+  await env.USAGE.put("t:" + ticket, JSON.stringify(t), {expirationTtl: TICKET_TTL});
+  await tg(env, "sendMessage", JSON.stringify({chat_id: env.CHAT_ID, reply_to_message_id: m.message_id,
+    text: "✓ Ответ сохранён — человек увидит его в ScanHub (программа проверяет ответы раз в полчаса, пока открыта)."})).catch(() => {});
+  return json({ok: true});
+}
+async function replies(req, env){
+  if (!env.USAGE) return json({ok: false}, 503);
+  const ip = req.headers.get("CF-Connecting-IP") || "unknown";
+  if (await bump("rep:" + ip, 3600) > 60) return json({ok: false}, 429);
+  let r;
+  try { r = JSON.parse((await req.text()).slice(0, 8000)) } catch { return json({ok: false}, 400) }
+  const out = {};
+  for (const x of (Array.isArray(r?.tickets) ? r.tickets : []).slice(0, 30)) {
+    if (!/^[0-9a-f]{16}$/.test(x?.id || "") || !/^[0-9a-f]{32}$/.test(x?.key || "")) continue;
+    const t = JSON.parse(await env.USAGE.get("t:" + x.id) || "null");
+    if (t && t.h === await hex(x.key) && t.replies?.length) out[x.id] = t.replies;
+  }
+  return json({ok: true, replies: out});
 }
 
 // ---------- счётчик запусков: одна запись KV на копию, всё нужное — в метаданных (их отдаёт list без отдельных чтений)
@@ -106,6 +156,9 @@ export default {
     const url = new URL(req.url);
     if (req.method === "GET" && url.pathname === "/stats") return stats(url, env);
     if (req.method === "POST" && url.pathname === "/ping") return ping(req, env);
+    if (req.method === "POST" && url.pathname === "/tg") return hook(req, env);
+    if (req.method === "POST" && url.pathname === "/replies") return replies(req, env);
+    if (req.method === "GET" && url.pathname === "/setup") return setup(url, env);
     if (req.method === "GET") return new Response("ScanHub: приём отчётов об ошибках работает", {headers: {"Content-Type": "text/plain; charset=utf-8"}});
     if (req.method !== "POST" || url.pathname !== "/report") return json({ok: false, error: "не найдено"}, 404);
     if (!env.BOT_TOKEN || !env.CHAT_ID) return json({ok: false, error: "посредник не настроен"}, 500);
@@ -144,12 +197,17 @@ export default {
       if (t["где"]) lines.push(`<b>Раздел:</b> ${html(cut(t["где"], 80))}`);
       if (t["ошибка_на_экране"]) lines.push(`<b>Ошибка на экране:</b> ${html(cut(t["ошибка_на_экране"], 500))}`);
     }
+    // номер обращения: по нему ScanHub того, кто писал, заберёт ответ автора (вместе с секретом, хэш которого здесь)
+    const ticket = /^[0-9a-f]{16}$/.test(r.ticket || "") && /^[0-9a-f]{64}$/.test(r.ticket_h || "") && env.USAGE ? r.ticket : null;
+    if (ticket) lines.push("", "↩ <i>Ответь на это сообщение (Reply) — человек увидит ответ в ScanHub.</i>");
     const text = lines.join("\n").slice(0, 4000);
+    const sent = [];
     try {
-      await tg(env, "sendMessage", JSON.stringify({chat_id: env.CHAT_ID, text, parse_mode: "HTML", disable_web_page_preview: true}))
+      const j = await tg(env, "sendMessage", JSON.stringify({chat_id: env.CHAT_ID, text, parse_mode: "HTML", disable_web_page_preview: true}))
         .catch(async () => {                            // на случай, если HTML не понравился Telegram — простым текстом
-          await tg(env, "sendMessage", JSON.stringify({chat_id: env.CHAT_ID, text: text.replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")}));
+          return await tg(env, "sendMessage", JSON.stringify({chat_id: env.CHAT_ID, text: text.replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")}));
         });
+      if (j?.result?.message_id) sent.push(j.result.message_id);
     } catch (e) {
       console.log("telegram:", e.message);             // видно в журнале Worker на Cloudflare
       return json({ok: false, error: "не получилось переслать отчёт автору — попробуй позже"}, 502);
@@ -162,11 +220,11 @@ export default {
       if (photos.length === 1) {
         fd.append("photo", photos[0], "screen" + (photos[0].type === "image/png" ? ".png" : ".jpg"));
         fd.append("caption", "Снимок к сообщению выше");
-        await tg(env, "sendPhoto", fd).catch(e => console.log("photo:", e.message));
+        await tg(env, "sendPhoto", fd).then(j => sent.push(j.result?.message_id)).catch(e => console.log("photo:", e.message));
       } else {
         fd.append("media", JSON.stringify(photos.map((p, i) => ({type: "photo", media: `attach://p${i}`, ...(i ? {} : {caption: "Снимки к сообщению выше"})}))));
         photos.forEach((p, i) => fd.append(`p${i}`, p, `screen${i}` + (p.type === "image/png" ? ".png" : ".jpg")));
-        await tg(env, "sendMediaGroup", fd).catch(e => console.log("photos:", e.message));
+        await tg(env, "sendMediaGroup", fd).then(j => (j.result || []).forEach(x => sent.push(x.message_id))).catch(e => console.log("photos:", e.message));
       }
     }
 
@@ -177,8 +235,12 @@ export default {
       fd.append("chat_id", String(env.CHAT_ID));
       fd.append("document", new Blob([cut(log, 20000)], {type: "text/plain"}), `scanhub-${cut(r.version, 20)}-errors.txt`);
       fd.append("caption", "Последние ошибки ScanHub у этого человека");
-      await tg(env, "sendDocument", fd).catch(() => {});
+      await tg(env, "sendDocument", fd).then(j => sent.push(j.result?.message_id)).catch(() => {});
     }
-    return json({ok: true});
+    if (ticket) {
+      await env.USAGE.put("t:" + ticket, JSON.stringify({h: r.ticket_h, kind: idea ? "idea" : "bug", replies: []}), {expirationTtl: TICKET_TTL});
+      for (const id of sent.filter(Boolean)) await env.USAGE.put("m:" + id, ticket, {expirationTtl: TICKET_TTL});
+    }
+    return json({ok: true, ticket});
   },
 };

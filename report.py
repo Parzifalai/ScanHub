@@ -8,10 +8,12 @@
   Ключ Telegram-бота хранится только в Worker: в открытом коде ScanHub его нет, достать и злоупотребить им нельзя.
 """
 import base64
+import hashlib
 import json
 import os
 import platform
 import re
+import secrets
 import sys
 import threading
 import traceback
@@ -180,12 +182,74 @@ def preview_text(rep):
     return "\n".join(parts)
 
 
+TICKETS = os.path.join(DATA, "tickets.json")      # мои сообщения автору: номер, секрет для ответа, начало текста, ответы
+
+
+def _tickets():
+    try:
+        return json.load(open(TICKETS, encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+
+
+def _save_tickets(t):
+    os.makedirs(DATA, exist_ok=True)
+    with open(TICKETS + ".tmp", "w", encoding="utf-8") as f:
+        json.dump(t[-50:], f, ensure_ascii=False, indent=1)
+    os.replace(TICKETS + ".tmp", TICKETS)
+
+
+def replies_view():
+    """Мои сообщения автору и его ответы (без секретов) — для окна."""
+    out = [{k: v for k, v in t.items() if k != "key"} for t in reversed(_tickets())]
+    return {"tickets": out, "unread": sum(t.get("unread", 0) for t in out)}
+
+
+def replies_read():
+    with _lock:
+        t = _tickets()
+        for x in t:
+            x["unread"] = 0
+        _save_tickets(t)
+    return replies_view()
+
+
+def check_replies(cfg):
+    """Спросить посредника, ответил ли автор. Отправляются только номера своих сообщений и секреты к ним. Возвращает число новых ответов."""
+    url = (cfg.get("report_url") or REPORT_URL).strip()
+    t = _tickets()
+    live = [x for x in t if (datetime.now() - datetime.fromisoformat(x["sent"])).days < 180]
+    if not url or not live:
+        return 0
+    data = json.dumps({"tickets": [{"id": x["id"], "key": x["key"]} for x in live[-30:]]}).encode()
+    req = urllib.request.Request(re.sub(r"/report$", "/replies", url), data=data, method="POST",
+                                 headers={"Content-Type": "application/json", "User-Agent": "ScanHub"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        ans = json.load(r)
+    new = 0
+    with _lock:
+        t = _tickets()
+        for x in t:
+            got = (ans.get("replies") or {}).get(x["id"]) or []
+            have = {(a.get("t"), a.get("text")) for a in x.get("replies", [])}
+            fresh = [a for a in got if (a.get("t"), a.get("text")) not in have]
+            if fresh:
+                x["replies"] = x.get("replies", []) + fresh
+                x["unread"] = x.get("unread", 0) + len(fresh)
+                new += len(fresh)
+        if new:
+            _save_tickets(t)
+    return new
+
+
 def send(rep, cfg):
     url = (cfg.get("report_url") or REPORT_URL).strip()
     if not url:
         raise RuntimeError("отправка отчётов ещё не настроена в этой копии ScanHub")
     if len(rep.get("text", "")) < 5:
         raise RuntimeError("напиши хотя бы пару слов" + ("" if rep.get("kind") == "idea" else " о том, что случилось"))
+    tid, key = secrets.token_hex(8), secrets.token_hex(16)      # по ним этот компьютер (и только он) заберёт ответ автора
+    rep = {**rep, "ticket": tid, "ticket_h": hashlib.sha256(key.encode()).hexdigest()}
     data = json.dumps(rep, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(url, data=data, method="POST",
                                  headers={"Content-Type": "application/json", "User-Agent": f"ScanHub/{rep.get('version')}"})
@@ -206,4 +270,10 @@ def send(rep, cfg):
         raise RuntimeError(f"нет связи с сервером отчётов: {getattr(e, 'reason', e)}")
     if not ans.get("ok"):
         raise RuntimeError(ans.get("error") or "отчёт не принят")
+    if ans.get("ticket") == tid:                                 # старый посредник ответы не поддерживает — тогда и ждать нечего
+        with _lock:
+            t = _tickets()
+            t.append({"id": tid, "key": key, "kind": rep.get("kind"), "text": rep.get("text", "")[:300],
+                      "sent": datetime.now().isoformat(timespec="seconds"), "replies": [], "unread": 0})
+            _save_tickets(t)
     return ans

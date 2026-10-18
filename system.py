@@ -551,6 +551,54 @@ def hosts_prepare(enable):
 
 # ================================================================ сторож (задача планировщика)
 
+def watch_explain(text):
+    """Срабатывание Сторожа простыми словами: насколько это страшно, что это и что делать.
+    lvl: ok — не страшно, warn — стоит посмотреть, bad — важно. go — раздел ScanHub для кнопки."""
+    t = text or ""
+    m = re.search(r"(процессор|видеокарта) перегревается: (\d+)", t)
+    if m:
+        who, deg = m.group(1), int(m.group(2))
+        cpu = who == "процессор"
+        hot = deg >= (100 if cpu else 92)
+        return {"lvl": "bad" if hot else "warn", "title": f"{'Процессор' if cpu else 'Видеокарта'} нагрелся до {deg}°C",
+                "what": (f"Для ноутбука под нагрузкой (игра, сборка, видео) {deg}°C — {'выше нормы' if hot else 'верхняя граница нормы'}: "
+                         f"{'процессор' if cpu else 'видеокарта'} сам снижает частоту, чтобы не перегреться, — отсюда бывают просадки FPS. "
+                         "Опасно, если так горячо в простое или часто."),
+                "todo": "Не закрывай решётки вентиляции (не ставь ноутбук на кровать или колени), поставь на подставку. Если греется в простое — "
+                        "посмотри «Почему шумит»: кто грузит процессор. Раз в 1–2 года ноутбуку нужна чистка от пыли и замена термопасты.",
+                "go": "speed:noise", "go_label": "Почему шумит"}
+    m = re.search(r"на диске (\S+) осталось ([\d.,]+) ГБ", t)
+    if m:
+        return {"lvl": "warn", "title": f"Заканчивается место на диске {m.group(1)}",
+                "what": f"Осталось {m.group(2)} ГБ. Когда места почти нет, Windows тормозит и не может поставить обновления.",
+                "todo": "Очисти мусор и Корзину, потом посмотри, что занимает место.", "go": "clean:junk", "go_label": "Очистить мусор"}
+    if re.search(r"майнинг|майнер", t, re.I):
+        return {"lvl": "bad", "title": "Похоже на скрытый майнер",
+                "what": "Программа нагружала компьютер или обращалась к майнинг-пулу — так ведут себя скрытые майнеры (тайно «добывают» криптовалюту на чужом ПК).",
+                "todo": "Запусти глубокую проверку — она найдёт и уберёт майнер. Если это твой собственный майнер — всё в порядке.",
+                "go": "scan:deep", "go_label": "Глубокая проверка"}
+    m = re.match(r"(.+?\.exe) аварийно завершилась", t, re.I)
+    if m:
+        app = m.group(1)
+        try:
+            import appinfo
+            about = appinfo.about(app)["ru"]
+        except Exception:
+            about = ""
+        return {"lvl": "ok", "title": f"Программа {app} вылетела",
+                "what": (about + " " if about else "") + "Одиночный вылет программы — не опасно для компьютера: она просто закрылась с ошибкой.",
+                "todo": "Если не замечал проблем — ничего делать не надо. Если вылетает часто или мешает — открой «Сбои и ошибки»: там видно, как часто и почему.",
+                "go": "health:crash", "go_label": "Сбои и ошибки"}
+    if re.search(r"синий экран|BugCheck|аппаратн|WHEA", t, re.I):
+        return {"lvl": "bad", "title": "Серьёзный сбой Windows", "what": t[:200],
+                "todo": "Открой «Сбои и ошибки» — там причина и что сделать.", "go": "health:crash", "go_label": "Сбои и ошибки"}
+    if re.search(r"выключ|Kernel-Power", t, re.I):
+        return {"lvl": "warn", "title": "Компьютер выключился неправильно", "what": t[:200],
+                "todo": "Если выключал кнопкой или садилась батарея — не страшно. Если сам — открой «Сбои и ошибки».", "go": "health:crash", "go_label": "Сбои и ошибки"}
+    return {"lvl": "warn", "title": t.split(" — ")[0][:120], "what": t[:240], "todo": "Подробности — в «Сбоях и ошибках».",
+            "go": "health:crash", "go_label": "Сбои и ошибки"}
+
+
 def watch_status():
     r = subprocess.run(["schtasks", "/Query", "/TN", WATCH_TASK], capture_output=True, creationflags=NO_WINDOW)
     alerts = []
@@ -558,6 +606,14 @@ def watch_status():
         alerts = json.load(open(os.path.join(DATA, "watch_alerts.json"), encoding="utf-8"))[:20]
     except (OSError, ValueError):
         pass
+    for a in alerts:                       # одинаковые строки одного прохода — одной строкой ×N, у каждой — объяснение
+        seen = {}
+        for f in a.get("found") or []:
+            if f in seen:
+                seen[f]["count"] += 1
+            else:
+                seen[f] = {"text": f, "count": 1, **watch_explain(f)}
+        a["items"] = list(seen.values())
     return {"enabled": r.returncode == 0, "alerts": alerts}
 
 

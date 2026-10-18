@@ -60,7 +60,9 @@ async function aiDoAction(a){
       [name, args] = ["startup_set", {id: it.id, enable: false}];
     }
     const t = await runTask(name, args);
-    if (t.status === "error") toast("Не получилось", t.error, "bad");
+    if (t.status === "error") return toast("Не получилось", t.error, "bad");
+    toast("Готово", a.id === "disable_driver" ? "Драйвер отключён — перезагрузи компьютер, чтобы он выгрузился из памяти" : AI_ACT[a.id].label(a.arg), "ok", 8000);
+    try { redrawPanels() } catch {}
   } catch (e) { toast("Не получилось", e.message, "bad") }
 }
 
@@ -73,7 +75,10 @@ function aiButtons(src){
 // безопасный мини-Markdown: сначала экранируем всё, потом жирный, код, списки, абзацы
 function aiMd(src){
   src = String(src || "").replace(/^\s*\[\[(?:кнопка:|действие:)?[a-z_]+(?::[^\]]+)?\]\]\s*$/gm, "").replace(/\[\[(?:кнопка:|действие:)?[a-z_]+(?::[^\]]+)?\]\]/g, "");
-  const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>");
+  // ссылки: [текст](https://…) и голые https://… — открываются в браузере после подтверждения
+  const links = s => s.replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g, '<a data-ai-link="$2" title="$2">$1</a>')
+    .replace(/(^|[\s(])(https:\/\/[^\s<)]+?)(?=[.,;:!?]?(?:\s|$|\)|<))/g, '$1<a data-ai-link="$2">$2</a>');
+  const inline = s => links(esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>"));
   const out = [], lines = String(src || "").replace(/\r/g, "").split("\n");
   let list = null;
   const close = () => { if (list) { out.push(`</${list}>`); list = null } };
@@ -129,7 +134,7 @@ function aiSetupHtml(){
   const prov = c.providers.find(x => x.id === sel);
   return `<div class="ai-setup">
     <p>Помощник объясняет находки ScanHub и отвечает на вопросы «почему у меня…», сам заглядывая в журналы Windows, сбои, драйверы и питание.
-      <b>Сам он ничего не меняет</b> — только читает и советует. Действия — по твоей кнопке: «⚡ …» у совета или «✦ Сделай сам», тогда он выполнит предложенное и проверит результат.</p>
+      <b>Сам он ничего не меняет</b> — только читает, ищет справки в интернете и советует. Действия — по твоей кнопке: «⚡ …» у совета или «✦ Сделай сам», тогда он выполнит предложенное и проверит результат.</p>
     <div class="ai-provs">${c.providers.map(x => `<label class="ai-prov${x.id === sel ? " on" : ""}"><input type="radio" name="aiProv" value="${x.id}" ${x.id === sel ? "checked" : ""}>
       <span><b>${esc(x.name)}</b>${x.has_key ? ' <span class="chip-ok">ключ сохранён</span>' : ""}${x.id === sel ? `<span class="sub">${esc(x.hint)}</span>
       <a data-link="${esc(x.get)}">${esc(x.get_label)} →</a>` : ""}</span></label>`).join("")}</div>
@@ -143,6 +148,7 @@ function aiSetupHtml(){
         ${c.enabled ? `<button id="aiOff" type="button">Выключить помощника</button>` : ""}${c.enabled ? `<button id="aiBack" type="button">К разговору</button>` : ""}</div>` : ""}
     ${AI.note ? `<div class="note ${AI.noteKind || "info"}">${esc(AI.note)}</div>` : ""}
     ${aiFilesHtml(c, prov)}
+    ${aiWebHtml()}
     ${prov?.cloud ? `<div class="sub">Перед отправкой ScanHub убирает имя пользователя, имя компьютера, личные пути, почту и ключи.${prov.needs_key ? " Ключ хранится на этом компьютере зашифрованным." : ""}</div>` : ""}
   </div>`;
 }
@@ -154,9 +160,12 @@ function aiCliHtml(prov){
     <div class="row-tools">${st && st.installed && !st.connected ? `<button class="primary small" data-ai-cli-login="${prov.id}" type="button">Войти</button>` : ""}
       ${st && !st.installed ? `<button class="small" data-link="${esc(prov.get)}" type="button">${esc(prov.get_label)}</button>` : ""}
       <button class="small" data-ai-cli-check="${prov.id}" type="button">Проверить</button></div>
-    ${AI.cliWait === prov.id ? `<div class="sub">Открылось окно входа: войди в браузере и вернись сюда — ScanHub сам заметит вход.</div>` : ""}
+    ${AI.cliWait === prov.id ? `<div class="sub">Открылось окно входа: войди в браузере и вернись сюда — ScanHub сам заметит вход.</div>` : ""}</div>`;
+}
+function aiWebHtml(){
+  return `<div class="ai-files"><b>Интернет</b>
     <label class="switch"><input type="checkbox" id="aiWeb" ${AI.cfg?.web !== false ? "checked" : ""}> Разрешить искать в интернете
-      <span class="sub">Для справок: что это за программа, что значит код ошибки, есть ли у других такая проблема. В запросы не попадают твои пути и имя. Для «Сделай сам» поиск всегда выключен.</span></label></div>`;
+      <span class="sub">Помощник сможет узнать, что это за программа или ошибка, знают ли о проблеме другие, и найти официальный сайт, чтобы дать безопасную ссылку на скачивание. В запросы не попадают твои пути и имя. Для «Сделай сам» поиск всегда выключен.</span></label></div>`;
 }
 async function aiCliCheck(id, action){
   try { AI.cli[id] = await api("/api/ai/cli", {provider: id, ...(action ? {action} : {})}) } catch (e) { AI.cli[id] = {installed: false, connected: false, message: e.message} }
@@ -222,7 +231,7 @@ function aiChatHtml(){
   const run = j && j.status === "running" ? `<div class="ai-msg ai-a ai-run"><div class="spin"></div><div>${(j.steps || []).length ? `<ul class="ai-steps">${j.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : `<span class="sub">думаю…</span>`}
       <button class="small" id="aiStop" type="button">Остановить</button></div></div>` : "";
   const empty = !AI.msgs.length && !run ? `<div class="ai-empty"><p>Спроси что угодно про этот компьютер — помощник сам посмотрит журналы Windows, сбои, драйверы,
-      питание, датчики, место, защиту, браузеры и то, что уже нашёл ScanHub${AI.cfg?.files === "off" ? "" : ", а ещё файлы и папки (кнопка «Файл…» или просто напиши путь)"}.
+      питание, датчики, место, защиту, браузеры и то, что уже нашёл ScanHub, а при необходимости поищет в интернете${AI.cfg?.files === "off" ? "" : ", а ещё файлы и папки (кнопка «Файл…» или просто напиши путь)"}.
       Или нажми «✦ Как решить» у любой находки — помощник коротко скажет, что делать, и предложит кнопку, если ScanHub может сделать это сам.</p><div class="ai-sug">${AI_SUGGEST.map(s => `<button class="small" data-ai-ask="${esc(s)}" type="button">${esc(s)}</button>`).join("")}</div></div>` : "";
   return empty + msgs + run;
 }
@@ -246,8 +255,8 @@ async function aiStart(body, userMsg, finding = null){
   }
   const j = AI.job; AI.job = null;
   if (j.status === "done") AI.msgs.push({role: "assistant", content: j.answer, cached: j.cached ? JSON.stringify(body.finding || null) : null, finding, act: body.kind === "act"});
-  if (body.kind === "act") { try { redrawPanels() } catch {} }
   else AI.msgs.push({role: "error", content: "Помощник не ответил: " + (j.error || "ошибка")});
+  if (body.kind === "act") { try { redrawPanels() } catch {} }
   aiRender();
   if (aiPanel().hidden && j.status === "done") toast("ИИ-помощник ответил", "открой панель помощника", "info", 6000, () => aiOpen());
 }
@@ -272,7 +281,88 @@ function aiExplain(f, fresh = false, kind = "solve"){
   aiStart({kind, finding: f, fresh}, {role: "user", content, show: `${kind === "solve" ? "Как решить" : "Подробнее"}: ${f.title}`}, kind === "solve" ? f : null);
 }
 
+// ---------- «✦ Есть ли тут важное?» перед удалением: помощник оценивает каждый пункт списка
+// REVIEW[area] = {status, steps, answer, marks: {id: {v: ok|check|keep, why}}, ids}; items — [{id, label, path, size, note}]
+const REVIEW = {}, REVIEW_ITEMS = {};
+const REVIEW_TAG = /\[\[оценка:(\d+):(ok|check|keep):([^\]]*)\]\]/g;
+const REVIEW_CHIP = {ok: ["chip-ok", "Можно удалить"], check: ["chip-warn", "Сначала посмотри"], keep: ["chip-bad", "Не удаляй"]};
+function aiReviewBtn(area, items, label = "✦ Есть ли тут важное?"){
+  REVIEW_ITEMS[area] = items;
+  const r = REVIEW[area];
+  if (!items.length) return "";
+  return `<button class="small ai-btn" data-ai-review="${esc(area)}" ${r?.status === "running" ? "disabled" : ""}
+    title="Помощник посмотрит каждый пункт (а если непонятно — поищет в интернете) и скажет, что можно удалять смело, а что лучше оставить">${r?.status === "running" ? "✦ Помощник смотрит…" : esc(label)}</button>`;
+}
+function aiReviewBox(area){
+  const r = REVIEW[area];
+  if (!r) return "";
+  if (r.status === "running") return `<div class="note info ai-review"><div class="spin" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:-2px"></div>
+    Помощник проверяет пункты…${r.steps?.length ? ` <span class="sub">${esc(r.steps[r.steps.length - 1])}</span>` : ""}</div>`;
+  if (r.status === "error") return `<div class="note warn ai-review">Помощник не смог проверить: ${esc(r.error || "ошибка")} <a data-ai-gear>Настройки помощника</a></div>`;
+  const n = {ok: 0, check: 0, keep: 0};
+  Object.values(r.marks).forEach(m => n[m.v]++);
+  return `<div class="note info ai-review"><b>✦ Помощник посмотрел:</b> можно удалить — ${n.ok}, сначала посмотри — ${n.check}, не удаляй — ${n.keep}.
+    ${n.ok ? "Безопасное он отметил галочками, " : ""}${n.keep ? "опасное снял. " : ""}Метки — у каждого пункта, причина — при наведении.
+    ${aiMd(r.answer)}<div class="sub"><a data-ai-review-hide="${esc(area)}">Скрыть оценку</a></div></div>`;
+}
+function aiMark(area, id){
+  const m = REVIEW[area]?.status === "done" && REVIEW[area].marks[id];
+  if (!m) return "";
+  const [cls, text] = REVIEW_CHIP[m.v];
+  return ` <span class="${cls}" title="${esc(m.why)}">✦ ${text}</span>${m.why ? `<span class="sub ai-why">${esc(m.why)}</span>` : ""}`;
+}
+async function aiReview(area){
+  const items = REVIEW_ITEMS[area] || [];
+  if (!items.length) return;
+  if (!AI.cfg) await aiLoadCfg();
+  if (!AI.cfg?.enabled) { toast("Сначала подключи ИИ-помощника", "это бесплатно — например, ключ Google Gemini", "info", 7000); return aiOpen(true) }
+  const it = items.slice(0, 60);
+  REVIEW[area] = {status: "running", steps: [], marks: {}, ids: it.map(i => i.id)};
+  redrawPanels();
+  let j;
+  try {
+    const r = await api("/api/ai/ask", {kind: "review", area, items: it.map(({id, ...x}) => x)});
+    for (let fails = 0; ;) {
+      await new Promise(res => setTimeout(res, 1000));
+      try { j = await api("/api/ai/job?id=" + r.id) } catch { if (++fails > 8) { j = {status: "error", error: "ScanHub перезапустился — попробуй ещё раз"}; break } continue }
+      if (j.status !== "running") break;
+      REVIEW[area].steps = j.steps || []; redrawPanels();
+    }
+  } catch (e) { j = {status: "error", error: e.message} }
+  const rv = REVIEW[area];
+  if (j.status !== "done") { Object.assign(rv, {status: "error", error: j.error}); return redrawPanels() }
+  for (const m of String(j.answer || "").matchAll(REVIEW_TAG)) {
+    const id = rv.ids[+m[1] - 1];
+    if (id !== undefined) rv.marks[id] = {v: m[2], why: m[3].trim()};
+  }
+  Object.assign(rv, {status: "done", answer: String(j.answer || "").replace(REVIEW_TAG, "").trim()});
+  // сразу показываем: безопасное отмечаем, «не удаляй» снимаем (что отмечено — видно до нажатия «Удалить»)
+  const set = REVIEW_SEL[area] && SEL[REVIEW_SEL[area]];
+  if (set) for (const [id, m] of Object.entries(rv.marks)) { if (m.v === "ok" && !String(id).startsWith("d:")) set.add(id); if (m.v === "keep") set.delete(id) }
+  if (!Object.keys(rv.marks).length) rv.answer += "\n\n(Помощник не поставил оценки пунктам — нажми ещё раз или выбери другую модель.)";
+  AI.msgs.push({role: "user", content: "Проверь, нет ли важного: " + area, show: "✦ Есть ли тут важное: " + area}, {role: "assistant", content: rv.answer});
+  redrawPanels();
+  toast("Помощник проверил список", "метки — у каждого пункта", "info", 5000);
+}
+// какой набор галочек (SEL) у каждого раздела очистки
+const REVIEW_SEL = {"Мусор и кэши": "junk", "Место на диске": "big", "Дубликаты": "dups", "Остатки программы": "left", "Пустые папки": "empty",
+  "Битые ярлыки": "lnk", "Старые драйверы": "drv", "Шредер": null};
+
 // ---------- события
+document.addEventListener("click", async e => {
+  const l = e.target.closest("[data-ai-link]");
+  if (!l) return;
+  e.preventDefault(); e.stopPropagation();
+  const url = l.dataset.aiLink;
+  if (!await ask(`Открыть ссылку в браузере?\n${url}\n\nЕё дал ИИ-помощник — проверь, что адрес похож на сайт программы.`)) return;
+  api("/api/link", {url, ai: true}).catch(err => toast("Не открылось", err.message, "warn"));
+}, true);
+document.addEventListener("click", async e => {
+  const rv = e.target.closest("[data-ai-review],[data-ai-review-hide]");
+  if (rv) { e.preventDefault(); e.stopPropagation();
+    if (rv.dataset.aiReviewHide) { delete REVIEW[rv.dataset.aiReviewHide]; return redrawPanels() }
+    return aiReview(rv.dataset.aiReview) }
+}, true);
 document.addEventListener("click", async e => {
   const a = e.target.closest("[data-ai],[data-ai-ask],[data-ai-gear],[data-ai-fresh],[data-ai-launch],[data-ai-act],[data-ai-more],[data-ai-do],[data-ai-cli-login],[data-ai-cli-check],#aiTop,#aiClose,#aiGear,#aiNew,#aiStop,#aiFindModels,#aiSave,#aiOff,#aiBack,#aiAttach");
   if (!a) return;

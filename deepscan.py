@@ -980,7 +980,7 @@ class DeepScan:
         s["drivers"] = []
         for h in r["hits"]:
             s["findings"].append(("⚠ " if h in mal or h in live else "") + intel._drv_text(h, r) + f" · {h['path']}")
-            if h in live and h.get("service"):
+            if (h in live or intel.pending_driver(h)) and h.get("service"):
                 try:
                     own = intel.driver_owner(h)
                 except Exception:
@@ -993,6 +993,7 @@ class DeepScan:
             s["findings"].append("⚠ блок-лист уязвимых драйверов Microsoft выключен — включи в «Приватность и защита → Защита Windows»")
         s.update(verdict="threat" if mal else "suspicious" if live else "unknown" if r["hits"] else "clean",
                  label=f"вредоносных: {len(mal)}" if mal else f"уязвимых в работе: {len(live)}" if live
+                       else "уязвимый драйвер отключён — перезагрузи компьютер" if any(intel.pending_driver(h) for h in r["hits"])
                        else f"уязвимых на диске (не работают или заблокированы): {len(r['hits'])}" if r["hits"]
                        else f"проверено {r['checked']}, известных уязвимых нет")
         self.emit("  " + s["label"])
