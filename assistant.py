@@ -172,17 +172,25 @@ ACT = """Человек нажал «Сделай сам» — поручил т
 {context}"""
 
 REVIEW = """Человек собирается удалить или очистить то, что ниже (раздел ScanHub: {area}), и просит проверить, нет ли там важного.
+У каждого пункта есть ФАКТЫ, которые ScanHub собрал на компьютере: чья это программа, запущено ли сейчас, когда меняли и открывали,
+что внутри папки, подпись, откуда скачан. Опирайся на них в первую очередь.
 Для КАЖДОГО пункта реши:
-- ok — можно удалять без риска (кэш, временные файлы, установщики, которые уже стоят, мусор, остатки удалённых программ);
-- check — сначала стоит посмотреть самому (могут быть личные файлы, сохранения игр, документы, единственная копия);
-- keep — не удалять (нужно Windows или установленной программе, файл подкачки, образ системы, база рабочей программы, личные данные).
-Как проверять: смотри путь и имя; если доступны file_info / list_folder — загляни, что там (сведения, подпапки, даты); непонятное
-название программы или файла — найди в интернете (web_search), без личных данных в запросе. Не выдумывай: не уверен — ставь check.
-Учитывай, что файлы, которые ещё нужны программам (например pagefile.sys, hiberfil.sys, образы WSL/Docker/виртуальных машин, базы
-игр и лаунчеров), удалять вручную нельзя — подскажи, как освободить место правильно (через саму программу или настройки Windows).
+- ok — можно удалять без риска (кэш, временные файлы, установщики и архивы, которые уже не нужны, копии «(2)», мусор, остатки удалённых программ);
+- check — сначала стоит посмотреть самому (личные файлы, сохранения игр, документы, видео, единственная копия, что-то непонятное);
+- keep — не удалять (нужно Windows или установленной программе, СЕЙЧАС ЗАПУЩЕНО, установленная игра — удалять через её лаунчер,
+  файл подкачки, образы WSL/Docker/виртуальных машин, базы рабочих программ, всё с пометкой «УДАЛЯТЬ НЕЛЬЗЯ»).
+Как проверять:
+1. Факты из списка — главное. Если пункт непонятен по фактам — загляни сам: file_info (файл) или list_folder (папка).
+2. Название программы, папки или файла тебе незнакомо — ОБЯЗАТЕЛЬНО найди в интернете (web_search), что это и можно ли удалить;
+   в запрос — только название, без путей и имени пользователя. Не выдумывай: не уверен — ставь check.
+3. Если внутри проверяемых папок или в Загрузках нашёл ещё что-то крупное и явно лишнее (повторные установщики «(2)…(7)», старые
+   архивы рядом с распакованной папкой, кэш) — добавь это отдельными строками [[найдено:ПОЛНЫЙ_ПУТЬ:ok|check:причина]] (до 10 строк, путь — точно
+   как в данных инструментов).
 Ответ:
-1) Коротко (до 120 слов, Markdown): вывод — можно ли смело чистить, что важное нашёл, что освободить в первую очередь.
-2) Потом по одной строке на КАЖДЫЙ пункт, строго так: [[оценка:НОМЕР:ok|check|keep:причина до 15 слов]]
+1) **Вывод:** 1–2 предложения — можно ли смело чистить и сколько примерно освободится.
+   **Что освободить в первую очередь:** до 5 пунктов списком «**имя (размер)** — почему можно и как правильно».
+   Если что-то правильнее удалить через программу (игру через лаунчер, модель Ollama командой, файл подкачки в настройках) — скажи как.
+2) Потом по одной строке на КАЖДЫЙ пункт, строго так: [[оценка:НОМЕР:ok|check|keep:причина до 15 слов, понятная обычному человеку]]
    например [[оценка:3:keep:файл подкачки Windows — уменьшается в настройках памяти, не удаляется]]
 Не добавляй [[действие:…]] и [[кнопка:…]].
 
@@ -1841,7 +1849,7 @@ def _loop(job, cfg, messages):
     tools, prefetched = tool_schemas(cfg), False
     if job.get("allowed"):
         tools = tools + [act_schema(job)]
-    for _ in range(20 if job.get("allowed") else 12):
+    for _ in range(20 if job.get("allowed") else 26 if job.get("kind") == "review" else 12):
         if job.get("stop"):
             raise AIError("остановлено")
         try:
@@ -2045,6 +2053,114 @@ def _tool_notes(text):
             "(поле где_в_ScanHub) и установлен ли он:\n" + json.dumps(hits[:4], ensure_ascii=False)) if hits else ""
 
 
+# ================================================================ «✦ Есть ли тут важное?» — проверка списка перед удалением
+
+REVIEWS = {}          # id задачи → {нормализованный путь: {"path", "v", "why", "size"}} — что можно удалить окном «Проверить и удалить»
+REVIEW_TAG = re.compile(r"\[\[оценка:(\d+):(ok|check|keep):([^\]]*)\]\]")
+FOUND_TAG = re.compile(r"\[\[найдено:(.+?):(ok|check):([^\]]*)\]\]")
+
+
+def _review(job, payload, cfg, cloud, agent):
+    import reviewfacts
+    items = [i for i in (payload.get("items") or []) if isinstance(i, dict)][:60]
+    for it in items:
+        p = str(it.get("path") or "")
+        it["path"] = p if p and os.path.isabs(p) and os.path.exists(p) else ""
+    job["steps"].append("собираю факты о файлах и папках")
+    try:
+        facts = reviewfacts.collect(items)
+    except Exception as e:
+        facts = {}
+        job["steps"].append(f"факты собрать не вышло: {e}"[:120])
+    lines = []
+    for n, it in enumerate(items, 1):
+        bits = [str(it.get("label") or it.get("path") or "")[:200]]
+        if it.get("path") and it["path"] != it.get("label"):
+            bits.append("путь: " + it["path"][:300])
+        if it.get("size"):
+            bits.append(f"размер: {_mb(it['size'])}")
+        if it.get("note"):
+            bits.append(str(it["note"])[:300])
+        f = facts.get(os.path.normcase(os.path.abspath(it["path"])).rstrip("\\")) if it.get("path") else None
+        if f:
+            bits.append("ФАКТЫ: " + f[:700])
+        lines.append(f"{n}. " + " · ".join(bits))
+    user = REVIEW.replace("{area}", str(payload.get("area") or "Очистка")[:80]).replace("{items}", "\n".join(lines))
+    user = redact(user, cfg) if cloud else user
+    if agent:
+        ans = _agent(job, cfg, system_prompt(cfg), user)
+    else:
+        ans = _to_en(cfg, _to_ty(cfg, _loop(job, cfg, [{"role": "system", "content": system_prompt(cfg)}, {"role": "user", "content": user}])))
+    # что можно удалить окном «Проверить и удалить»: оценённые пункты с настоящим путём + найденное помощником (путь проверяется)
+    out, allowed = [], {}
+    for m in REVIEW_TAG.finditer(ans or ""):
+        k = int(m.group(1)) - 1
+        if 0 <= k < len(items):
+            it = items[k]
+            row = {"n": k + 1, "id": it.get("id"), "label": it.get("label") or it.get("path"), "path": it.get("path") or "",
+                   "size": it.get("size") or 0, "v": m.group(2), "why": m.group(3).strip()}
+            out.append(row)
+            if row["path"] and row["v"] != "keep" and not reviewfacts.blocked(row["path"]):
+                allowed[os.path.normcase(os.path.abspath(row["path"]))] = row
+    roots = [os.path.normcase(os.path.abspath(i["path"])) for i in items if i.get("path") and os.path.isdir(i["path"])]
+    try:
+        import intel
+        roots += [os.path.normcase(os.path.abspath(d)) for d in intel.download_folders()]
+    except Exception:
+        pass
+    extra = []
+    for m in FOUND_TAG.finditer(ans or ""):
+        path = _path(m.group(1).strip().strip('"«»'))
+        n = os.path.normcase(os.path.abspath(path)) if path else ""
+        if not n or n in allowed or not os.path.exists(path) or reviewfacts.blocked(path):
+            continue
+        if not any(n.startswith(r + "\\") for r in roots):       # только внутри проверяемых папок или в Загрузках
+            continue
+        row = {"n": None, "id": "x:" + path, "label": path, "path": path, "size": reviewfacts._size(path) if os.path.isfile(path) else 0,
+               "v": m.group(2), "why": m.group(3).strip(), "extra": True}
+        if len(extra) < 10:
+            extra.append(row)
+            allowed[n] = row
+    REVIEWS[job["id"]] = allowed
+    job["review"] = out + extra
+    return ans
+
+
+def _mb(b):
+    b = float(b or 0)
+    return f"{b / 2 ** 30:.1f} ГБ" if b >= 2 ** 30 else f"{b / 2 ** 20:.0f} МБ"
+
+
+def review_delete(job_id, paths, permanent=False, admin=False, run_elevated=None, later=False):
+    """Удалить то, что человек отметил в окне «Проверить и удалить», — только из одобренного помощником списка (не «не удаляй»)."""
+    import reviewfacts
+    allowed = REVIEWS.get(str(job_id)) or {}
+    todo = [p for p in paths if os.path.normcase(os.path.abspath(str(p))) in allowed]
+    if not todo or len(todo) != len(paths):
+        raise RuntimeError("этих путей нет в последней проверке помощника — проверь заново")
+    if not admin and not later:
+        return reviewfacts.delete(todo, permanent)
+    if later:
+        ops = [{"type": "delay_delete", "path": p} for p in todo if not reviewfacts.blocked(p)]
+    elif permanent:
+        ops = [{"type": "rmtree" if os.path.isdir(p) else "remove", "path": p} for p in todo if not reviewfacts.blocked(p)]
+    else:
+        ops = [{"type": "recycle", "paths": [p]} for p in todo if not reviewfacts.blocked(p)]
+    sizes = {p: reviewfacts._size(p) for p in todo}
+    res = run_elevated(ops)
+    done, failed = [], []
+    for p, r in zip(todo, res):
+        if later:
+            (done if r.get("ok") else failed).append({"path": p, "size": 0, "note": "удалится при перезагрузке"} if r.get("ok") else
+                                                     {"path": p, "kind": "other", "why": r.get("error") or "не получилось", "how": "Удали вручную после перезагрузки."})
+        elif not os.path.exists(p):
+            done.append({"path": p, "size": sizes[p]})
+        else:
+            failed.append({"path": p, "kind": "busy", "why": r.get("error") or "не удалилось даже с правами администратора — скорее всего, файл занят",
+                           "how": "Нажми «Удалить при перезагрузке» — Windows удалит его до запуска программ."})
+    return {"done": done, "failed": failed, "freed": sum(d["size"] for d in done), "permanent": permanent}
+
+
 def start(kind, payload, cfg):
     jid = uuid.uuid4().hex[:10]
     job = JOBS[jid] = {"id": jid, "kind": kind, "status": "running", "steps": [], "answer": "", "error": None,
@@ -2071,23 +2187,7 @@ def start(kind, payload, cfg):
                 ans = _agent(job, cfg, sysmsg, user) if agent else _loop(job, cfg, [{"role": "system", "content": sysmsg}, {"role": "user", "content": user}])
                 ans = _to_en(cfg, _to_ty(cfg, ans)) if not agent else ans
             elif kind == "review":
-                items = [i for i in (payload.get("items") or []) if isinstance(i, dict)][:60]
-                lines = []
-                for n, it in enumerate(items, 1):
-                    bits = [str(it.get("label") or it.get("path") or "")[:200]]
-                    if it.get("path") and it.get("path") != it.get("label"):
-                        bits.append("путь: " + str(it["path"])[:300])
-                    if it.get("size"):
-                        bits.append(f"размер: {round(float(it['size']) / 2 ** 20, 1)} МБ")
-                    if it.get("note"):
-                        bits.append(str(it["note"])[:300])
-                    lines.append(f"{n}. " + " · ".join(bits))
-                user = REVIEW.replace("{area}", str(payload.get("area") or "Очистка")[:80]).replace("{items}", "\n".join(lines))
-                user = redact(user, cfg) if cloud else user
-                if agent:
-                    ans = _agent(job, cfg, system_prompt(cfg), user)
-                else:
-                    ans = _to_en(cfg, _to_ty(cfg, _loop(job, cfg, [{"role": "system", "content": system_prompt(cfg)}, {"role": "user", "content": user}])))
+                ans = _review(job, payload, cfg, cloud, agent)
             elif kind in ("explain", "solve"):
                 f = payload.get("finding") or {}
                 fact = {k: f.get(k) for k in ("title", "text", "how", "source", "extra") if f.get(k)}

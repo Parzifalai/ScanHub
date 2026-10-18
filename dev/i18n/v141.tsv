@@ -1,0 +1,88 @@
+(без расширения)	(no extension)
+(нажми, чтобы увидеть почему)	(click to see why)
+(удалять через «Удаление программ»)	(remove via "Uninstall programs")
+AI.msgs.push({role: "user", content: "Проверь, нет ли важного: " + area, show: "✦ Есть ли тут важное: " + area, rv: area, job: rv.job	-
+if (j.status !== "done") throw new Error(j.error || "помощник не ответил")	-
+toast("Помощник проверил список", "оценка — над списком, метки — у каждого пункта", "info", 5000)	-
+Безопасное уже отмечено галочками — нажми кнопку удаления этого раздела ниже.	The safe ones are already ticked — press this section's delete button below.
+Битые ярлыки": "lnk", "Старые драйверы": "drv	-
+Вернуть будет нельзя.	It can't be undone.
+Если удалялось в Корзину — открой Корзину Windows → правой кнопкой по файлу → «Восстановить». Удалённое навсегда вернуть нельзя.	If it went to the Recycle Bin — open the Windows Recycle Bin → right-click the file → "Restore". Permanently deleted items can't be restored.
+Ещё	Another
+Закрой программу, которая его использует, и попробуй снова — или нажми «Удалить при перезагрузке».	Close the program that uses it and try again — or press "Delete on restart".
+Нажми «Удалить с правами администратора» — появится окно UAC.	Press "Delete as administrator" — a UAC window will appear.
+Открой папку	Open the folder
+Открыть в Проводнике	Open in File Explorer
+Открыть помощника с этой оценкой — можно спросить подробнее про любой пункт	Open the assistant with this review — you can ask more about any item
+Отправить в Корзину	Move to the Recycle Bin
+Оценка пунктов:	Item ratings:
+Помощник посмотрит каждый пункт: чей он, запущен ли, что внутри, а если непонятно — поищет в интернете. Скажет, что можно удалять смело, а что лучше оставить	The assistant will look at each item: whose it is, whether it's running, what's inside, and search the web if unclear. It will say what's safe to delete and what's better to keep
+СЕЙЧАС ЗАПУЩЕНО отсюда:	RUNNING NOW from here:
+Такие вещи удаляются только через настройки Windows или программу, которой они принадлежат.	Such things are removed only via Windows settings or the program they belong to.
+УДАЛЯТЬ НЕЛЬЗЯ:	DO NOT DELETE:
+Удалено по проверке помощника	Deleted after the assistant's review
+архив	archive
+архив, рядом уже есть распакованная папка	archive, the unpacked folder is already next to it
+в Корзине	in the Recycle Bin
+внутри	inside
+внутри — установленная программа	inside is an installed program
+г. назад	yr ago
+документ — возможно, личный	a document — possibly personal
+занят	busy
+и удали вручную; если не получится — спроси помощника.	and delete it manually; if that fails — ask the assistant.
+изменён	modified
+лежит в Загрузках	in Downloads
+мес. назад	mo ago
+нашёл помощник	found by the assistant
+не удалилось — нужны права администратора	not deleted — administrator rights needed
+нужны права администратора	administrator rights needed
+освободилось	freed
+освободится	will free
+открывали	opened
+относится к установленной программе	belongs to the installed program
+папка Program Files целиком	the whole Program Files folder
+папка Windows — вручную не удаляется	the Windows folder — not deleted manually
+папка пользователя целиком	the whole user folder
+папок; больше всего:	folders; most common:
+подтверди окно UAC (в нём будет «Python» — это ScanHub)	confirm the UAC window (it will say "Python" — that's ScanHub)
+последнее изменение внутри	last change inside
+похоже на папку игры или лаунчера	looks like a game or launcher folder
+похоже на установщик	looks like an installer
+при необходимости найди в интернете	search the web if needed
+причина и что сделать написаны у каждого пункта.	the reason and what to do are written at each item.
+пунктов помощник советует не трогать — их здесь нет.	items the assistant advises not to touch — they're not here.
+сверху:	on top:
+сегодня	today
+системная папка пользователя целиком — удаляй то, что внутри	a whole system user folder — delete what's inside
+служебный файл Windows — удаляется только через настройки Windows	a Windows system file — removed only via Windows settings
+собираю факты о файлах	collecting facts about files
+справка ScanHub:	ScanHub note:
+удалено	deleted
+уже не было	was already gone
+уже удалено	already deleted
+файл сейчас открыт программой	the file is open in a program
+файлов и	files and
+фото, видео или музыка — возможно, личное	photos, video or music — possibly personal
+этих путей нет в последней проверке помощника — проверь заново	these paths aren't in the assistant's last review — check again
+это весь диск	that's the whole drive
+это копия: рядом лежит такой же файл без номера	it's a copy: the same file without a number is next to it
+✦ Проверить и удалить с помощью ИИ	✦ Review and delete with AI
+✦ Продолжить разговор	✦ Continue the conversation
+Свернуть	Collapse
+Показать	Show
+Убрать	Remove
+Оценка помощника:	Assistant's review:
+Сначала посмотри	Look first
+Можно удалить	Safe to delete
+Не удаляй	Don't delete
+Удалить выбранное	Delete selected
+В Корзину	To the Recycle Bin
+Удалить навсегда	Delete permanently
+Удалить с правами администратора	Delete as administrator
+Удалить при перезагрузке	Delete on restart
+✦ Как удалить?	✦ How to delete?
+✦ Что это?	✦ What is it?
+Проверить и удалить с помощью ИИ	Review and delete with AI
+Помощник смотрит…	The assistant is looking…
+Удаляю…	Deleting…
+собираю факты о файлах и папках	collecting facts about files and folders
