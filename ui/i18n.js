@@ -81,4 +81,5 @@ document.addEventListener("click", e => {
   const a = e.target.closest("[data-lang]");
   if (a) { e.preventDefault(); setLang(a.dataset.lang) }
 });
-document.addEventListener("DOMContentLoaded", i18nStart);       // переключатель языка — в подвале боковой панели (pages.js)
+document.addEventListener("DOMContentLoaded", i18nStart);       // переключатель языка — в начале ⚙ Настроек (index.html)
+document.addEventListener("DOMContentLoaded", () => document.querySelectorAll(".set-lang [data-lang]").forEach(b => b.classList.toggle("on", b.dataset.lang === LANG)));
