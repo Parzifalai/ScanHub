@@ -19,7 +19,7 @@ const PAGES = [
    tabs: [["boot", "Автозагрузка"], ["game", "Игровой режим"], ["memory", "Оперативная память"], ["noise", "Почему шумит"], ["net", "Интернет"]]},
   {id: "privacy", ico: "privacy", t: "Приватность и защита",
    intro: "Что Windows отправляет о тебе, что программы добавили в меню правой кнопки, кого пускает брандмауэр и как откатить изменения.",
-   tabs: [["privacy", "Приватность"], ["security", "Защита Windows"], ["browsers", "Браузеры"], ["ctx", "Контекстное меню"], ["firewall", "Брандмауэр"], ["restore", "Точки восстановления"], ["miners", "Защита от майнеров"], ["shred", "Шредер"], ["changes", "Что изменил ScanHub"]]},
+   tabs: [["privacy", "Приватность"], ["security", "Защита Windows"], ["browsers", "Браузеры"], ["ctx", "Контекстное меню"], ["firewall", "Брандмауэр"], ["restore", "Точки восстановления"], ["miners", "Защита от майнеров"], ["shred", "Шредер", "dev"], ["changes", "Что изменил ScanHub"]]},
   {id: "health", ico: "health", t: "Здоровье ПК", intro: "Общая проверка системы, сбои и их причины, компоненты для программ, предупреждения, устройства (клавиатура, мышь, микрофон, звук, камера), драйверы и комплектующие.",
    tabs: [["health", "Полная проверка"], ["crash", "Сбои и ошибки"], ["runtimes", "Компоненты для программ"], ["alerts", "Предупреждения"], ["devices", "Устройства"], ["drivers", "Драйверы"], ["hw", "Комплектующие"], ["history", "История"]]},
   {id: "phone", ico: "phone", t: "Телефон", intro: "Проверка Android-телефона по кабелю: следилки, приложения не из магазина, кто получил опасный доступ, обновления безопасности, батарея и память. На телефон ничего не ставится."},
@@ -518,7 +518,7 @@ function pJunk(dev){
   const groups = [...JUNK_GROUPS, "Корзина"].filter(g => all.some(c => c.grp === g));
   const res = run?.result;
   const RV = "Мусор и кэши";
-  const rvBtn = aiReviewBtn(RV, all.filter(c => c.size > 0).map(c => ({id: c.id, label: `${c.grp}: ${c.label}`, size: c.size, note: c.desc || "", path: (c.paths || []).slice(0, 3).join("; ")})));
+  const rvBtn = aiReviewBtn(RV, all.filter(c => c.size > 0).map(c => ({id: c.id, label: `${c.grp}: ${c.label}`, size: c.size, note: (c.desc || "") + ((c.paths || []).length ? " · папки: " + c.paths.slice(0, 3).join("; ") : "")})));
   return pnl(`${head("Мусор и кэши", `На C: свободно ${fmtB(r.c_free)} из ${fmtB(r.c_total)}`, btn + rvBtn)}
     ${aiReviewBox(RV)}
     ${explain("<b>Что такое кэш.</b> Программы сохраняют копии картинок, страниц и скомпилированных данных, чтобы в следующий раз открываться быстрее. Кэш можно удалять: программа создаст его заново, просто первый запуск будет чуть медленнее. Удаляются только файлы старше суток, а занятые программами — пропускаются. Личные файлы, пароли и настройки не трогаются.")}
@@ -609,8 +609,8 @@ function pDisk(dev){
   const rest = v.path.toLowerCase().startsWith(base.toLowerCase()) ? v.path.slice(base.length).split("\\").filter(Boolean) : [];
   rest.forEach((seg, i) => crumbs.push(base + "\\" + rest.slice(0, i + 1).join("\\")));
   const RV = "Место на диске";
-  const rvBtn = aiReviewBtn(RV, [...r.big.slice(0, 40).map(f => ({id: f.path, label: f.path, size: f.size, note: "файл · " + f.kind})),
-    ...v.items.slice(0, 15).map(k => ({id: "d:" + k.path, label: "папка " + k.path, size: k.size, note: `папка, файлов: ${k.files}`}))], "✦ Что можно удалить?");
+  const rvBtn = aiReviewBtn(RV, [...r.big.slice(0, 40).map(f => ({id: f.path, label: f.path, path: f.path, size: f.size, note: "файл · " + f.kind})),
+    ...v.items.slice(0, 15).map(k => ({id: "d:" + k.path, label: "папка " + k.path, path: k.path, size: k.size, note: `папка, файлов: ${k.files}`}))], "✦ Что можно удалить?");
   return pnl(`${head("Что занимает место", `${esc(r.root)} · ${fmtB(r.size)} в ${r.files.toLocaleString(LOC)} файлах · посчитано за ${r.seconds} с${r.denied ? ` · без доступа: ${r.denied} папок` : ""}`, rvBtn)}
     ${top}${aiReviewBox(RV)}
     ${u ? `<div><div class="bar big-bar" title="занято ${fmtB(u.used)}"><div class="${u.free / u.total < 0.1 ? "crit" : ""}" style="width:${u.used / u.total * 100}%"></div></div>
@@ -644,7 +644,7 @@ function pDups(dev){
   const S = sel("dups", t.finished, def);
   const free = r.groups.reduce((a, g) => a + g.paths.filter(p => S.has(p)).length * g.size, 0);
   const RV = "Дубликаты";
-  const rvBtn = aiReviewBtn(RV, r.groups.slice(0, 20).flatMap((g, gi) => g.paths.map((p, i) => ({id: p, label: p, size: g.size, note: `группа ${gi + 1} одинаковых файлов${i === 0 ? ", самый старый" : ""}`}))).slice(0, 60));
+  const rvBtn = aiReviewBtn(RV, r.groups.slice(0, 20).flatMap((g, gi) => g.paths.map((p, i) => ({id: p, label: p, path: p, size: g.size, note: `группа ${gi + 1} одинаковых файлов${i === 0 ? ", самый старый" : ""}`}))).slice(0, 60));
   return pnl(`${head("Дубликаты", `${esc(r.root)} · просмотрено файлов: ${r.files.toLocaleString(LOC)} · групп: ${r.groups.length} · лишнего: ${fmtB(r.waste)}`, rvBtn)}
     ${top}${aiReviewBox(RV)}${busyErr("recycle", "Удаляю…")}
     ${r.groups.length ? r.groups.slice(0, dev ? 400 : 120).map((g, gi) => `<div class="dupg"><div class="sub">${g.paths.length} одинаковых файла по ${fmtB(g.size)}</div>
@@ -657,7 +657,7 @@ function pEmpty(dev){
   const t = TASK.empty, r = t?.result, rm = TASK.empty_remove?.result;
   const S = r ? sel("empty", t.finished, r.folders.map(f => f.path)) : new Set();
   const RV = "Пустые папки";
-  const rvBtn = r ? aiReviewBtn(RV, r.folders.slice(0, 60).map(f => ({id: f.path, label: f.path, note: f.nested ? `+${f.nested} вложенных пустых` : ""}))) : "";
+  const rvBtn = r ? aiReviewBtn(RV, r.folders.slice(0, 60).map(f => ({id: f.path, label: f.path, path: f.path, note: f.nested ? `+${f.nested} вложенных пустых` : ""}))) : "";
   return pnl(`${head("Пустые папки", r ? `${esc(r.root)} · пустых папок: ${r.total}` : "Папки, в которых нет ни одного файла", rvBtn)}${aiReviewBox(RV)}
     ${explain("Пустые папки остаются после удаления программ и распаковки архивов. Места почти не занимают, но засоряют проводник. Системные папки и AppData не трогаются — некоторые программы ждут, что их пустая папка существует.")}
     <div class="row-tools"><button class="primary" data-pick-run="empty">Выбрать папку…</button></div>
@@ -692,7 +692,7 @@ function pUninst(dev){
           <div style="margin-top:6px"><button class="small primary" data-task-run="uninstall" data-args="${attr({key: L.key, elevated: true})}">Удалить с правами администратора 🛡</button></div></div>` : ""}
        ${L.backup ? `<div class="sub">Запись из реестра сохранена: <code>${esc(L.backup)}</code></div>` : ""}
        ${L.leftovers.length ? `<div class="sub">Найдены остатки. Папки уйдут в Корзину, ключи реестра перед удалением сохраняются в резервную копию.
-           ${aiReviewBtn("Остатки программы", L.leftovers.slice(0, 60).map(i => ({id: i.path, label: i.kind === "service" ? (i.label || i.path) : i.path, size: i.size,
+           ${aiReviewBtn("Остатки программы", L.leftovers.slice(0, 60).map(i => ({id: i.path, label: i.kind === "service" ? (i.label || i.path) : i.path, path: i.kind === "folder" ? i.path : "", size: i.size,
              note: `остаток удалённой программы ${L.name}; ${i.kind === "folder" ? "папка" : i.kind === "service" ? "служба " + (i.exe || "") : "ключ реестра"}${i.data ? "; ScanHub думает, что тут могут быть данные пользователя" : ""}`})))}</div>
          ${aiReviewBox("Остатки программы")}
          <div class="rows">${L.leftovers.map(i => `<label class="crow tight">${cb("left", i.path, S.has(i.path))}<span><b>${i.kind === "folder" ? "📁" : i.kind === "service" ? "⚙ служба" : "🔑"} ${esc(i.kind === "service" ? (i.label || i.path) : i.path)}</b> ${i.admin ? adminChip : ""}${i.data ? ` <span class="chip-warn" title="Сохранения игр, настройки, переписка — загляни в папку, прежде чем удалять">могут быть твои данные</span>` : ""}${aiMark("Остатки программы", i.path)}

@@ -282,28 +282,48 @@ function aiExplain(f, fresh = false, kind = "solve"){
 }
 
 // ---------- «✦ Есть ли тут важное?» перед удалением: помощник оценивает каждый пункт списка
-// REVIEW[area] = {status, steps, answer, marks: {id: {v: ok|check|keep, why}}, ids}; items — [{id, label, path, size, note}]
-const REVIEW = {}, REVIEW_ITEMS = {};
-const REVIEW_TAG = /\[\[оценка:(\d+):(ok|check|keep):([^\]]*)\]\]/g;
+// REVIEW[area] = {status, steps, answer, job, rows: [{id, label, path, size, v, why, extra}], marks: {id: row}, hidden}
+// items — [{id, label, path?, size, note}]; path есть у настоящих файлов и папок — их можно удалить окном «Проверить и удалить»
+const REVIEW = (() => { try { return JSON.parse(sessionStorage.getItem("scanhub.review") || "{}") } catch { return {} } })(), REVIEW_ITEMS = {};
+// оценка переживает перезагрузку окна (сервер помнит, что разрешено удалить, до своего перезапуска)
+const rvSave = () => { try { sessionStorage.setItem("scanhub.review", JSON.stringify(Object.fromEntries(Object.entries(REVIEW).filter(([, v]) => v.status === "done")))) } catch {} };
+const REVIEW_TAG = /\[\[(?:оценка|найдено):[^\]]*\]\]/g;
 const REVIEW_CHIP = {ok: ["chip-ok", "Можно удалить"], check: ["chip-warn", "Сначала посмотри"], keep: ["chip-bad", "Не удаляй"]};
+const rvName = r => r.path ? r.path.split("\\").filter(Boolean).pop() : String(r.label || "");
+const rvSize = r => r.size ? fmtB(r.size) : "";
+// пункт внутри другой папки из того же списка (yara_x.pyd в build) — его размер уже учтён, а удалится он вместе с папкой
+const rvNested = (x, rows) => !!x.path && rows.some(y => y !== x && y.path && x.path.toLowerCase().startsWith(y.path.toLowerCase().replace(/\\+$/, "") + "\\"));
 function aiReviewBtn(area, items, label = "✦ Есть ли тут важное?"){
   REVIEW_ITEMS[area] = items;
   const r = REVIEW[area];
   if (!items.length) return "";
   return `<button class="small ai-btn" data-ai-review="${esc(area)}" ${r?.status === "running" ? "disabled" : ""}
-    title="Помощник посмотрит каждый пункт (а если непонятно — поищет в интернете) и скажет, что можно удалять смело, а что лучше оставить">${r?.status === "running" ? "✦ Помощник смотрит…" : esc(label)}</button>`;
+    title="Помощник посмотрит каждый пункт: чей он, запущен ли, что внутри, а если непонятно — поищет в интернете. Скажет, что можно удалять смело, а что лучше оставить">${r?.status === "running" ? "✦ Помощник смотрит…" : esc(label)}</button>`;
+}
+function rvList(rows, area){
+  return `<ul class="rv-list">${rows.map(r => `<li><b>${esc(rvName(r))}</b>${rvSize(r) ? ` <span class="sub-inline">${rvSize(r)}</span>` : ""}${r.extra ? ` <span class="chip-note" title="Этого не было в списке — помощник нашёл сам, когда смотрел папки">нашёл помощник</span>` : ""}
+    — ${esc(r.why || "")}${r.path ? ` <a data-open="${esc(r.path)}" title="${esc(r.path)}">папка</a>` : ""}</li>`).join("")}</ul>`;
 }
 function aiReviewBox(area){
   const r = REVIEW[area];
   if (!r) return "";
   if (r.status === "running") return `<div class="note info ai-review"><div class="spin" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:-2px"></div>
-    Помощник проверяет пункты…${r.steps?.length ? ` <span class="sub">${esc(r.steps[r.steps.length - 1])}</span>` : ""}</div>`;
-  if (r.status === "error") return `<div class="note warn ai-review">Помощник не смог проверить: ${esc(r.error || "ошибка")} <a data-ai-gear>Настройки помощника</a></div>`;
-  const n = {ok: 0, check: 0, keep: 0};
-  Object.values(r.marks).forEach(m => n[m.v]++);
-  return `<div class="note info ai-review"><b>✦ Помощник посмотрел:</b> можно удалить — ${n.ok}, сначала посмотри — ${n.check}, не удаляй — ${n.keep}.
-    ${n.ok ? "Безопасное он отметил галочками, " : ""}${n.keep ? "опасное снял. " : ""}Метки — у каждого пункта, причина — при наведении.
-    ${aiMd(r.answer)}<div class="sub"><a data-ai-review-hide="${esc(area)}">Скрыть оценку</a></div></div>`;
+    Помощник проверяет пункты — смотрит, чьи они, что внутри, и при необходимости ищет в интернете. Это 20–90 секунд.${r.steps?.length ? `<div class="sub">${esc(r.steps[r.steps.length - 1])}</div>` : ""}</div>`;
+  if (r.status === "error") return `<div class="note warn ai-review">Помощник не смог проверить: ${esc(r.error || "ошибка")} <a data-ai-gear>Настройки помощника</a> · <a data-ai-review-close="${esc(area)}">Закрыть</a></div>`;
+  const g = {ok: [], check: [], keep: []};
+  r.rows.forEach(x => g[x.v]?.push(x));
+  const sum = rows => rows.filter(x => !rvNested(x, rows)).reduce((a, x) => a + (x.size || 0), 0);
+  const counts = `можно удалить — <b>${g.ok.length}</b>${sum(g.ok) ? ` (${fmtB(sum(g.ok))})` : ""}, сначала посмотри — <b>${g.check.length}</b>, не удаляй — <b>${g.keep.length}</b>`;
+  if (r.hidden) return `<div class="note info ai-review rv-min"><b>✦ Оценка помощника:</b> ${counts}. <a data-ai-review-show="${esc(area)}">Показать</a> · <a data-ai-review-close="${esc(area)}">Убрать</a></div>`;
+  const canDel = r.rows.some(x => x.path && x.v !== "keep");
+  return `<div class="note info ai-review"><div class="rv-head"><span><b>✦ Помощник посмотрел:</b> ${counts}.</span>
+      <span class="grow"></span><a data-ai-review-hide="${esc(area)}">Свернуть</a></div>
+    ${aiMd(r.answer)}
+    ${g.ok.length ? `<div class="rv-g rv-ok"><b>Можно удалить</b> — ${g.ok.length}${sum(g.ok) ? `, освободится ${fmtB(sum(g.ok))}` : ""}${rvList(g.ok)}</div>` : ""}
+    ${g.check.length ? `<div class="rv-g rv-check"><b>Сначала посмотри</b> — ${g.check.length}${rvList(g.check)}</div>` : ""}
+    ${g.keep.length ? `<details class="rv-g rv-keep"><summary><b>Не удаляй</b> — ${g.keep.length} (нажми, чтобы увидеть почему)</summary>${rvList(g.keep)}</details>` : ""}
+    <div class="row-tools">${canDel ? `<button class="small primary" data-ai-review-del="${esc(area)}">✦ Проверить и удалить с помощью ИИ</button>` : g.ok.length ? `<span class="sub">Безопасное уже отмечено галочками — нажми кнопку удаления этого раздела ниже.</span>` : ""}
+      <button class="small" data-ai-review-chat="${esc(area)}" title="Открыть помощника с этой оценкой — можно спросить подробнее про любой пункт">✦ Продолжить разговор</button></div></div>`;
 }
 function aiMark(area, id){
   const m = REVIEW[area]?.status === "done" && REVIEW[area].marks[id];
@@ -311,42 +331,160 @@ function aiMark(area, id){
   const [cls, text] = REVIEW_CHIP[m.v];
   return ` <span class="${cls}" title="${esc(m.why)}">✦ ${text}</span>${m.why ? `<span class="sub ai-why">${esc(m.why)}</span>` : ""}`;
 }
+async function aiPoll(id, onStep){
+  for (let fails = 0; ;) {
+    await new Promise(res => setTimeout(res, 1000));
+    let j;
+    try { j = await api("/api/ai/job?id=" + id) } catch { if (++fails > 8) return {status: "error", error: "ScanHub перезапустился — попробуй ещё раз"}; continue }
+    if (j.status !== "running") return j;
+    onStep?.(j);
+  }
+}
 async function aiReview(area){
   const items = REVIEW_ITEMS[area] || [];
   if (!items.length) return;
   if (!AI.cfg) await aiLoadCfg();
   if (!AI.cfg?.enabled) { toast("Сначала подключи ИИ-помощника", "это бесплатно — например, ключ Google Gemini", "info", 7000); return aiOpen(true) }
   const it = items.slice(0, 60);
-  REVIEW[area] = {status: "running", steps: [], marks: {}, ids: it.map(i => i.id)};
+  REVIEW[area] = {status: "running", steps: [], rows: [], marks: {}};
   redrawPanels();
   let j;
   try {
-    const r = await api("/api/ai/ask", {kind: "review", area, items: it.map(({id, ...x}) => x)});
-    for (let fails = 0; ;) {
-      await new Promise(res => setTimeout(res, 1000));
-      try { j = await api("/api/ai/job?id=" + r.id) } catch { if (++fails > 8) { j = {status: "error", error: "ScanHub перезапустился — попробуй ещё раз"}; break } continue }
-      if (j.status !== "running") break;
-      REVIEW[area].steps = j.steps || []; redrawPanels();
-    }
+    const r = await api("/api/ai/ask", {kind: "review", area, items: it});
+    REVIEW[area].job = r.id;
+    j = await aiPoll(r.id, x => { REVIEW[area].steps = x.steps || []; redrawPanels() });
   } catch (e) { j = {status: "error", error: e.message} }
   const rv = REVIEW[area];
   if (j.status !== "done") { Object.assign(rv, {status: "error", error: j.error}); return redrawPanels() }
-  for (const m of String(j.answer || "").matchAll(REVIEW_TAG)) {
-    const id = rv.ids[+m[1] - 1];
-    if (id !== undefined) rv.marks[id] = {v: m[2], why: m[3].trim()};
-  }
-  Object.assign(rv, {status: "done", answer: String(j.answer || "").replace(REVIEW_TAG, "").trim()});
+  rv.rows = j.review || [];
+  rv.rows.forEach(x => { if (x.id != null) rv.marks[x.id] = x });
+  Object.assign(rv, {status: "done", answer: String(j.answer || "").replace(REVIEW_TAG, "").replace(/\n{3,}/g, "\n\n").trim()});
   // сразу показываем: безопасное отмечаем, «не удаляй» снимаем (что отмечено — видно до нажатия «Удалить»)
   const set = REVIEW_SEL[area] && SEL[REVIEW_SEL[area]];
-  if (set) for (const [id, m] of Object.entries(rv.marks)) { if (m.v === "ok" && !String(id).startsWith("d:")) set.add(id); if (m.v === "keep") set.delete(id) }
-  if (!Object.keys(rv.marks).length) rv.answer += "\n\n(Помощник не поставил оценки пунктам — нажми ещё раз или выбери другую модель.)";
-  AI.msgs.push({role: "user", content: "Проверь, нет ли важного: " + area, show: "✦ Есть ли тут важное: " + area}, {role: "assistant", content: rv.answer});
-  redrawPanels();
-  toast("Помощник проверил список", "метки — у каждого пункта", "info", 5000);
+  if (set) for (const x of rv.rows) { if (x.id == null) continue; if (x.v === "ok" && !String(x.id).startsWith("d:")) set.add(x.id); if (x.v === "keep") set.delete(x.id) }
+  if (!rv.rows.length) rv.answer += "\n\n(Помощник не поставил оценки пунктам — нажми ещё раз или выбери другую модель.)";
+  rvToChat(area);
+  rvSave(); redrawPanels();
+  toast("Помощник проверил список", "оценка — над списком, метки — у каждого пункта", "info", 5000);
+}
+// в разговор — целиком, с оценкой каждого пункта: так «Продолжить разговор» знает, о чём речь (и после перезагрузки окна)
+function rvToChat(area){
+  const rv = REVIEW[area];
+  if (!rv || rv.status !== "done" || AI.msgs.some(m => m.rv === area && m.job === rv.job)) return;
+  const V = {ok: "можно удалить", check: "сначала посмотреть", keep: "не удалять"};
+  AI.msgs.push({role: "user", content: "Проверь, нет ли важного: " + area, show: "✦ Есть ли тут важное: " + area, rv: area, job: rv.job},
+    {role: "assistant", content: rv.answer + "\n\nОценка пунктов:\n" + rv.rows.map(x => `- ${x.path || x.label} (${rvSize(x) || "—"}): ${V[x.v]} — ${x.why}`).join("\n")});
 }
 // какой набор галочек (SEL) у каждого раздела очистки
 const REVIEW_SEL = {"Мусор и кэши": "junk", "Место на диске": "big", "Дубликаты": "dups", "Остатки программы": "left", "Пустые папки": "empty",
-  "Битые ярлыки": "lnk", "Старые драйверы": "drv", "Шредер": null};
+  "Битые ярлыки": "lnk", "Старые драйверы": "drv"};
+
+// быстрый вопрос помощнику без панели: ответ — строкой (для «Что это?» в окне удаления)
+async function aiQuick(question){
+  const r = await api("/api/ai/ask", {kind: "chat", messages: [{role: "user", content: question}]});
+  const j = await aiPoll(r.id);
+  if (j.status !== "done") throw new Error(j.error || "помощник не ответил");
+  return j.answer;
+}
+
+// ---------- окно «Проверить и удалить с помощью ИИ»
+async function aiReviewDelete(area){
+  const rv = REVIEW[area];
+  if (!rv?.job) return;
+  const all = rv.rows.filter(x => x.path && x.v !== "keep"), rows = all.filter(x => !rvNested(x, all));
+  const keep = rv.rows.filter(x => x.v === "keep").length;
+  const on = new Set(rows.filter(x => x.v === "ok").map(x => x.path));
+  const wrap = document.createElement("div");
+  wrap.className = "mdl-back";
+  const row = (x, i) => `<div class="rvd-row" data-i="${i}">
+      <label class="rvd-main"><input type="checkbox" data-rvd="${i}" ${on.has(x.path) ? "checked" : ""}>
+        <span><b>${esc(rvName(x))}</b> ${rvSize(x) ? `<span class="sub-inline">${rvSize(x)}</span>` : ""} <span class="${REVIEW_CHIP[x.v][0]}">✦ ${REVIEW_CHIP[x.v][1]}</span>
+          <span class="sub">${esc(x.why || "")}</span></span></label>
+      <div class="rvd-path"><a data-open="${esc(x.path)}" title="Открыть в Проводнике">${esc(x.path)}</a></div>
+      <div class="rvd-acts"><button class="small" data-rvd-what="${i}" type="button">✦ Что это?</button><span class="rvd-res" id="rvdRes${i}"></span></div>
+      <div class="rvd-what" id="rvdWhat${i}" hidden></div></div>`;
+  const draw = () => {
+    const tot = rows.filter(x => on.has(x.path)).reduce((a, x) => a + (x.size || 0), 0);
+    wrap.querySelector("#rvdTot").textContent = `Выбрано: ${on.size}${tot ? ` · ${fmtB(tot)}` : ""}`;
+    wrap.querySelector("[data-rvd-go]").disabled = !on.size;
+  };
+  wrap.innerHTML = `<div class="mdl xwide rvd" role="dialog" aria-modal="true" aria-labelledby="rvdT">
+    <div class="mdl-top"><span class="mdl-ic">✦</span><h3 id="rvdT">Проверить и удалить с помощью ИИ</h3></div>
+    <p>Отмечено то, что помощник считает безопасным. «Сначала посмотри» — не отмечено: нажми на путь, чтобы открыть папку, или «✦ Что это?», чтобы помощник рассказал подробнее.${keep ? ` Ещё ${keep} пунктов помощник советует не трогать — их здесь нет.` : ""}</p>
+    <div class="rvd-list">${rows.map(row).join("")}</div>
+    <div class="rvd-mode"><label><input type="radio" name="rvdMode" value="recycle" checked> В Корзину <span class="sub">— можно вернуть; место освободится после очистки Корзины (очень большие папки Windows может удалить сразу)</span></label>
+      <label><input type="radio" name="rvdMode" value="permanent"> Удалить навсегда <span class="sub">— место освободится сразу, вернуть нельзя</span></label></div>
+    <div class="note" id="rvdNote" hidden></div>
+    <div class="mdl-btns"><span class="sub grow" id="rvdTot"></span><button data-rvd-x type="button">Закрыть</button><button class="danger" data-rvd-go type="button">Удалить выбранное</button></div></div>`;
+  document.body.appendChild(wrap);
+  draw();
+  const close = () => { wrap.classList.add("out"); setTimeout(() => wrap.remove(), 140); document.removeEventListener("keydown", key, true) };
+  const key = e => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close() } };
+  document.addEventListener("keydown", key, true);
+  const note = (html, kind = "info") => { const n = wrap.querySelector("#rvdNote"); n.hidden = !html; n.className = "note " + kind; n.innerHTML = html };
+  const showResult = res => {
+    const failed = res.failed || [];
+    for (const d of res.done || []) {
+      const i = rows.findIndex(x => x.path === d.path);
+      if (i < 0) continue;
+      on.delete(d.path);
+      const el = wrap.querySelector(`.rvd-row[data-i="${i}"]`);
+      el.classList.add("gone");
+      el.querySelector(`#rvdRes${i}`).innerHTML = `<span class="chip-ok">✓ ${d.note ? esc(d.note) : res.permanent ? "удалено" : "в Корзине"}</span>`;
+      el.querySelector("input").disabled = true;
+    }
+    for (const f of failed) {
+      const i = rows.findIndex(x => x.path === f.path);
+      if (i < 0) continue;
+      wrap.querySelector(`#rvdRes${i}`).innerHTML = `<span class="chip-bad">не удалилось: ${esc(f.why)}</span>
+        <div class="sub">${esc(f.how || "")}</div><div class="row-tools">
+        ${f.kind === "admin" ? `<button class="small primary" data-rvd-admin="${i}" type="button">Удалить с правами администратора</button>` : ""}
+        ${["admin", "busy"].includes(f.kind) ? `<button class="small" data-rvd-later="${i}" type="button">Удалить при перезагрузке</button>` : ""}
+        <button class="small" data-rvd-help="${i}" data-why="${esc(f.why)}" type="button">✦ Как удалить?</button></div>`;
+    }
+    draw();
+    note(`${res.done?.length ? `✓ Удалено: ${res.done.length}${res.freed ? ` · освободилось ${fmtB(res.freed)}${res.permanent ? "" : " (после очистки Корзины)"}` : ""}.` : ""}
+      ${failed.length ? ` Не получилось: ${failed.length} — причина и что сделать написаны у каждого пункта.` : ""}`, failed.length ? "warn" : "info");
+  };
+  const run = async (paths, extra = {}) => {
+    const permanent = wrap.querySelector('input[name="rvdMode"]:checked')?.value === "permanent";
+    note(`<div class="spin" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:-2px"></div> Удаляю… ${extra.admin || extra.later ? "подтверди окно UAC (в нём будет «Python» — это ScanHub)" : ""}`);
+    wrap.querySelectorAll("button").forEach(b => b.disabled = true);
+    const t = await runTask("ai_delete", {job: rv.job, paths, permanent, ...extra});
+    wrap.querySelectorAll("button").forEach(b => b.disabled = false);
+    if (t.status === "error") return note(esc(t.error || "не получилось"), "bad");
+    showResult(t.result || {});
+    try { redrawPanels() } catch {}
+  };
+  wrap.addEventListener("change", e => { const i = e.target.dataset.rvd; if (i == null) return; e.target.checked ? on.add(rows[+i].path) : on.delete(rows[+i].path); draw() });
+  wrap.addEventListener("click", async e => {
+    const b = e.target.closest("button,[data-open]");
+    if (!b || b.hasAttribute("data-open")) return;            // путь открывает папку общим обработчиком
+    if (b.hasAttribute("data-rvd-x")) return close();
+    if (b.hasAttribute("data-rvd-go")) {
+      const permanent = wrap.querySelector('input[name="rvdMode"]:checked')?.value === "permanent";
+      if (!await ask(`${permanent ? "Удалить навсегда" : "Отправить в Корзину"} выбранное (${on.size})?${permanent ? " Вернуть будет нельзя." : ""}`)) return;
+      return run([...on]);
+    }
+    if (b.dataset.rvdAdmin) return run([rows[+b.dataset.rvdAdmin].path], {admin: true});
+    if (b.dataset.rvdLater) return run([rows[+b.dataset.rvdLater].path], {later: true});
+    if (b.dataset.rvdHelp) {
+      const x = rows[+b.dataset.rvdHelp];
+      close(); aiOpen();
+      return aiAsk(`ScanHub не смог удалить «${x.path}»: ${b.dataset.why}. Как удалить это правильно и безопасно? Скажи по шагам, где это лежит и что нажать.`);
+    }
+    if (b.dataset.rvdWhat) {
+      const i = +b.dataset.rvdWhat, x = rows[i], box = wrap.querySelector(`#rvdWhat${i}`);
+      if (!box.hidden && box.dataset.done) { box.hidden = true; return }
+      box.hidden = false; box.innerHTML = `<span class="sub">Помощник смотрит…</span>`; b.disabled = true;
+      try {
+        box.innerHTML = aiMd(await aiQuick(`Что это и можно ли это удалить: «${x.path}»${rvSize(x) ? ` (${rvSize(x)})` : ""}? Посмотри сведения о файле или папке${AI.cfg?.web ? ", при необходимости найди в интернете" : ""}. Ответь коротко: что это, чьё, что будет, если удалить, и вывод — удалять или нет.`));
+        box.dataset.done = "1";
+      } catch (err) { box.innerHTML = `<span class="sub">${esc(err.message)}</span>` }
+      b.disabled = false;
+    }
+  });
+}
 
 // ---------- события
 document.addEventListener("click", async e => {
@@ -358,10 +496,16 @@ document.addEventListener("click", async e => {
   api("/api/link", {url, ai: true}).catch(err => toast("Не открылось", err.message, "warn"));
 }, true);
 document.addEventListener("click", async e => {
-  const rv = e.target.closest("[data-ai-review],[data-ai-review-hide]");
-  if (rv) { e.preventDefault(); e.stopPropagation();
-    if (rv.dataset.aiReviewHide) { delete REVIEW[rv.dataset.aiReviewHide]; return redrawPanels() }
-    return aiReview(rv.dataset.aiReview) }
+  const rv = e.target.closest("[data-ai-review],[data-ai-review-hide],[data-ai-review-show],[data-ai-review-close],[data-ai-review-del],[data-ai-review-chat]");
+  if (!rv) return;
+  e.preventDefault(); e.stopPropagation();
+  const d = rv.dataset;
+  if (d.aiReviewHide) { REVIEW[d.aiReviewHide].hidden = true; rvSave(); return redrawPanels() }
+  if (d.aiReviewShow) { REVIEW[d.aiReviewShow].hidden = false; rvSave(); return redrawPanels() }
+  if (d.aiReviewClose) { delete REVIEW[d.aiReviewClose]; rvSave(); return redrawPanels() }
+  if (d.aiReviewDel) return aiReviewDelete(d.aiReviewDel);
+  if (d.aiReviewChat) { rvToChat(d.aiReviewChat); await aiOpen(); const t = $("#aiText"); if (t) { t.placeholder = "Спроси про любой пункт: «а что за папка npm-cache?», «как удалить модель Ollama?»…"; t.focus() } return }
+  return aiReview(d.aiReview);
 }, true);
 document.addEventListener("click", async e => {
   const a = e.target.closest("[data-ai],[data-ai-ask],[data-ai-gear],[data-ai-fresh],[data-ai-launch],[data-ai-act],[data-ai-more],[data-ai-do],[data-ai-cli-login],[data-ai-cli-check],#aiTop,#aiClose,#aiGear,#aiNew,#aiStop,#aiFindModels,#aiSave,#aiOff,#aiBack,#aiAttach");

@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "1.4.0"
+VERSION = "1.4.1"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -1639,6 +1639,8 @@ def _task_fn(name, args):
         "firewall_set": lambda: {"ok": tweaks.firewall_set(args.get("ids") or args["id"], bool(args.get("enable")), run_el)},
         "firewall_remove": lambda: tweaks.firewall_remove(args.get("ids") or [], run_el),
         "ext_open": lambda: __import__("browsers").open_extension(_find_ext(args)),
+        "ai_delete": lambda: assistant.review_delete(str(args.get("job", "")), [str(x) for x in args.get("paths") or []][:200],
+                                                     bool(args.get("permanent")), bool(args.get("admin")), run_el, bool(args.get("later"))),
         "startup": tweaks.startup_list,
         "startup_set": lambda: {"ok": tweaks.startup_set(args["id"], bool(args.get("enable")), run_el)},
         "boot_trace": lambda: tweaks.boot_trace(run_el),
@@ -1830,7 +1832,7 @@ CHANGE_TASKS = {
     "force_remove": "Удалена запись программы из списка установленных", "force_remove_many": "Удалены записи удалённых программ",
     "uninstall": "Удалена программа", "leftovers_remove": "Удалены остатки программы", "leftovers_delay": "Остатки удалятся при перезагрузке",
     "appx_remove": "Удалены встроенные приложения Windows", "junk_clean": "Очистка мусора и кэшей", "cleanup_run": "Очистка",
-    "empty_remove": "Удалены пустые папки", "recycle": "Файлы перемещены в Корзину", "drvstore_remove": "Удалены старые драйверы",
+    "empty_remove": "Удалены пустые папки", "recycle": "Файлы перемещены в Корзину", "ai_delete": "Удалено по проверке помощника", "drvstore_remove": "Удалены старые драйверы",
     "shred": "Файлы уничтожены шредером", "restore_enable": "Включена защита системы", "restore_create": "Создана точка восстановления",
     "quarantine": "Файлы перемещены в карантин", "q_restore": "Файл возвращён из карантина", "q_delete": "Файл удалён из карантина навсегда",
     "app_links_create": "Созданы ярлыки ScanHub",
@@ -1855,6 +1857,7 @@ HOW = {
     "uninstall": "Вернуть: поставь программу заново с её официального сайта.",
     "appx_remove": "Вернуть: найди приложение в Microsoft Store и установи снова.",
     "recycle": "Вернуть: открой Корзину Windows → правой кнопкой по файлу → «Восстановить».",
+    "ai_delete": "Если удалялось в Корзину — открой Корзину Windows → правой кнопкой по файлу → «Восстановить». Удалённое навсегда вернуть нельзя.",
     "quarantine": "Вернуть: «Проверка на вирусы → Карантин» → «Вернуть».",
     "restore_create": "", "restore_enable": "Выключить: «Приватность и защита → Точки восстановления».", "app_links_create": "",
     "q_restore": "", "game_off": "", "driver_restore": "", "privacy_revert": "", "security_revert": "",
@@ -1932,6 +1935,8 @@ def _change_items(name, a, r):
             return [i.get("path", "") for i in a.get("items", [])]
         if name in ("quarantine",):
             return [os.path.basename(f.get("path", "")) for f in a.get("files", [])]
+        if name == "ai_delete":
+            return [d.get("path", "") for d in (r or {}).get("done", [])]
     except Exception:
         pass
     return []

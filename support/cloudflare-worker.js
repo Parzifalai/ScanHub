@@ -123,11 +123,47 @@ function summary(all){
   return {today: n(1), week: n(7), month: n(30), total: all.length, fresh, loyal: all.filter(u => u.days >= 5).length,
           versions: by(u => u.v || "?"), langs: by(u => u.lang || "?"), win: by(u => +u.win >= 22000 ? "Windows 11" : u.win ? "Windows 10" : "?"), perDay};
 }
+// ежедневная сводка автору: понятными словами, с пояснением, что считается
+const SELF_URL = "https://scanhub-reports.parzifaal2.workers.dev";
+const plural = (n, one, few, many) => { const m10 = n % 10, m100 = n % 100;
+  return m10 === 1 && m100 !== 11 ? one : m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20) ? few : many };
+const people = n => `${n} ${plural(n, "человек", "человека", "человек")}`;
+function dailyText(all, s, env){
+  const day = d => new Date(Date.now() - d * DAY).toISOString().slice(0, 10);
+  const today = day(0), yesterday = day(1);
+  const newToday = all.filter(u => u.first === today).length, newYest = all.filter(u => u.first === yesterday).length;
+  const ranYest = all.filter(u => u.last >= yesterday && u.first <= yesterday).length;
+  const prevWeek = all.filter(u => u.last >= day(13) && u.first <= day(7)).length;       // приблизительно: были активны неделей раньше
+  const back = all.filter(u => u.last === today && u.first < today).length;               // вернулись сегодня (ставили раньше)
+  const list = rows => rows.slice(0, 5).map(([k, v]) => `${html(k)} — ${v}`).join(", ") || "—";
+  const dateRu = new Date().toLocaleDateString("ru-RU", {day: "numeric", month: "long", timeZone: "Asia/Almaty"});
+  const trend = s.week > prevWeek ? `▲ больше, чем неделей раньше (${prevWeek})` : s.week < prevWeek ? `▼ меньше, чем неделей раньше (${prevWeek})` : "столько же, сколько неделей раньше";
+  return [
+    `📊 <b>ScanHub — сводка за ${dateRu}</b>`,
+    "",
+    `<b>Сегодня</b> ScanHub открывали: <b>${people(s.today)}</b>${newToday ? ` (из них новых — ${newToday})` : ""}${back ? `, вернулись к нему — ${back}` : ""}`,
+    `<b>Вчера</b>: ${people(ranYest)}${newYest ? `, новых установок — ${newYest}` : ""}`,
+    `<b>За 7 дней</b>: ${people(s.week)} — ${trend}; из них поставили на этой неделе — ${s.fresh}`,
+    `<b>За 30 дней</b>: ${people(s.month)} · <b>всего установок</b>: ${s.total}`,
+    `<b>Пользуются постоянно</b> (открывали 5+ разных дней): ${s.loyal}`,
+    "",
+    `Версии: ${list(s.versions)}`,
+    `Язык окна: ${list(s.langs.map(([k, v]) => [k === "ru" ? "русский" : k === "en" ? "английский" : k, v]))}`,
+    `Windows: ${list(s.win)}`,
+    "",
+    `<i>Считаются только копии, где согласились на статистику. «Человек» = одна установка ScanHub на одном компьютере (без имён и IP).</i>`,
+    env.STATS_KEY ? `<a href="${SELF_URL}/stats?key=${encodeURIComponent(env.STATS_KEY)}">Подробная страница с графиком</a>` : "",
+  ].filter(x => x !== null).join("\n");
+}
 async function stats(url, env){
   if (!env.USAGE || !env.STATS_KEY) return new Response("Счётчик не настроен: нужны привязка KV «USAGE» и секрет STATS_KEY.", {status: 503});
   if (url.searchParams.get("key") !== env.STATS_KEY) return new Response("Нет доступа", {status: 403});
-  const s = summary(await usageAll(env));
+  const all = await usageAll(env), s = summary(all);
   if (url.searchParams.get("format") === "json") return json(s);
+  if (url.searchParams.get("send") === "daily") {          // прислать сводку в Telegram прямо сейчас (для проверки)
+    await tg(env, "sendMessage", JSON.stringify({chat_id: env.CHAT_ID, text: dailyText(all, s, env), parse_mode: "HTML", disable_web_page_preview: true}));
+    return json({ok: true});
+  }
   const tbl = rows => rows.map(([k, v]) => `<tr><td>${html(k)}</td><td>${v}</td></tr>`).join("");
   const max = Math.max(1, ...s.perDay.map(x => x[2]));
   return new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ScanHub — статистика</title>
@@ -148,9 +184,8 @@ export default {
   // раз в день (если в Triggers настроен Cron) — короткая сводка автору в Telegram
   async scheduled(event, env){
     if (!env.USAGE || !env.BOT_TOKEN || !env.CHAT_ID) return;
-    const s = summary(await usageAll(env));
-    await tg(env, "sendMessage", JSON.stringify({chat_id: env.CHAT_ID,
-      text: `📊 ScanHub: сегодня ${s.today}, за неделю ${s.week}, за месяц ${s.month}, всего копий ${s.total} (новых за неделю: ${s.fresh}).`})).catch(() => {});
+    const all = await usageAll(env), s = summary(all);
+    await tg(env, "sendMessage", JSON.stringify({chat_id: env.CHAT_ID, text: dailyText(all, s, env), parse_mode: "HTML", disable_web_page_preview: true})).catch(() => {});
   },
   async fetch(req, env){
     const url = new URL(req.url);
