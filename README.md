@@ -4,7 +4,9 @@
 
 Всё для проверки и обслуживания Windows в одном окне: 30+ антивирусов, сканеров и проверок, очистка, программы, приватность и защита. Только **разовые** проверки: ScanHub ничего не держит запущенным в фоне и не ставит постоянных служб.
 
-Версия 1.0.0 · Windows 10/11 · бесплатно, открытый код (MIT)
+[![Последняя версия](https://img.shields.io/github/v/release/Parzifalai/ScanHub?label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=2f6feb)](../../releases/latest) [![Звёзды](https://img.shields.io/github/stars/Parzifalai/ScanHub?style=flat&label=%E2%AD%90)](../../stargazers) · Windows 10/11 · бесплатно, открытый код (MIT)
+
+⭐ Пригодился ScanHub? Поставь звезду (кнопка **Star** вверху страницы) — так его проще найти другим.
 
 ### ⬇ [Скачать ScanHub для Windows](../../releases/latest/download/ScanHub-Windows.zip)
 

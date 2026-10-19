@@ -115,14 +115,14 @@ function prepCard(){
 
 // ============================================================ ГЛАВНАЯ: «Что стоит сделать»
 let TODO = [], SELFUPD = null;
-document.addEventListener("click", async e => {
-  if (!e.target.closest("[data-self-update]")) return;
+document.addEventListener("click", e => { if (e.target.closest("[data-self-update]")) selfUpdateAsk() });
+async function selfUpdateAsk(){
   const u = SELFUPD || {};
   if (!await modal({title: `Обновить ScanHub до ${u.latest}?`, icon: "↑", ok: "Обновить", cancel: "Позже",
       html: `${u.notes ? `<div class="grp">Что нового</div><div class="sub" style="white-space:pre-wrap;max-height:260px;overflow:auto">${esc(u.notes)}</div>` : ""}
         <p class="sub" style="margin-top:10px">ScanHub скачает архив с GitHub (${esc(u.repo || "")}), сверит контрольную сумму, поставит поверх и перезапустится — окно обновится само. Ключи, история и карантин останутся.${u.url ? ` <a data-link="${esc(u.url)}">Страница выпуска</a>` : ""}</p>`})) return;
   selfUpdateRun(u);
-});
+}
 // окно обновления: полоска и проценты — скачивание, проверка контрольной суммы, установка, перезапуск.
 // «Свернуть» прячет окно в плашку справа снизу (там, где уведомления); нажатие по плашке открывает окно снова.
 async function selfUpdateRun(u){
@@ -194,14 +194,16 @@ document.addEventListener("click", async e => {
   const b = e.target.closest("[data-usage]");
   if (!b) return;
   USAGE = (await api("/api/usage", {on: b.dataset.usage === "1"}).catch(() => ({on: null}))).on;
-  toast(USAGE ? "Спасибо!" : "Хорошо, не буду", USAGE ? "ScanHub будет раз в день отмечаться у автора — без личных данных" : "ничего не отправляется; изменить можно в ⚙ Настройках");
+  if (USAGE) toast("Спасибо!", "ScanHub будет раз в день отмечаться у автора — без личных данных. А если не сложно — поставь звезду на GitHub ⭐ (нажми)", "ok", 12000, () => api("/api/link", {url: GH_REPO}).catch(() => {}));
+  else toast("Хорошо, не буду", "ничего не отправляется; изменить можно в ⚙ Настройках");
   renderTodo();
 });
 function computeTodo(){
   const T = [], add = (lvl, t, s, b) => T.push({lvl, t, s, b});
   const prep = prepCard();
   if (prep) T.push(prep);
-  if (USAGE === null) T.push({lvl: "info", app: true, t: "Помочь автору ScanHub?", s: "Раз в день сообщать автору, что ScanHub запущен: случайный номер этой копии, версия, язык и номер сборки Windows. Без имён, файлов и находок. Так автор узнаёт, сколько людей пользуется ScanHub. Изменить можно в ⚙ Настройках.",
+  if (USAGE === null) T.push({lvl: "info", app: true, t: "Помочь автору ScanHub?", s: "Раз в день сообщать автору, что ScanHub запущен: случайный номер этой копии, версия, язык и номер сборки Windows. Без имён, файлов и находок. Так автор узнаёт, сколько людей пользуется ScanHub. Изменить можно в ⚙ Настройках. И если не сложно — поставь ScanHub звезду на GitHub ⭐",
+    b3: ["⭐ GitHub", `data-link="${GH_REPO}"`],
     b: ["Разрешить", `data-usage="1"`], b2: ["Не надо", `data-usage="0"`]});
   if (TASK.app_links?.result && !TASK.app_links.result.ok && store.get("links.ack") !== "1")
     T.push({lvl: "info", app: true, t: "Создай ярлык ScanHub", s: "Ярлык на рабочем столе и в меню «Пуск» — чтобы открывать ScanHub в один клик, не заходя в папку.", b: ["Создать ярлык", `data-task-run="app_links_create"`]});
@@ -263,7 +265,7 @@ function renderTodo(){
   const ic = {bad: ["threat", "!"], warn: ["suspicious", "!"], info: ["running", "i"]};
   const html = TODO.length ? `<h2 class="sec">Что стоит сделать</h2><div class="checks">${TODO.map(x => `<div class="check${x.app ? " sh-self" : ""}">
       ${x.app ? `<span class="ic ic-app" title="Это про сам ScanHub, а не про компьютер">S</span>` : `<span class="ic ic-${ic[x.lvl][0]}">${ic[x.lvl][1]}</span>`}<span><b>${esc(x.t)}</b><span class="sub">${esc(x.s)}</span></span>
-      <span class="acts">${x.primary || x.app ? "" : aiBtn(x.t, x.s, {source: "Главная · Что стоит сделать"})}${x.b ? `<button class="small${x.lvl === "bad" || x.primary ? " primary" : ""}" ${x.b[1]}>${esc(x.b[0])}</button>` : ""}${x.b2 ? ` <button class="small" ${x.b2[1]}>${esc(x.b2[0])}</button>` : x.lvl === "info" ? ` <button class="small" data-todo-ack="${esc(x.t)}" title="Убрать из списка">Понятно</button>` : ""}</span></div>`).join("")}</div>
+      <span class="acts">${x.primary || x.app ? "" : aiBtn(x.t, x.s, {source: "Главная · Что стоит сделать"})}${x.b ? `<button class="small${x.lvl === "bad" || x.primary ? " primary" : ""}" ${x.b[1]}>${esc(x.b[0])}</button>` : ""}${x.b2 ? ` <button class="small" ${x.b2[1]}>${esc(x.b2[0])}</button>` : ""}${x.b3 ? ` <button class="small ghost" ${x.b3[1]} title="Открыть страницу ScanHub на GitHub — кнопка «Star» вверху справа">${esc(x.b3[0])}</button>` : ""}${x.b2 ? "" : x.lvl === "info" ? ` <button class="small" data-todo-ack="${esc(x.t)}" title="Убрать из списка">Понятно</button>` : ""}</span></div>`).join("")}</div>
       ${hidden.length ? `<div class="sub" style="margin-top:6px">Скрыто советов: ${hidden.length}. <a data-todo-unack>Показать снова</a></div>` : ""}`
     : `<h2 class="sec">Что стоит сделать</h2><div class="note info">Сейчас ничего срочного. 👍${hidden.length ? ` <a data-todo-unack>Показать скрытые советы (${hidden.length})</a>` : ""}</div>`;
   if (html === TODO_HTML) return;                // не перерисовывать без изменений (данные приходят каждые 1,5 с)
