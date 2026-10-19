@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/logo/scanhub-horizontal-on-dark.svg">
+  <img src="docs/logo/scanhub-horizontal.svg" alt="ScanHub" height="72">
+</picture>
+
 # ScanHub
 
 *[English summary below](#english)*

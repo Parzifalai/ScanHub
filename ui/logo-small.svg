@@ -1,9 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="600 270 800 960" fill="none">
-  <!-- ScanHub: упрощённый знак для 16–32 px — толще линии, без внутреннего кольца и опоры -->
-  <g stroke="#22c55e" stroke-width="58" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M1000 310 L1325 392 Q1350 400 1350 430 L1350 742 C1350 950 1215 1090 1022 1180 Q1000 1190 978 1180 C785 1090 650 950 650 742 L650 430 Q650 400 675 392 Z"/>
-    <path d="M1000 515 A230 230 0 1 0 1230 745"/>
-    <path d="M1000 745 L1110 500 A270 270 0 0 1 1210 565 Z" fill="#22c55e"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>ScanHub</title>
+  <rect x="0" y="0" width="256" height="256" rx="56" fill="#2456D6"/>
+  <g transform="translate(2 8)">
+    <path d="M70 186C88 210 150 212 166 182C182 152 154 138 128 128C102 118 66 104 80 74C88 58 108 52 132 52" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/>
+    <path d="M126 18L184.89 52L126 86Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="10" stroke-linejoin="round"/>
   </g>
-  <circle cx="1205" cy="655" r="34" fill="#4ade80"/>
 </svg>
