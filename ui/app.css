@@ -1049,3 +1049,7 @@ details.dsec>.checks{margin-top:6px}
 .bootslow tr.det:hover{background:color-mix(in srgb,var(--accent) 6%,transparent)}
 .bootbars>button{max-width:28px;background:var(--s1)} .bootbars>button.slow{background:var(--crit)}
 .bootdates>span{max-width:28px;font-size:9.5px;letter-spacing:-.2px}
+
+/* просьба о звезде на GitHub — спокойно, без давления */
+.star-note{margin-top:10px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,#f5b301 12%,var(--panel2));font-size:13px;line-height:1.5}
+.star-note.small{font-size:12px;padding:8px 10px}

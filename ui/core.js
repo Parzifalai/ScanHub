@@ -390,6 +390,11 @@ function render(){
     if (PAGE === "home") renderTodo();
   }
 }
+// ============================================================ «поставь звезду» — без навязывания: в мастере, в карточке статистики и после «спасибо»
+const GH_REPO = "https://github.com/Parzifalai/ScanHub";
+const starNote = (small = false) => `<div class="star-note${small ? " small" : ""}">⭐ Если ScanHub пригодился — поставь ему звезду на GitHub, если не сложно.
+  Так его проще найти другим, а автору — понять, что работа нужна. <a data-link="${GH_REPO}">Открыть страницу ScanHub на GitHub</a> → кнопка «Star» вверху справа (нужен аккаунт GitHub).</div>`;
+
 // ============================================================ уведомления
 function toast(title, text = "", kind = "ok", ms = 5000, onclick = null){
   const box = $("#toasts");
@@ -723,10 +728,22 @@ $("#scanAll").onclick = async () => {
   if (!tools.length) return say("Не выбрано ни одного готового инструмента");
   scanBatch(target, tools);
 };
+// «Проверить обновления»: сканеры и базы + новая версия самого ScanHub; итог — уведомлением справа снизу
 $("#checkBtn").onclick = async () => {
-  $("#checkBtn").disabled = true; $("#checkBtn").textContent = "Проверяю…";
-  await api("/api/check", {});
-  setTimeout(async () => { await refresh(); $("#checkBtn").disabled = false; $("#checkBtn").textContent = "Проверить обновления" }, 5000);
+  const b = $("#checkBtn");
+  b.disabled = true; b.textContent = "Проверяю…";
+  const [, su] = await Promise.all([api("/api/check", {}).catch(() => null), api("/api/self_update?force=1").catch(e => ({error: e.message}))]);
+  setTimeout(async () => {
+    await refresh();
+    b.disabled = false; b.textContent = "Проверить обновления";
+    if (su && !su.error) { SELFUPD = su; if (PAGE === "home") renderTodo() }
+    if (su?.newer) toast(`Вышла новая версия ScanHub — ${su.latest}`, `у тебя ${su.current}. Нажми, чтобы обновить`, "info", 15000, () => selfUpdateAsk());
+    else if (su?.error) toast("Не получилось проверить версию ScanHub", "нет связи с GitHub — попробуй позже", "warn", 7000);
+    else if (su?.enabled) toast("ScanHub последней версии", su.current, "ok", 5000);
+    const upd = TOOLS.filter(t => t.ready && (t.update_available || t.stale));
+    toast(upd.length ? `Сканеры: можно обновить ${upd.length}` : "Сканеры и базы — свежие", upd.length ? upd.slice(0, 4).map(t => t.name).join(", ") + (upd.length > 4 ? "…" : "") : "", upd.length ? "info" : "ok", 8000,
+      upd.length ? () => go("tools") : null);
+  }, 5000);
 };
 
 // ---------- история

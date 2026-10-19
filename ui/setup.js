@@ -75,6 +75,7 @@ function setupDraw(){
     <label class="setup-chk"><input type="checkbox" id="setupUsage" ${SETUP.usage ? "checked" : ""}> <span><b>Анонимная статистика запусков</b>
       <span class="sub">Раз в день сообщать автору, что ScanHub запущен: случайный номер копии, версия, язык. Без имён, файлов и находок. Помогает автору понять, сколько людей пользуется ScanHub.</span></span></label>
     <div class="note info" style="margin-top:10px">Дальше: на главной — «Ультра проверка», она проверит всё по очереди. ИИ-помощник (кнопка «✦ Помощник» вверху) настраивается отдельно, по желанию.</div>
+    ${starNote()}
     <div class="setup-btns"><button class="ghost" data-setup-back>Назад</button><div class="grow"></div>
       <button class="primary" data-setup-finish>${running ? "Открыть ScanHub — подготовка закончится сама" : "Открыть ScanHub"}</button></div>`; }
   const keep = {};                                   // не потерять вставленные, но ещё не сохранённые ключи
