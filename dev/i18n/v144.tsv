@@ -1,0 +1,55 @@
+(вся загрузка шла	(the whole boot took
+OneDrive — облачное хранилище Microsoft: синхронизирует файлы.	OneDrive — Microsoft cloud storage: syncs files.
+Windows не записала, что замедляло эту загрузку, — значит, ничего заметного не было.	Windows didn't record anything slowing this boot — so nothing noticeable happened.
+Windows оптимизировала свою работу в фоне.	Windows optimized itself in the background.
+Windows оптимизировала свою работу во время загрузки.	Windows optimized itself during boot.
+Антивирус Microsoft Defender: проверяет файлы при запуске.	Microsoft Defender antivirus: scans files on access.
+Всего на запуск ушло	Starting it took
+Выключить автозапуск	Turn off autostart
+Драйвер устройства грузился медленно. Обычно помогает обновить драйвер: «Windows Update → Дополнительные параметры → Необязательные обновления» или сайт производителя ноутбука (для тебя — Lenovo Vantage). Если устройство не нужно — его можно отключить в Диспетчере устройств.	A device driver loaded slowly. Updating the driver usually helps: "Windows Update → Advanced options → Optional updates" or the laptop maker's site (for you — Lenovo Vantage). If the device isn't needed, you can disable it in Device Manager.
+Драйвер устройства — через него Windows работает с оборудованием (звук, сеть, видеокарта, тачпад…).	A device driver — Windows uses it to work with hardware (sound, network, graphics card, touchpad…).
+Замедляет загрузку Windows:	Slows down Windows boot:
+Заметно	Noticeable
+Запуск основы Windows.	Starting the Windows core.
+Индексатор поиска Windows: строит индекс файлов для быстрого поиска.	Windows Search indexer: builds the file index for fast search.
+Нажми на столбик	Click a bar
+Нажми на строку — что это и что с этим сделать.	Click a row — what it is and what to do about it.
+Насколько замедлила.	How much it slowed.
+Немного	A little
+По этой загрузке подробностей нет: данные собраны прошлой версией ScanHub. Нажми «обновить» ниже — ScanHub перечитает журнал (одно окно UAC), и подробности будут у каждой загрузки.	No details for this boot: the data was collected by an older ScanHub. Press "refresh" below — ScanHub will re-read the log (one UAC window) and every boot will have details.
+Подготовка Windows к входу пользователя.	Preparing Windows for user sign-in.
+Почти незаметно	Barely noticeable
+Применение настроек компьютера (групповые политики).	Applying computer settings (group policy).
+Применение настроек пользователя (групповые политики).	Applying user settings (group policy).
+Проводник Windows: рабочий стол, панель задач и окна папок.	Windows Explorer: desktop, taskbar and folder windows.
+Программа запускалась во время загрузки. Если она в автозагрузке и не нужна сразу — выключи её автозапуск в списке ниже. Если это часть Windows или драйвера — оставь.	The program started during boot. If it's in startup and not needed right away — turn off its autostart in the list below. If it's part of Windows or a driver — leave it.
+Программа, которая запускалась во время загрузки Windows.	A program that started during Windows boot.
+Системный процесс Windows, внутри которого работают службы.	A Windows system process that hosts services.
+Скорость → Автозагрузка	Speed → Startup
+Служба запускалась медленно. Если это служба программы, которой ты не пользуешься, — удали программу в «Программы → Удаление». Службы Windows трогать не стоит.	A service started slowly. If it belongs to a program you don't use — remove the program in "Programs → Uninstall". Don't touch Windows services.
+Служба — программа, которая работает в фоне без окна.	A service — a program that runs in the background without a window.
+Устройство, которое Windows подключала при загрузке.	A device Windows connected during boot.
+Часть запуска Windows.	Part of Windows startup.
+Часть поиска Windows: разбирает файлы для индекса.	Part of Windows Search: parses files for the index.
+Часть поиска Windows: читает содержимое файлов для индекса, чтобы поиск в «Пуске» и Проводнике находил их быстро.	Part of Windows Search: reads file contents for the index so Start and File Explorer search are fast.
+Что замедлило загрузку	What slowed the boot
+Что сделать.	What to do.
+Это работа самой Windows при запуске. Обычно сильнее всего помогают меньше программ в автозагрузке, свободное место на диске C: и SSD вместо жёсткого диска.	This is Windows itself starting up. What helps most is fewer startup programs, free space on drive C: and an SSD instead of a hard drive.
+Это часть самой Windows — выключать или удалять её не нужно. Если загрузка медленная, помогают меньше программ в автозагрузке и свободное место на диске C:.	This is part of Windows itself — no need to disable or remove it. If boot is slow, fewer startup programs and free space on drive C: help.
+дольше обычного	longer than usual
+загрузок, красным — когда Windows сама отметила загрузку как медленную.	boots, red — when Windows itself marked the boot as slow.
+замедлил на	slowed by
+запуск сеанса Windows	Windows session start
+запускается вместе с Windows. Если она не нужна сразу после включения — выключи её автозапуск: программа останется, просто будет открываться, когда ты её запустишь.	starts with Windows. If you don't need it right after turning on — turn off its autostart: the program stays, it just opens when you start it.
+нажми, чтобы увидеть, что тормозило	click to see what slowed it
+оптимизация Windows	Windows optimization
+политики компьютера	computer policies
+политики пользователя	user policies
+с, всего	s, total
+устройство	device
+фоновая оптимизация Windows	Windows background optimization
+чтобы увидеть, что замедлило именно эту загрузку.	to see what slowed this particular boot.
+ядро Windows	Windows core
+программа	program
+драйвер	driver
+служба	service

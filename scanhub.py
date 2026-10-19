@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "1.4.3"
+VERSION = "1.4.4"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
