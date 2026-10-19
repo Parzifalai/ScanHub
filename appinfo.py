@@ -7,6 +7,14 @@ from ctypes import wintypes
 
 # точные имена файлов — самые частые гости журналов сбоев
 KNOWN = {
+    "searchprotocolhost.exe": ("Часть поиска Windows: читает содержимое файлов для индекса, чтобы поиск в «Пуске» и Проводнике находил их быстро.",
+                               "Part of Windows Search: reads file contents for the index so Start and File Explorer search are fast."),
+    "searchindexer.exe": ("Индексатор поиска Windows: строит индекс файлов для быстрого поиска.", "Windows Search indexer: builds the file index for fast search."),
+    "searchfilterhost.exe": ("Часть поиска Windows: разбирает файлы для индекса.", "Part of Windows Search: parses files for the index."),
+    "explorer.exe": ("Проводник Windows: рабочий стол, панель задач и окна папок.", "Windows Explorer: desktop, taskbar and folder windows."),
+    "svchost.exe": ("Системный процесс Windows, внутри которого работают службы.", "A Windows system process that hosts services."),
+    "msmpeng.exe": ("Антивирус Microsoft Defender: проверяет файлы при запуске.", "Microsoft Defender antivirus: scans files on access."),
+    "onedrive.exe": ("OneDrive — облачное хранилище Microsoft: синхронизирует файлы.", "OneDrive — Microsoft cloud storage: syncs files."),
     "excel.exe": ("Microsoft Excel — таблицы из пакета Office.", "Microsoft Excel — spreadsheets from the Office suite."),
     "winword.exe": ("Microsoft Word — текстовый редактор из пакета Office.", "Microsoft Word — the word processor from the Office suite."),
     "powerpnt.exe": ("Microsoft PowerPoint — презентации из пакета Office.", "Microsoft PowerPoint — presentations from the Office suite."),
@@ -215,7 +223,7 @@ def about(app, path=""):
         ru, en = KNOWN[low]
         _CACHE[key] = r = {"ru": ru, "en": en}
         return r
-    if not low.endswith(".exe") and "." in low and not path:              # имя пакета Store: Microsoft.Copilot
+    if not low.endswith((".exe", ".sys", ".dll", ".msi", ".com", ".scr")) and "." in low and not path:   # имя пакета Store: Microsoft.Copilot
         hit = next((x for rx, x in STORE if re.search(rx, low)), None)
         ru, en = hit or ("Приложение из Microsoft Store.", "A Microsoft Store app.")
         _CACHE[key] = r = {"ru": ru, "en": en}

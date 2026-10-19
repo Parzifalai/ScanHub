@@ -1048,3 +1048,4 @@ details.dsec>.checks{margin-top:6px}
 .bootslow tr.det{cursor:pointer}
 .bootslow tr.det:hover{background:color-mix(in srgb,var(--accent) 6%,transparent)}
 .bootbars>button{max-width:28px;background:var(--s1)} .bootbars>button.slow{background:var(--crit)}
+.bootdates>span{max-width:28px;font-size:9.5px;letter-spacing:-.2px}
