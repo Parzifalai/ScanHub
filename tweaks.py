@@ -1074,29 +1074,16 @@ $ev = Get-WinEvent -LogName 'Microsoft-Windows-Diagnostics-Performance/Operation
     boots = [e for e in evs if e["id"] == 100]
     if not boots:
         raise RuntimeError("Windows ещё не записала ни одной загрузки (журнал пуст — так бывает после чистой установки)")
+    # события 101–110 записываются в течение нескольких минут после события 100 своей загрузки
+    others = [e for e in evs if e["id"] != 100]
     hist = []
-    for b in boots[:15]:
+    for i, b in enumerate(boots[:15]):
         d = b["d"]
+        upto = boots[i - 1]["t"] if i else "9999"
+        window = [e for e in others if _plus(b["t"], -60) <= e["t"] <= _plus(b["t"], 900) and e["t"] < upto]
         hist.append({"t": b["t"], "total": int(d.get("BootTime") or 0), "main": int(d.get("MainPathBootTime") or 0),
-                     "post": int(d.get("BootPostBootTime") or 0), "degraded": d.get("BootIsDegradation") == "true"})
-    last_t = boots[0]["t"]
-    nxt = None
-    # события 101–110 по последней загрузке: записываются сразу после события 100
-    window = [e for e in evs if e["id"] != 100 and e["t"] <= _plus(last_t, 900) and e["t"] >= _plus(last_t, -60)]
-    apps, drivers, services, other = [], [], [], []
-    for e in window:
-        d = e["d"]
-        row = {"name": d.get("FriendlyName") or d.get("Name") or "?", "file": d.get("Name") or "", "total": int(d.get("TotalTime") or 0),
-               "degradation": int(d.get("DegradationTime") or 0)}
-        if e["id"] == 101:
-            row["name"] = d.get("FriendlyName") or d.get("Name")
-            apps.append(row)
-        elif e["id"] == 102:
-            drivers.append(row)
-        elif e["id"] == 103:
-            services.append(row)
-        else:
-            other.append(row)
+                     "post": int(d.get("BootPostBootTime") or 0), "degraded": d.get("BootIsDegradation") == "true",
+                     "slow": _boot_slow(window)})
     all_apps = {}
     for e in evs:
         if e["id"] == 101:
@@ -1106,10 +1093,31 @@ $ev = Get-WinEvent -LogName 'Microsoft-Windows-Diagnostics-Performance/Operation
                 x["count"] += 1
                 x["degradation"] = max(x["degradation"], int(e["d"].get("DegradationTime") or 0))
     data = {"collected": datetime.now().isoformat(timespec="seconds"), "boots": hist, "last": hist[0],
-            "slow_last": sorted(apps + drivers + services + other, key=lambda r: -r["degradation"])[:20],
-            "apps": sorted(all_apps.values(), key=lambda r: -r["degradation"])[:30]}
+            "slow_last": hist[0]["slow"], "apps": sorted(all_apps.values(), key=lambda r: -r["degradation"])[:30]}
     save(BOOT_FILE, data)
     return data
+
+
+# что замедляло загрузку: тип события → по-человечески
+BOOT_KIND = {101: "программа", 102: "драйвер", 103: "служба", 104: "ядро Windows", 105: "оптимизация Windows", 106: "фоновая оптимизация Windows",
+             107: "политики компьютера", 108: "политики пользователя", 109: "устройство", 110: "запуск сеанса Windows"}
+
+
+def _boot_slow(window):
+    rows = []
+    for e in window:
+        d = e["d"]
+        rows.append({"name": d.get("FriendlyName") or d.get("Name") or "?", "file": d.get("Name") or d.get("FileName") or "",
+                     "total": int(d.get("TotalTime") or 0), "degradation": int(d.get("DegradationTime") or 0),
+                     "kind": BOOT_KIND.get(e["id"], "Windows"), "id": e["id"], "path": d.get("Path") or ""})
+    rows.sort(key=lambda r: -r["degradation"])
+    try:
+        import appinfo
+        for r in rows[:15]:
+            r["about"] = appinfo.about(r["file"] if r["file"].lower().endswith((".exe", ".sys", ".dll")) else r["name"], r["path"])["ru"]
+    except Exception:
+        pass
+    return rows[:15]
 
 
 def _plus(iso, seconds):

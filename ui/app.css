@@ -1037,3 +1037,14 @@ details.dsec>.checks{margin-top:6px}
 .upd-bar.mini{display:block;height:6px;margin:5px 0 3px;width:220px;max-width:100%}
 .upd-bar.mini>span{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .35s ease}
 .mdl-back[hidden]{display:none!important}
+
+/* время загрузки: столбики нажимаются, под ними даты */
+.bootbars>button{flex:1;border:0;padding:0;border-radius:4px 4px 0 0;background:var(--accent);cursor:pointer;opacity:.75;min-width:0}
+.bootbars>button:hover,.bootbars>button.on{opacity:1}
+.bootbars>button.on{box-shadow:0 0 0 2px var(--text) inset}
+.bootbars>button.slow{background:var(--bad)}
+.bootdates{display:flex;gap:4px;margin-top:3px}
+.bootdates>span{flex:1;text-align:center;font-size:10.5px;color:var(--muted);min-width:0;overflow:hidden}
+.bootslow tr.det{cursor:pointer}
+.bootslow tr.det:hover{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.bootbars>button{max-width:28px;background:var(--s1)} .bootbars>button.slow{background:var(--crit)}
