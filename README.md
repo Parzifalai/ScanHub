@@ -33,7 +33,7 @@
 - **Отчёт ультра проверки в PDF** и сравнение с прошлой проверкой: что исправлено, что появилось нового.
 - **«Что изменил ScanHub»** (Приватность и защита): все изменения системы списком, с датой и кнопкой «Отменить» — настройки, автозагрузка, брандмауэр, PATH, удалённые записи программ.
 - **Обновление в одну кнопку:** когда выходит новая версия, на главной появляется «Обновить» — ScanHub скачает её отсюда, сверит контрольную сумму и поставит поверх, ключи и история останутся.
-- **Русский и английский интерфейс** — переключатель внизу боковой панели (*English interface: switch at the bottom of the sidebar*).
+- **Русский и английский интерфейс** — переключатель в самом начале ⚙ Настроек (*English interface: ⚙ Settings → Language, at the top*).
 - **ИИ-помощник (по желанию).** Кнопка «✦ Как решить» у любой находки (коротко: причина, шаги и кнопка автоматического решения, если ScanHub может сделать это сам — с подтверждением) и чат «Спроси про свой ПК»: помощник сам смотрит журналы Windows, сбои, датчики, место, защиту, браузеры, карантин и — если разрешишь — файлы и папки. Сам он ничего не меняет — только читает и советует. Если ScanHub может исправить проблему сам, у ответа появятся кнопки действий и **«✦ Сделай сам»**: помощник выполнит только эти действия по очереди и проверит результат — через те же проверки и окна UAC, что и кнопки ScanHub, с записью в «Что изменил ScanHub». Модель на выбор: бесплатный Gemini; **Claude или ChatGPT по своей подписке** (ScanHub запускает официальные Claude Code или Codex, в которые ты вошёл, — запросы идут в лимиты подписки; у агента нет командной строки — данные он берёт инструментами ScanHub, а справки может искать в интернете, это выключается в настройках помощника); по ключу API — Claude, OpenAI, OpenRouter, DeepSeek; или локально Ollama.
 
 ## Установка
@@ -108,8 +108,10 @@ ScanHub не заменяет постоянный антивирус — он �
 
 **ScanHub** is a free, open-source toolbox for checking and maintaining a Windows 10/11 PC in one window: 30+ antivirus scanners and checks (Microsoft Defender, ClamAV, YARA, Kaspersky VRT, Dr.Web CureIt!, ESET, Malwarebytes, AdwCleaner, HiJackThis+…), junk cleanup, disk usage, program uninstall with leftovers, privacy and Windows security settings with one-click undo, crash and stability analysis, an internet-slowdown diagnosis and an optional AI assistant. Everything is **one-off**: nothing keeps running in the background.
 
+⭐ Found ScanHub useful? A star (the **Star** button at the top of this page) helps others find it.
+
 - **Install:** download [ScanHub-Windows.zip](../../releases/latest/download/ScanHub-Windows.zip), unpack anywhere, run `ScanHub.exe` (Python is bundled). SmartScreen may warn because the launcher is not code-signed — "More info" → "Run anyway".
-- **Language:** the interface is Russian by default; switch to English at the bottom of the left sidebar. The AI assistant then answers in English too.
+- **Language:** the interface is Russian by default; switch to English at the top of ⚙ Settings. The AI assistant then answers in English too.
 - **Phone check:** Android over USB debugging — stalkerware, apps not from a store (checked on VirusTotal by hash), who has accessibility/device-admin/notification access, root, patch age, battery. Nothing is installed on the phone.
 - **Devices:** keyboard, mouse, microphone, speakers, camera, Bluetooth — status plus live tests in the window (mic level and playback, key tester with chatter detection, mouse buttons/double-click/polling rate).
 - **Privacy:** only file hashes go to online scanners (VirusTotal etc., with your own API keys); files are uploaded only when you press "Upload". No ads or accounts; an anonymous daily "ScanHub is running" counter (random copy id, version, language) is sent only if you opt in. Settings and history stay in the `data` folder on your PC.
