@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "1.5.1"
+VERSION = "1.5.2"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -3073,6 +3073,27 @@ def prune_window_profile():
         shutil.rmtree(os.path.join(base, name), ignore_errors=True)
     for sub in ("Cache", "Code Cache", "GPUCache", "DawnGraphiteCache", "DawnWebGPUCache", "Service Worker"):
         shutil.rmtree(os.path.join(base, "Default", sub), ignore_errors=True)
+    # Edge берёт значок окна и кнопки на панели задач из своего кэша значков сайтов — после смены логотипа там
+    # оставался старый. При новой версии ScanHub кэш значков профиля окна стирается (окно закрыто — файлы свободны).
+    mark = os.path.join(base, "icons.version")
+    try:
+        old = open(mark, encoding="utf-8").read().strip()
+    except OSError:
+        old = ""
+    if old != VERSION and os.path.isdir(os.path.join(base, "Default")):
+        left = 0
+        for name in ("Favicons", "Favicons-journal", "HubApps Icons", "HubApps Icons-journal",
+                     "JumpListIconsRecentClosed", "JumpListIconsRecentWorkspacesV2", "JumpListIconsMostVisited"):
+            p = os.path.join(base, "Default", name)
+            try:
+                shutil.rmtree(p) if os.path.isdir(p) else os.remove(p)
+            except FileNotFoundError:
+                pass
+            except OSError:
+                left += 1
+        if not left:
+            with open(mark, "w", encoding="utf-8") as f:
+                f.write(VERSION)
 
 
 def open_window():
