@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>ScanHub</title>
+  <rect x="0" y="0" width="256" height="256" rx="56" fill="#000000"/>
+  <g transform="translate(2 8)">
+    <path d="M70 186C88 210 150 212 166 182C182 152 154 138 128 128C102 118 66 104 80 74C88 58 108 52 132 52" fill="none" stroke="#FFFFFF" stroke-width="40" stroke-linecap="round"/>
+    <path d="M126 18L184.89 52L126 86Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="10" stroke-linejoin="round"/>
+  </g>
+</svg>
