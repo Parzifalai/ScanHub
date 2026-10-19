@@ -888,19 +888,25 @@ function pBoot(dev){
 }
 // время загрузки: выбранный столбик и что его замедлило
 let BOOT_SEL = 0;
+const bootSec = ms => ms ? (ms / 1000).toFixed(1).replace(".", ",") + " с" : "—";
 const bootDate = t => { const d = new Date(t); return isNaN(d) ? String(t || "").slice(0, 16).replace("T", " ") : d.toLocaleString(LOC, {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}) };
 function bootSlowHtml(b, dev){
   const x = b.boots[BOOT_SEL] || b.boots[0];
   const rows = x.slow || (BOOT_SEL === 0 ? b.slow_last : null);
-  const head = `<div class="grp">Что замедлило загрузку ${esc(bootDate(x.t))} · ${sec(x.total)}</div>`;
+  const head = `<div class="grp">Что замедлило загрузку ${esc(bootDate(x.t))} · ${bootSec(x.total)}</div>`;
   if (!rows) return head + `<div class="note info">По этой загрузке подробностей нет: данные собраны прошлой версией ScanHub. Нажми «обновить» ниже — ScanHub перечитает журнал (одно окно UAC), и подробности будут у каждой загрузки.</div>`;
   if (!rows.length) return head + `<div class="note info">Windows не записала, что замедляло эту загрузку, — значит, ничего заметного не было. 👍</div>`;
   BOOT_ROWS = rows;
   return head + `<div class="sub" style="margin:-4px 0 6px">Нажми на строку — что это и что с этим сделать.</div><table class="t small bootslow">${rows.slice(0, 12).map((r, i) => `<tr class="det" data-boot-item="${i}" tabindex="0" role="button">
       <td><b>${esc(r.name)}</b> <span class="sub-inline">${esc(r.kind || "")}</span>${r.about ? `<div class="sub">${esc(r.about)}</div>` : ""}${dev && r.file ? `<div class="sub mono">${esc(r.file)}</div>` : ""}</td>
-      <td class="n">+${sec(r.degradation)}</td><td class="n sub">Подробнее ›</td></tr>`).join("")}</table>`;
+      <td class="n">+${bootSec(r.degradation)}</td><td class="n sub">Подробнее ›</td></tr>`).join("")}</table>`;
 }
 let BOOT_ROWS = [];
+const BOOT_WHAT = {"программа": "Программа, которая запускалась во время загрузки Windows.", "драйвер": "Драйвер устройства — через него Windows работает с оборудованием (звук, сеть, видеокарта, тачпад…).",
+  "служба": "Служба — программа, которая работает в фоне без окна.", "устройство": "Устройство, которое Windows подключала при загрузке.",
+  "ядро Windows": "Запуск основы Windows.", "запуск сеанса Windows": "Подготовка Windows к входу пользователя.",
+  "политики компьютера": "Применение настроек компьютера (групповые политики).", "политики пользователя": "Применение настроек пользователя (групповые политики).",
+  "оптимизация Windows": "Windows оптимизировала свою работу во время загрузки.", "фоновая оптимизация Windows": "Windows оптимизировала свою работу в фоне."};
 function bootAdvice(r){
   const st = (TASK.startup?.result?.items || []).find(i => i.enabled && r.file && (i.exe || i.cmd || "").toLowerCase().includes(r.file.toLowerCase().replace(/\.exe$/, "")));
   if (r.id === 101 && st) return {text: `«${st.name}» запускается вместе с Windows. Если она не нужна сразу после включения — выключи её автозапуск: программа останется, просто будет открываться, когда ты её запустишь.`, btn: `<button class="small primary" data-boot-off="${esc(st.id)}">Выключить автозапуск</button>`};
@@ -922,8 +928,8 @@ document.addEventListener("click", async e => {
   const tot = (TASK.startup?.result?.boot || TASK.boot_trace?.result)?.boots?.[BOOT_SEL]?.total || 0;
   const adv = bootAdvice(r);
   modal({title: r.name, icon: "⏱", ok: "Понятно", cancel: null, wide: true,
-    html: `<p><b>Что это.</b> ${esc(r.about || (r.kind ? `${r.kind[0].toUpperCase() + r.kind.slice(1)} Windows.` : ""))}${r.file && r.file !== r.name ? ` <span class="sub mono">${esc(r.file)}</span>` : ""}</p>
-      <p><b>Насколько замедлила.</b> На ${sec(r.degradation)} дольше обычного${tot ? ` (вся загрузка шла ${sec(tot)})` : ""}. Всего на запуск ушло ${sec(r.total)}. ${r.degradation >= 10000 ? sevChip(["warn", "Заметно"]) : r.degradation >= 3000 ? sevChip(["info", "Немного"]) : sevChip(["ok", "Почти незаметно"])}</p>
+    html: `<p><b>Что это.</b> ${esc(r.about || BOOT_WHAT[r.kind] || "Часть запуска Windows.")}${r.file && r.file !== r.name ? ` <span class="sub mono">${esc(r.file)}</span>` : ""}</p>
+      <p><b>Насколько замедлила.</b> На ${bootSec(r.degradation)} дольше обычного${tot ? ` (вся загрузка шла ${bootSec(tot)})` : ""}. Всего на запуск ушло ${bootSec(r.total)}. ${r.degradation >= 10000 ? sevChip(["warn", "Заметно"]) : r.degradation >= 3000 ? sevChip(["info", "Немного"]) : sevChip(["ok", "Почти незаметно"])}</p>
       <p><b>Что сделать.</b> ${esc(adv.text)}</p>
       <div class="row-tools">${adv.btn || ""}${aiBtn(`Замедляет загрузку Windows: ${r.name}`, `${r.kind}; файл ${r.file}; замедлил на ${Math.round(r.degradation / 1000)} с, всего ${Math.round(r.total / 1000)} с. ${r.about || ""}`, {source: "Скорость → Автозагрузка"})}</div>`});
 });

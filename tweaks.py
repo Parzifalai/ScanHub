@@ -1041,6 +1041,17 @@ def startup_list():
         hit = slow.get(os.path.basename(i["exe"] or "").lower())
         i["delay_ms"] = hit["degradation"] if hit else None
     items.sort(key=lambda i: (not i["enabled"], i["name"].lower()))
+    # данные прошлых версий: у строк «что замедлило» не было типа и описания — дописываем по имени файла
+    try:
+        import appinfo
+        for r in [*(boot.get("slow_last") or []), *[x for b in boot.get("boots") or [] for x in b.get("slow") or []]]:
+            f = (r.get("file") or "").lower()
+            r.setdefault("kind", "драйвер" if f.endswith(".sys") else "программа" if f.endswith(".exe") else "Windows")
+            r.setdefault("id", 102 if f.endswith(".sys") else 101 if f.endswith(".exe") else 110)
+            if not r.get("about"):
+                r["about"] = appinfo.about(r.get("file") or r.get("name"), r.get("path") or "")["ru"]
+    except Exception:
+        pass
     return {"items": items, "boot": boot or None}
 
 
