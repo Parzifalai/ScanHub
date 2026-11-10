@@ -1372,3 +1372,10 @@ button.round{width:58px;height:58px;padding:0;border-radius:50%;display:grid;pla
   .hero-text h2{font-size:28px}
 }
 dialog label.switch{display:flex;align-items:flex-start;gap:10px} dialog label.switch input{width:auto;margin-top:3px;flex:none}
+/* средние окна: щит и показатели делят ширину, заголовок не ломается */
+.home-top{grid-template-columns:minmax(0,1fr) minmax(330px,clamp(330px,32vw,500px))}
+.hero-text h2{font-size:clamp(30px,2.7vw,42px)}
+.hero-actions{flex-wrap:nowrap}
+@media (max-width:1500px){.shield-wrap{width:230px;height:230px} .shield-wrap .shield{width:130px;height:150px} .view .hero{gap:22px}}
+@media (max-width:1200px){.home-top{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:620px){.hero-actions{flex-wrap:wrap}}
