@@ -303,7 +303,7 @@ def analyze(days=30):
                 x["items"].append({"t": t, "version": g(1), "seconds": round(ms / 1000) if ms else None, "type": kind,
                                    "why": HANG_TYPES.get(kind.lower(), HANG_TYPES["unknown"])})
         elif prov == ".NET Runtime":
-            R["dotnet"].append({"t": t, "text": msg[:400]})
+            R["dotnet"].append({"t": t, "text": msg[:1500]})
         elif prov == "Windows Error Reporting":
             kind = g(2)
             if kind == "LiveKernelEvent":
@@ -327,6 +327,12 @@ def analyze(days=30):
                 x = R["hangs"].setdefault(app.lower(), {"app": app, "path": "", "count": 0, "last": t, "items": []})
                 x["count"] += 1
                 x["last"] = max(x["last"], t)
+    # .NET: настоящая причина — текст исключения из события «.NET Runtime 1026» (код 0xe0434352 говорит только «ошибка .NET»)
+    for dn in R["dotnet"]:
+        m = re.search(r"(?:Application|Приложение):\s*(\S+?\.exe)", dn["text"], re.I)
+        ex = re.search(r"(?:Exception Info|Сведения об исключении):\s*(.+?)(?:\s+at\s|\s+в\s+\w+\.|\s*Stack:|$)", dn["text"], re.S)
+        if m and ex and m.group(1).lower() in R["crashes"]:
+            R["crashes"][m.group(1).lower()].setdefault("exception", re.sub(r"\s+", " ", ex.group(1)).strip()[:300])
     # вылеты: главная причина по самой частой категории модуля
     crashes = []
     for x in R["crashes"].values():
@@ -336,7 +342,8 @@ def analyze(days=30):
         crashes.append({"app": x["app"], "path": x["path"], "count": x["count"], "last": x["last"], "module": top_mod, "cat": top_cat,
                         "what": main.get("what", ""), "code": main.get("code", ""), "code_name": main.get("code_name", ""),
                         "code_desc": main.get("code_desc", ""), "advice": ADVICE.get(top_cat, ADVICE["app"]),
-                        "modules": [f"{m} ×{n}" for m, n in x["modules"].most_common(4)], "items": x["items"]})
+                        "modules": [f"{m} ×{n}" for m, n in x["modules"].most_common(4)], "items": x["items"],
+                        **({"exception": x["exception"]} if x.get("exception") else {})})
     crashes.sort(key=lambda c: c["last"], reverse=True)
     R["crashes"] = crashes
     R["hangs"] = sorted(R["hangs"].values(), key=lambda h: h["last"], reverse=True)

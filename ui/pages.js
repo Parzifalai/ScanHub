@@ -1504,7 +1504,7 @@ function pCrash(dev){
     "Ошибки чтения или записи — сделай резервную копию важных файлов и проверь диск («Полная проверка» → «Проверить диски подробно»).", "disk"));
   parts.push(sec(`Вылеты программ: ${r.crashes.reduce((a, c) => a + c.count, 0)}`, r.crashes.length ? `<div class="checks">${r.crashes.map(c => row(c.count >= 3 ? "warn" : "info",
     `${esc(c.app)} <span class="sub-inline">${c.count} ${c.count === 1 ? "раз" : "раза"}</span>`,
-    `${aboutOf(c) ? `<b style="font-weight:600">Что это:</b> ${aboutHtml(c)}<br>` : ""}<b style="font-weight:600">Почему:</b> ${esc(c.what)}${c.code_name ? ` · ${esc(c.code_name)}` : ""}${c.code_desc ? ` — ${esc(c.code_desc)}` : ""}.<br><b style="font-weight:600">Что делать:</b> ${esc(c.advice)}
+    `${aboutOf(c) ? `<b style="font-weight:600">Что это:</b> ${aboutHtml(c)}<br>` : ""}<b style="font-weight:600">Почему:</b> ${esc(c.what)}${c.code_name ? ` · ${esc(c.code_name)}` : ""}${c.code_desc ? ` — ${esc(c.code_desc)}` : ""}.<br>${c.exception ? `<b style="font-weight:600">Текст ошибки:</b> <span class="mono" style="font-size:12.5px">${esc(c.exception)}</span><br>` : ""}<b style="font-weight:600">Что делать:</b> ${esc(c.advice)}
      ${sevLine(c.count >= 3 ? ["warn", "Стоит посмотреть: вылетает регулярно — нажми «Решить»"] : c.count === 2 ? ["info", "Не страшно, если больше не повторится"] : ["info", "Не опасно: разовый вылет — если не повторяется, можно забыть"])}
      ${dev ? `<br>модули: <span class="mono">${esc(c.modules.join(", "))} · ${esc(c.code)} · ${esc(c.path)}</span>` : ""}`,
     `<span class="sub">${esc(ago2(c.last))}</span><button class="small primary" data-crash-fix="${attr({app: c.app, path: c.path, count: c.count})}" title="Что можно сделать именно с этой программой">Решить</button>`,
