@@ -1621,6 +1621,51 @@ def _only_found(name, args):
     return a
 
 
+def _extra_install(prog):
+    """Скачать все дополнительные сканеры, которые можно скачать автоматически (CureIt — только со страницы Dr.Web)."""
+    import extra_av
+    got, failed, skipped = [], [], []
+    tv = {t["id"]: t for t in tools_view()}
+    ids = [t for t in extra_av.SILENT + extra_av.GUI if t in tv]
+    for i, tid in enumerate(ids):
+        t = tv[tid]
+        if t["source"]["type"] in ("manual", "system"):
+            if not t["ready"]:
+                skipped.append(t["name"])
+            continue
+        if t["ready"] and not t.get("stale") and not t.get("update_available"):
+            got.append(t["name"])
+            continue
+        prog(f"{round(i / len(ids) * 100)}% · скачиваю {t['name']}")
+        (got if _install_wait(tid) else failed).append(t["name"])
+    return {"ready": got, "failed": failed, "manual": skipped}
+
+
+def _extra_remove():
+    """Удалить скачанные дополнительные сканеры и их следы (одно окно UAC: часть следов создана с правами администратора)."""
+    import extra_av
+    tv = {t["id"]: t for t in tools_view()}
+    paths = []
+    for tid in extra_av.SILENT + ["eset"]:
+        t = tv.get(tid)
+        if t and t.get("exe_path"):
+            paths += extra_av.traces(tid, t["exe_path"])
+    paths = [p for p in dict.fromkeys(paths) if os.path.exists(p)]
+    if not paths:
+        return {"removed": [], "freed": 0}
+    size = 0
+    for p in paths:
+        for root, _, files in (os.walk(p) if os.path.isdir(p) else [(os.path.dirname(p), [], [os.path.basename(p)])]):
+            for f in files:
+                try:
+                    size += os.path.getsize(os.path.join(root, f))
+                except OSError:
+                    pass
+    deepscan.run_elevated([{"type": "remove" if os.path.isfile(p) else "rmtree", "path": p} for p in paths])
+    left = [p for p in paths if os.path.exists(p)]
+    return {"removed": [p for p in paths if p not in left], "left": left, "freed": size}
+
+
 def _summary_save(kind, private):
     import summary
     path = summary.save_copy(kind, private)
@@ -1636,6 +1681,9 @@ def _task_fn(name, args):
     lazy = {
         # ---- очистка и место на диске
         "prepare": lambda: prepare(prog, args.get("_cancel") or (lambda: False), bool(args.get("trails"))),
+        # ---- дополнительные антивирусы: скачать все одной кнопкой / удалить скачанные со следами
+        "extra_install": lambda: _extra_install(prog),
+        "extra_remove": lambda: _extra_remove(),
         # ---- сводки для второго мнения ИИ
         "check_summary": lambda: __import__("summary").check_summary(jobs, [str(j) for j in args.get("jobs") or []], args.get("verdict"),
                                                                     str(args.get("target") or ""), args.get("excluded"), VERSION),
@@ -2916,6 +2964,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 return self.send(200, {"ok": True})
             if p == "/api/ultra":
                 return self.send(200, {"id": start_ultra(body.get("sel"))["id"]})
+            if p == "/api/ultra/skip":                       # пропустить текущий дополнительный антивирус
+                import extra_av
+                with open(extra_av.CTL, "w", encoding="utf-8") as f:
+                    f.write("skip")
+                return self.send(200, {"ok": True})
             if p == "/api/updates":
                 ids = body.get("ids")
                 return self.send(200, {"id": start_updates(list(ids) if ids is not None else None,

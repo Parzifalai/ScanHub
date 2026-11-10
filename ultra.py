@@ -58,6 +58,23 @@ PLAN = [
      "hint": "слежка Windows, брандмауэр, расширения браузеров, меню правой кнопки, точки восстановления, защита от майнеров, встроенные приложения, PATH"},
     {"id": "errors", "title": "Сбои и ошибки", "mins": 1,
      "hint": "вылеты программ, синие экраны, аппаратные ошибки, устройства и драйверы с ошибками, нехватка компонентов, перегрев"},
+    {"id": "extra", "title": "Дополнительные антивирусы", "mins": 120, "admin": True,
+     "hint": "в конце, по очереди и в фоне: полная проверка всех дисков другими антивирусами — только поиск, лечение потом по кнопке. "
+             "Скачиваются сами с официальных сайтов; ESET и Malwarebytes откроются своими окнами, ScanHub сам нажмёт «Начать»",
+     "opts": [
+         {"id": "kvrt", "t": "Kaspersky Virus Removal Tool", "on": True, "admin": True, "mins": 60, "d": "все диски, без окна · ~150 МБ"},
+         {"id": "msert", "t": "Microsoft Safety Scanner", "on": True, "admin": True, "mins": 60, "d": "полная проверка, без окна · ~230 МБ"},
+         {"id": "adwcleaner", "t": "Malwarebytes AdwCleaner", "on": True, "admin": True, "mins": 2, "d": "рекламное ПО и угонщики браузера, без окна · ~9 МБ"},
+         {"id": "emsisoft", "t": "Emsisoft Emergency Kit", "on": True, "admin": True, "mins": 60,
+          "d": "память, руткиты и все диски, два движка, без окна · ~750 МБ, нужен 7-Zip"},
+         {"id": "cureit", "t": "Dr.Web CureIt!", "on": True, "admin": True, "mins": 60,
+          "d": "если уже скачан (Dr.Web отдаёт его только со своей страницы); если ключи не сработают — откроется его окно"},
+         {"id": "eset", "t": "ESET Online Scanner", "on": True, "mins": 60,
+          "d": "своё окно: ScanHub нажмёт «Начать» и выберет полную проверку; найденное ESET сам убирает в свой карантин"},
+         {"id": "malwarebytes", "t": "Malwarebytes", "on": True, "mins": 20, "d": "только если уже установлен: своё окно, ScanHub нажмёт «Сканировать»"},
+         {"id": "delete", "t": "Удалить сканеры после проверки", "on": True,
+          "d": "скачанные сканеры и их следы (папка C:\\AdwCleaner, журнал Microsoft) — Kaspersky и Microsoft всё равно устаревают за 3 и 10 дней; отчёты останутся в ScanHub"},
+     ]},
 ]
 STEP = {p["id"]: p for p in PLAN}
 LVL = ["threat", "bad", "warn", "info", "ok"]
@@ -713,12 +730,128 @@ class Ultra:
         s["label"] = f"замечаний: {n}" if n else "серьёзных сбоев нет"
 
     # ------------------------------------------------------------ что сделать ещё (вручную)
+    def s_extra(self, s):
+        import threading
+        import extra_av as xa
+        picked = [t for t in xa.SILENT + xa.GUI if self.on("extra", t)]
+        self.extra_done = set()
+        if not picked:
+            s["label"] = "ничего не выбрано"
+            return
+        tv = {t["id"]: t for t in self.ctx["tools"]()}
+        # скачать недостающие и устаревшие (Kaspersky и Microsoft держат базы внутри файла — свежий файл = свежие базы)
+        for tid in picked:
+            t = tv.get(tid)
+            if not t or self.stopped() or t["source"]["type"] in ("manual", "system"):
+                continue
+            if not t["ready"] or t.get("stale") or t.get("update_available"):
+                s["progress"] = f"скачиваю {t['name']}"
+                if not self.ctx["install"](tid):
+                    self.add(s, "warn", f"{t['name']} не скачался", "Проверь интернет — без него этот антивирус пропущен.",
+                             {"install": tid, "label": "Повторить"})
+        tv = {t["id"]: t for t in self.ctx["tools"]()}
+        exe = {tid: tv[tid]["exe_path"] for tid in picked if tv.get(tid, {}).get("ready") and tv[tid].get("exe_path")}
+        for tid in picked:
+            if tid in exe:
+                continue
+            t = tv.get(tid) or {}
+            if tid == "cureit":
+                self.add(s, "info", "Dr.Web CureIt! не скачан — пропущен", "Dr.Web отдаёт его только со своей страницы. Скачай, и ScanHub найдёт файл сам.",
+                         {"page": "scan:check", "label": "Скачать"}, todo=False)
+            elif tid == "malwarebytes":
+                self.add(s, "info", "Malwarebytes не установлен — пропущен", "ScanHub не ставит программы сам. Если нужен — скачай с официального сайта.",
+                         {"page": "scan:check", "label": "Где скачать"}, todo=False)
+            elif t:
+                self.add(s, "warn", f"{t['name']} не готов — пропущен", "", {"page": "tools", "label": "Подробнее"})
+        rep = os.path.join(deepscan.DATA, "reports", self.job["id"] + "-extra")
+        silent = [t for t in xa.SILENT if t in exe]
+        ops, main = [{"type": "mkdir", "path": rep}], {}
+        for tid in silent:
+            part = xa.ops_for(tid, exe[tid], rep)
+            main[tid] = len(ops) + next(i for i, o in enumerate(part) if o.get("stdout_file"))
+            ops += part
+        gone = []
+        if self.on("extra", "delete"):
+            for tid in silent:
+                for p in xa.traces(tid, exe[tid]):
+                    ops.append({"type": "remove" if os.path.splitext(p)[1] else "rmtree", "path": p, "label": f"удаляю {xa.NAMES[tid]}"})
+                gone.append(tid)
+        if silent and not self.stopped():
+            try:
+                os.remove(xa.CTL)
+            except OSError:
+                pass
+            alive = {"on": True}
+
+            def beat():                                 # пока ScanHub жив — сканеры работают; закроют ScanHub — остановятся сами
+                while alive["on"]:
+                    try:
+                        open(xa.ALIVE, "w").close()
+                    except OSError:
+                        pass
+                    time.sleep(5)
+            threading.Thread(target=beat, daemon=True).start()
+            s["progress"] = "запрашиваю права администратора (одно окно UAC на все антивирусы)…"
+            s["skip"] = True                            # окно показывает «Пропустить этот антивирус»
+            t0 = time.time()
+            res = None
+            try:
+                res = deepscan.run_elevated(ops, timeout=int(sum(xa.HOURS[t] for t in silent) * 3600 + 3600),
+                                            on_started=lambda: s.update(progress="права выданы ✓ — запускаю первый антивирус"),
+                                            on_progress=lambda txt: s.update(progress=f"{txt} · прошло {round((time.time() - t0) / 60)} мин"),
+                                            ctl=xa.CTL)
+            except PermissionError as e:
+                self.add(s, "warn", "Права администратора не выданы — антивирусы без окна пропущены", str(e))
+            finally:
+                alive["on"] = False
+                s.pop("skip", None)
+            for tid in silent if res else []:
+                r = xa.parse(tid, res[main[tid]] if main[tid] < len(res) else None, rep)
+                self.extra_done.add(tid)
+                name = xa.NAMES[tid]
+                cure = ({"page": "scan:check", "label": "Открыть сканеры"} if tid in gone else
+                        {"run": [tid, "clean"], "label": "Вылечить"} if tid == "emsisoft" else {"run": [tid, "run"], "label": "Открыть для лечения"})
+                if r["v"] == "clean":
+                    self.add(s, "ok", f"{name}: {r['text']}")
+                elif r["v"] == "threat":
+                    self.add(s, "threat", f"{name}: {r['text']}", "; ".join(r["items"][:8]) or "подробности — в отчёте", cure)
+                elif r["v"] == "pup":
+                    self.add(s, "warn", f"{name}: {r['text']}", "; ".join(r["items"][:8]), cure)
+                elif r["v"] == "skipped":
+                    self.add(s, "info", f"{name}: {r['text']}", "", todo=False)
+                else:
+                    self.add(s, "warn", f"{name}: не получилось проверить", r["text"])
+                for line in r["items"][:20]:
+                    self.emit(f"    {name}: {line}")
+        # со своим окном — в конце: ScanHub открывает и нажимает «Начать», окно поднимается поверх, когда кнопки нажаты
+        for tid in [t for t in xa.GUI if t in exe]:
+            if self.stopped():
+                break
+            s["progress"] = f"открываю {xa.NAMES[tid]} и нажимаю «Начать»"
+            st = xa.launch_gui(tid, exe[tid], self.emit)
+            if st is None:
+                self.add(s, "warn", f"{xa.NAMES[tid]} не открылся", "", {"run": [tid, "run"], "label": "Открыть"})
+                continue
+            self.extra_done.add(tid)
+            for _ in range(240):                        # до 4 минут: UAC, загрузка, лицензия
+                if st["done"] or self.stopped():
+                    break
+                time.sleep(1)
+            xa.bring_front(tid)
+            how = ("ScanHub нажал: " + ", ".join(c.split(": ", 1)[-1] for c in st["clicked"])) if st["clicked"] else \
+                  ("кнопку «Начать» найти не удалось — нажми её в окне сам" + (" и выбери «Полное сканирование»" if tid == "eset" else ""))
+            self.add(s, "info", f"{xa.NAMES[tid]} проверяет в своём окне", how + ". Итог — в его окне, когда он закончит.", todo=False)
+        n_threat = sum(1 for i in s["items"] if i["lvl"] == "threat")
+        s["label"] = f"найдены угрозы: {n_threat}" if n_threat else f"проверено антивирусов: {len(self.extra_done)}"
+        if gone and self.extra_done:
+            self.add(s, "info", "Сканеры удалены после проверки", "Отчёты остались в ScanHub. Для новой проверки они скачаются заново.", todo=False)
+
     def recs(self):
         R = []
         threat = any(s["verdict"] in ("threat", "warn") and s["id"] in ("quick", "deep") for s in self.steps)
         R.append({"kind": "tools", "t": "Проверь ещё отдельными антивирусами" + (" — обязательно, раз есть находки" if threat else ""),
                   "s": "Они запускаются своим окном и сами ведут проверку, поэтому ультра проверка не может пройти их за тебя.",
-                  "tools": EXTERNAL, "threat": threat})
+                  "tools": [t for t in EXTERNAL if t not in getattr(self, "extra_done", ())], "threat": threat})
         if threat:
             R.append({"t": "Офлайн-проверка Defender", "s": "Раз есть находки — проверь диск до запуска Windows: так Defender находит руткиты, "
                       "которые прячутся от обычной проверки. Компьютер перезагрузится, проверка займёт около 15 минут.",

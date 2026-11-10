@@ -106,6 +106,7 @@ function ultraRunning(j, dev){
       const open = s.status === "running" || ULTRA.openStep?.[s.id];
       return `<li class="ustep${open ? " open" : ""}" data-ustep="${esc(s.id)}" title="Нажми — что делает этот шаг">${ultraStepIcon(s, i)}
       <span class="t"><b>${esc(s.title)}</b><span class="sub">${s.status === "running" ? esc(s.progress || s.hint) + (s.started ? ` · <span data-since="${esc(s.started)}">${elapsedText(s.started)}</span>` : "") : esc(s.hint)}</span>
+        ${s.status === "running" && s.skip ? `<div class="row-tools" style="margin-top:8px"><button class="small" data-ultra-skip title="Остановить текущий антивирус и перейти к следующему">Пропустить этот антивирус</button></div>` : ""}
         ${s.status === "running" ? ultraLive(j) : open ? ultraStepInfo(s) : ""}
         ${s.status === "done" ? ultraItems(s.items, dev) : ""}</span>
       <span class="lbl">${s.status === "pending" ? "ждёт" : s.status === "running" ? "идёт…" : esc(s.label)}</span></li>`}).join("")}</ul>`);
@@ -411,4 +412,12 @@ document.addEventListener("click", e => {
   if (m.dataset.umark) set.add(m.dataset.umark); else set.delete(m.dataset.uunmark);
   uMarkSet(ULTRA.job.id, set);
   redrawPanels();
+});
+
+// «Дополнительные антивирусы»: пропустить текущий (Kaspersky на всех дисках может идти час)
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-ultra-skip]");
+  if (!b) return;
+  b.disabled = true; b.textContent = "Пропускаю…";
+  await api("/api/ultra/skip", {}).catch(() => {});
 });

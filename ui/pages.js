@@ -1673,6 +1673,9 @@ function taskToast2(name, t, args){
   const r = t.result || {};
   const rp = r.restore_point?.status === "ok" ? " · точка восстановления создана" : "";
   const m = {
+    extra_install: () => [r.failed?.length ? `Не скачались: ${r.failed.join(", ")}` : "Дополнительные сканеры скачаны",
+      [r.ready?.length ? `готовы: ${r.ready.join(", ")}` : "", r.manual?.length ? `скачать вручную: ${r.manual.join(", ")}` : ""].filter(Boolean).join(" · "), r.failed?.length ? "warn" : "ok"],
+    extra_remove: () => [r.removed?.length ? `Удалено: ${fmtB(r.freed || 0)}` : "Удалять нечего", r.left?.length ? `не удалось: ${r.left.length} — закрой эти сканеры и повтори` : "скачанные сканеры и их следы убраны", r.left?.length ? "warn" : "ok"],
     junk_clean: () => [`Освобождено ${fmtB(r.freed || 0)}`, (r.errors?.length ? "часть не удалось: " + r.errors[0] : r.skipped ? `пропущено занятых файлов: ${r.skipped}` : "мусор удалён"), r.errors?.length ? "warn" : "ok"],
     disk_analyze: () => ["Анализ диска готов", `${fmtB(r.size)} · ${r.files?.toLocaleString(LOC)} файлов`],
     dups: () => [r.groups?.length ? `Найдено групп дубликатов: ${r.groups.length}` : "Дубликатов нет", r.waste ? `лишнего: ${fmtB(r.waste)}` : ""],
