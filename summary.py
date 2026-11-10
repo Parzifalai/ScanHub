@@ -30,7 +30,10 @@ def _win():
         import winreg
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion") as k:
             g = lambda n: winreg.QueryValueEx(k, n)[0]
-            return f"{g('ProductName')} {g('DisplayVersion')} (сборка {g('CurrentBuild')}.{g('UBR')})"
+            name = g("ProductName")
+            if int(g("CurrentBuild")) >= 22000:                  # Windows 11 в реестре до сих пор называет себя «Windows 10»
+                name = name.replace("Windows 10", "Windows 11")
+            return f"{name} {g('DisplayVersion')} (сборка {g('CurrentBuild')}.{g('UBR')})"
     except OSError:
         return platform.platform()
 
