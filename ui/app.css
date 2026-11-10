@@ -1379,3 +1379,7 @@ dialog label.switch{display:flex;align-items:flex-start;gap:10px} dialog label.s
 @media (max-width:1500px){.shield-wrap{width:230px;height:230px} .shield-wrap .shield{width:130px;height:150px} .view .hero{gap:22px}}
 @media (max-width:1200px){.home-top{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:620px){.hero-actions{flex-wrap:wrap}}
+/* «Нагрузка подробно» — отдельной строкой под показателями, а не поверх полоски диска */
+.hs-go{grid-column:1/-1;position:static;opacity:1;display:flex;justify-content:flex-end;align-items:center;gap:4px;padding:9px 18px;border-top:1px solid var(--line);color:var(--muted);transition:color .2s}
+.hstats:hover .hs-go,.hstats:focus-visible .hs-go{color:var(--accent2)}
+.hs:nth-child(3),.hs:nth-child(4){border-bottom:0}
