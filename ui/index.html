@@ -9,56 +9,60 @@
 <link rel="stylesheet" href="/app.css">
 </head>
 <body>
-<header>
-  <button class="burger" id="burger" aria-label="Меню">☰</button>
-  <h1><img src="/logo-small.svg" width="26" height="26" alt=""> ScanHub</h1>
-  <div class="seg" id="modeSeg">
-    <button data-mode-set="simple" title="Только главное, простыми словами">Простой</button>
-    <button data-mode-set="dev" title="Все подробности: пути, команды, коды выхода, консоль">Разработчик</button>
-  </div>
-  <div class="grow"></div>
-  <span class="sub dev-only" id="lastCheck"></span>
-  <button class="dev-only" id="conBtn" title="Вывод сканеров">⌨ Консоль</button>
-  <button class="dev-only" id="checkBtn">Проверить обновления</button>
-  <button id="aiTop" title="ИИ-помощник: объяснит находки и ответит «почему у меня…»"><span class="ai-star">✦</span>Помощник</button>
-  <button id="bugBtn" title="Нашёл ошибку или есть идея? Напиши автору — сообщение уйдёт ему в Telegram"><span data-ic="bug"></span>Ошибка или идея?</button>
-  <button id="settingsBtn" title="Настройки"><span data-ic="gear"></span>Настройки</button>
-  <button id="quitBtn" title="Закрыть ScanHub полностью — сразу, а не через 2 минуты после закрытия окна"><span data-ic="power"></span>Выйти</button>
-</header>
-
 <div class="layout">
   <nav class="side" id="side" aria-label="Разделы"></nav>
+  <div class="maincol">
+  <header>
+    <button class="burger" id="burger" aria-label="Меню"><span data-ic="menu"></span></button>
+    <div class="seg" id="modeSeg">
+      <button data-mode-set="simple" title="Только главное, простыми словами">Простой</button>
+      <button data-mode-set="dev" title="Все подробности: пути, команды, коды выхода, консоль">Разработчик</button>
+    </div>
+    <div class="grow"></div>
+    <span class="sub dev-only" id="lastCheck"></span>
+    <button class="dev-only tb" id="conBtn" title="Вывод сканеров">⌨ Консоль</button>
+    <button class="dev-only tb" id="checkBtn">Проверить обновления</button>
+    <button class="tb ai" id="aiTop" title="ИИ-помощник: объяснит находки и ответит «почему у меня…»"><span class="ai-star">✦</span><span class="tb-t">Помощник</span></button>
+    <button class="tb ic-only" id="alertsBtn" data-go-page="health:alerts" title="Предупреждения ScanHub"><span data-ic="bell"></span><i class="tb-dot" hidden></i></button>
+    <button class="tb ic-only" id="bugBtn" title="Нашёл ошибку или есть идея? Напиши автору — сообщение уйдёт ему в Telegram"><span data-ic="bug"></span></button>
+    <button class="tb ic-only" id="settingsBtn" title="Настройки"><span data-ic="gear"></span></button>
+    <span class="tb-sep"></span>
+    <button class="tb" id="quitBtn" title="Закрыть ScanHub полностью — сразу, а не через 2 минуты после закрытия окна"><span data-ic="power"></span><span class="tb-t">Выйти</span></button>
+  </header>
   <main>
     <div id="pageHead"></div>
 
     <!-- ===================== главная ===================== -->
     <section id="v-home" class="view" hidden>
-      <div class="hero" id="hero"></div>
+      <div class="home-top">
+        <div class="hero" id="hero"></div>
+        <button class="hstats" id="hStats" data-go-page="speed:res" title="Открыть нагрузку на компьютер: процессор, память, видеокарта, диски, процессы"></button>
+      </div>
+      <div id="sRes"></div>
       <div class="ultra-cta" id="ultraCta"></div>
       <div id="todo"></div>
       <div>
-        <h2 class="sec">Быстрые действия</h2>
+        <div class="sec-row"><h2 class="sec"><span data-ic="quick"></span>Быстрые действия</h2><div class="grow"></div><a id="qaMore" aria-expanded="false">Все быстрые действия</a></div>
+        <!-- четыре самых частых — крупно; остальные раскрываются ссылкой «Все быстрые действия» -->
         <div class="quick">
           <button class="qa" data-act="pick"><span class="qi" data-ic="scan"></span><b>Проверить на вирусы</b><span>Файл или папку: скачанную программу, «Загрузки», флешку</span></button>
+          <button class="qa" data-go-page="clean:junk"><span class="qi" data-ic="clean"></span><b>Очистить мусор</b><span>Кэши, временные файлы, Корзина</span></button>
+          <button class="qa" data-go-page="apps:uninst"><span class="qi" data-ic="apps"></span><b>Удалить программу</b><span>Вместе с остатками в папках и реестре</span></button>
+          <button class="qa" data-noise-go><span class="qi" data-ic="fan"></span><b>Почему шумит</b><span>Кто греет компьютер и раскручивает вентиляторы — 25 секунд</span></button>
+        </div>
+        <div class="quick-more" id="quickMore" hidden>
           <button class="qa" data-act="quick"><span class="qi" data-ic="quick"></span><b>Быстрая проверка</b><span>Defender: память и система, 2–5 минут</span></button>
           <button class="qa" data-go-page="scan:deep"><span class="qi" data-ic="deep"></span><b>Глубокая проверка</b><span>Все сканеры по очереди, 15–40 минут</span></button>
-          <button class="qa" data-go-page="clean:junk"><span class="qi" data-ic="clean"></span><b>Очистить мусор</b><span>Кэши, временные файлы, Корзина</span></button>
-          <button class="qa" data-go-page="disk:disk"><span class="qi" data-ic="disk"></span><b>Что занимает место</b><span>Папки, типы файлов, большие файлы</span></button>
-          <button class="qa" data-go-page="apps:uninst"><span class="qi" data-ic="apps"></span><b>Удалить программу</b><span>Вместе с остатками</span></button>
+          <button class="qa" data-go-page="clean:disk"><span class="qi" data-ic="disk"></span><b>Что занимает место</b><span>Папки, типы файлов, большие файлы</span></button>
           <button class="qa" data-go-page="health:health"><span class="qi" data-ic="health"></span><b>Полная проверка ПК</b><span>Защита, обновления, диски, батарея</span></button>
-          <button class="qa" data-noise-go><span class="qi" data-ic="fan"></span><b>Почему шумит</b><span>Кто греет компьютер и раскручивает вентиляторы — 25 секунд</span></button>
           <button class="qa" data-go-page="speed:net"><span class="qi" data-ic="net"></span><b>Почему тормозит интернет</b><span>Wi‑Fi, роутер, DNS или провайдер — около 40 секунд</span></button>
           <button class="qa" data-go-page="speed:game"><span class="qi" data-ic="game"></span><b>Игровой режим</b><span>Максимум мощности для игры, фоновые задачи на паузу</span></button>
           <button class="qa" data-fps-quick id="qaFps"><span class="qi" data-ic="fps"></span><b>Показать FPS</b><span>Цифры кадров в углу экрана поверх игры</span></button>
-          <button class="qa" data-hwcheck-go><span class="qi" data-ic="chip"></span><b>Проверить комплектующие</b><span>Память, видеокарта, экран, зарядка, BIOS, кабели — несколько секунд</span></button>
+          <button class="qa" data-hwcheck-go><span class="qi" data-ic="chip"></span><b>Проверить комплектующие</b><span>Память, видеокарта, экран, зарядка, BIOS — несколько секунд</span></button>
         </div>
       </div>
       <div>
-        <h2 class="sec">Компьютер сейчас</h2>
-        <div id="sRes"><div class="sub">Собираю данные…</div></div>
-      </div>
-      <div>
-        <h2 class="sec">Последние проверки</h2>
+        <div class="sec-row"><h2 class="sec"><span data-ic="history"></span>Последние проверки</h2><div class="grow"></div><a data-go-page="history">Вся история</a></div>
         <div class="recent" id="sRecent"></div>
       </div>
     </section>
@@ -133,6 +137,7 @@
     <section id="v-history" class="view" hidden><div id="history"></div></section>
     <section id="v-panel" class="view" hidden><div id="panelBox"></div></section>
   </main>
+  </div>
 </div>
 
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
@@ -227,6 +232,7 @@ window.addEventListener("load", () => setTimeout(() => {
 <script src="/phone.js"></script>
 <script src="/setup.js"></script>
 <script src="/game.js"></script>
+<script src="/hero.js"></script>
 <script src="/pages.js"></script>
 </body>
 </html>

@@ -1,42 +1,59 @@
 // ============================================================ НАВИГАЦИЯ: разделы слева, вкладки сверху
+// Разделы — по задачам человека («защитить», «освободить место», «разобраться с программами»…), а не по устройству ScanHub.
+// Вкладка-«сборка» показывает несколько панелей подряд (COMPOSITE): так близкие вещи не расползаются по десятку вкладок.
 const PAGES = [
   {id: "home", ico: "home", t: "Главная"},
-  {id: "ultra", ico: "ultra", t: "Ультра проверка"},
-  {id: "scan", ico: "scan", t: "Проверка на вирусы",
-   intro: "Проверить файл, папку, программу или весь компьютер. Сразу смотрят несколько антивирусов и наборов правил, а их находки ScanHub перепроверяет по цифровой подписи и VirusTotal, чтобы не пугать ложными тревогами.",
-   tabs: [["check", "Проверка"], ["deep", "Глубокая проверка"], ["apps", "Проверить программу"], ["quar", "Карантин"], ["network", "Сеть", "dev"]]},
-  {id: "clean", ico: "clean", t: "Очистка",
-   intro: "Удаление того, что точно не нужно: временные файлы, кэши, следы удалённых программ. У каждого пункта написано, что это такое и что будет после очистки.",
-   tabs: [["junk", "Мусор и кэши"], ["shortcuts", "Битые ярлыки"], ["drvstore", "Старые драйверы"], ["envpath", "Переменная PATH"]]},
-  {id: "disk", ico: "disk", t: "Место на диске",
-   intro: "Что занимает место: папки, типы файлов, самые большие файлы, одинаковые копии и пустые папки. Удалённое отсюда уходит в Корзину — его можно вернуть.",
-   tabs: [["disk", "Что занимает место"], ["dups", "Дубликаты"], ["empty", "Пустые папки"]]},
+  {id: "scan", ico: "scan", t: "Защита от вирусов",
+   intro: "Проверки файлов и всего компьютера, карантин, расширения браузеров и встроенная защита Windows. Находки ScanHub перепроверяет по цифровой подписи и VirusTotal, чтобы не пугать ложными тревогами.",
+   tabs: [["check", "Проверка"], ["ultra", "Ультра проверка"], ["deep", "Глубокая проверка"], ["apps", "Проверить программу"], ["quar", "Карантин"],
+          ["browsers", "Браузеры"], ["winsec", "Защита Windows"], ["network", "Сеть", "dev"]]},
+  {id: "clean", ico: "clean", t: "Очистка и место",
+   intro: "Что можно удалить без вреда и что занимает место. У каждого пункта написано, что это и что будет после очистки; удалённое из «Места» уходит в Корзину.",
+   tabs: [["junk", "Мусор и кэши"], ["disk", "Что занимает место"], ["copies", "Дубликаты и пустые папки"], ["shortcuts", "Битые ярлыки"], ["drvstore", "Старые драйверы"], ["envpath", "Переменная PATH", "dev"]]},
   {id: "apps", ico: "apps", t: "Программы",
-   intro: "Удаление программ вместе с остатками, лишние встроенные приложения Windows и обновления программ.",
-   tabs: [["uninst", "Удаление программ"], ["debloat", "Встроенные приложения"], ["winget", "Обновления программ"]]},
-  {id: "speed", ico: "speed", t: "Скорость",
-   intro: "Что запускается вместе с Windows и замедляет загрузку, игровой режим, оперативная память и шум вентиляторов.",
-   tabs: [["boot", "Автозагрузка"], ["game", "Игровой режим"], ["memory", "Оперативная память"], ["noise", "Почему шумит"], ["net", "Интернет"]]},
-  {id: "privacy", ico: "privacy", t: "Приватность и защита",
-   intro: "Что Windows отправляет о тебе, что программы добавили в меню правой кнопки, кого пускает брандмауэр и как откатить изменения.",
-   tabs: [["privacy", "Приватность"], ["security", "Защита Windows"], ["browsers", "Браузеры"], ["ctx", "Контекстное меню"], ["firewall", "Брандмауэр"], ["restore", "Точки восстановления"], ["miners", "Защита от майнеров"], ["shred", "Шредер", "dev"], ["changes", "Что изменил ScanHub"]]},
-  {id: "health", ico: "health", t: "Здоровье ПК", intro: "Общая проверка системы, сбои и их причины, компоненты для программ, предупреждения, устройства (клавиатура, мышь, микрофон, звук, камера), драйверы и комплектующие.",
-   tabs: [["health", "Полная проверка"], ["crash", "Сбои и ошибки"], ["runtimes", "Компоненты для программ"], ["alerts", "Предупреждения"], ["devices", "Устройства"], ["drivers", "Драйверы"], ["hw", "Комплектующие"], ["history", "История"]]},
+   intro: "Удаление программ вместе с остатками, обновления, что запускается вместе с Windows, лишние встроенные приложения и пункты меню правой кнопки.",
+   tabs: [["uninst", "Удаление"], ["winget", "Обновления"], ["boot", "Автозагрузка"], ["debloat", "Встроенные приложения"], ["ctx", "Меню правой кнопки"]]},
+  {id: "speed", ico: "speed", t: "Скорость и игры",
+   intro: "Игровой режим и FPS, нагрузка на компьютер прямо сейчас, шум вентиляторов, оперативная память и медленный интернет.",
+   tabs: [["game", "Игровой режим и FPS"], ["res", "Нагрузка сейчас"], ["noise", "Почему шумит"], ["memory", "Память"], ["net", "Интернет"]]},
+  {id: "health", ico: "health", t: "Здоровье ПК",
+   intro: "Общий обзор, сбои и их причины, устройства (клавиатура, мышь, микрофон, звук, камера), комплектующие и драйверы, компоненты для программ и история.",
+   tabs: [["health", "Обзор"], ["crash", "Сбои и ошибки"], ["devices", "Устройства"], ["hwdrv", "Комплектующие и драйверы"], ["runtimes", "Компоненты для программ"], ["history", "История"], ["alerts", "Предупреждения"]]},
+  {id: "privacy", ico: "privacy", t: "Приватность",
+   intro: "Что Windows отправляет о тебе, точки восстановления и полный список того, что менял ScanHub, — с кнопкой «вернуть как было».",
+   tabs: [["privacy", "Слежка Windows"], ["restore", "Точки восстановления"], ["changes", "Что изменил ScanHub"], ["shred", "Шредер", "dev"]]},
   {id: "phone", ico: "phone", t: "Телефон", intro: "Проверка Android-телефона по кабелю: следилки, приложения не из магазина, кто получил опасный доступ, обновления безопасности, батарея и память. На телефон ничего не ставится."},
-  {id: "res", ico: "res", t: "Ресурсы", intro: "Нагрузка на процессор, память, видеокарту, сеть и диск за последние 5 минут — и какие программы её создают."},
-  {id: "tools", ico: "tools", t: "Сканеры", dev: true, intro: "Все подключённые сканеры: версии, обновления, режимы запуска и технические подробности."},
-  {id: "history", ico: "history", t: "История", intro: "Все проверки с результатами и журналами."},
+  {id: "history", ico: "history", t: "История проверок", foot: true, intro: "Все проверки с результатами и журналами."},
+  {id: "tools", ico: "tools", t: "Сканеры", dev: true, foot: true, intro: "Все подключённые сканеры: версии, обновления, режимы запуска и технические подробности."},
 ];
+const COMPOSITE = {winsec: ["security", "firewall", "miners"], copies: ["dups", "empty"], hwdrv: ["hw", "drivers"]};
+const COMP_OF = Object.fromEntries(Object.entries(COMPOSITE).flatMap(([c, parts]) => parts.map(p => [p, c])));
+// старые адреса (из подсказок сервера, помощника, предупреждений, сохранённой вкладки) → новые места
+const LEGACY = {ultra: ["scan", "ultra"], disk: ["clean", "disk"], res: ["speed", "res"]};
 const OLD_PANELS = {deep: ["scan", "deep"], apps: ["scan", "apps"], network: ["scan", "network"], cleanup: ["clean", "junk"],
-  health: ["health", "health"], drivers: ["health", "drivers"], hw: ["health", "hw"], protect: ["privacy", "miners"],
-  noise: ["speed", "noise"], autoruns: ["speed", "boot"]};
+  health: ["health", "health"], drivers: ["health", "hwdrv"], hw: ["health", "hwdrv"], protect: ["scan", "winsec"],
+  noise: ["speed", "noise"], autoruns: ["apps", "boot"]};
 let PAGE = store.get("page") || "home", SUB = null;
 const SUBS = (() => { try { return JSON.parse(store.get("subs") || "{}") } catch { return {} } })();
 const pageOf = id => PAGES.find(p => p.id === id) || PAGES[0];
 const tabsOf = p => (p.tabs || []).filter(t => t[2] !== "dev" || MODE === "dev");
 const attr = o => esc(JSON.stringify(o));
+const hasTab = (p, s) => (p?.tabs || []).some(t => t[0] === s);
+function resolvePage(page, sub){
+  const p = PAGES.find(x => x.id === page);
+  if (sub) {
+    const real = COMP_OF[sub] || sub;
+    if (hasTab(p, real)) return [p.id, real];
+    const q = PAGES.find(x => hasTab(x, real));
+    if (q) return [q.id, real];
+  }
+  if (p) return [p.id, null];
+  return LEGACY[page] || ["home", null];
+}
+const onTab = (page, ...subs) => PAGE === page && subs.includes(SUB);
 
 function go(page, sub){
+  [page, sub] = resolvePage(page, sub);
   const p = pageOf(page);
   if (p.dev && MODE !== "dev") { MODE = "dev"; store.set("mode", MODE); render() }
   PAGE = p.id;
@@ -49,22 +66,26 @@ function go(page, sub){
   window.scrollTo({top: 0});
 }
 function goPanel(name){
-  const [p, s] = OLD_PANELS[name] || [(PAGES.find(x => (x.tabs || []).some(t => t[0] === name)) || PAGES[0]).id, name];
+  const [p, s] = OLD_PANELS[name] || resolvePage(null, name);
   go(p, s);
 }
 function viewFor(){
   if (PAGE === "home") return "home";
-  if (PAGE === "scan" && SUB === "check") return "check";
-  if (["tools", "res", "history"].includes(PAGE)) return PAGE;
+  if (onTab("scan", "check")) return "check";
+  if (onTab("speed", "res")) return "res";
+  if (["tools", "history"].includes(PAGE)) return PAGE;
   return "panel";
 }
 function showPage(){
-  const p = pageOf(PAGE), v = viewFor(), tabs = tabsOf(p);
+  [PAGE] = resolvePage(PAGE);              // сохранённый раздел из прошлой версии (например, «res»)
+  const p = pageOf(PAGE), tabs = tabsOf(p);
   if (p.dev && MODE !== "dev") return go("home");
   if (tabs.length && !tabs.some(t => t[0] === SUB)) SUB = tabs[0][0];
+  const v = viewFor();
   for (const id of ["home", "check", "tools", "res", "history", "panel"]) $("#v-" + id).hidden = v !== id;
-  $("#pageHead").innerHTML = PAGE === "home" ? "" : `<div class="page-h"><h2><span class="plate">${icon(p.ico)}</span>${esc(p.t)}</h2>${p.intro ? `<p>${esc(p.intro)}</p>` : ""}</div>
+  $("#pageHead").innerHTML = PAGE === "home" ? "" : `<div class="page-h"><h2>${esc(p.t)}</h2>${p.intro ? `<p>${esc(p.intro)}</p>` : ""}</div>
     ${tabs.length > 1 ? `<div class="tabs" role="tablist">${tabs.map(t => `<button role="tab" data-tab-go="${t[0]}" class="${t[0] === SUB ? "on" : ""}">${esc(t[1])}${tabCount(t[0]) ? ` <span class="cnt">${tabCount(t[0])}</span>` : ""}</button>`).join("")}</div>` : ""}`;
+  document.body.dataset.page = PAGE;
   renderNav();
   if (v === "panel") { prepPanel(SUB || PAGE); redrawPanels() }
   if (v === "tools") renderDev();
@@ -76,23 +97,38 @@ function showPage(){
   pollMetrics();
 }
 const tabCount = id => id === "quar" ? (TASK.quarantine_list?.result?.items || []).length : 0;
+const LOGO = `<svg viewBox="0 0 256 256" aria-hidden="true"><g transform="translate(6 14)"><path d="M34 196C58 232 132 232 152 190C170 150 132 136 104 126C74 116 32 102 50 66C60 46 90 42 146 42" fill="none" stroke="currentColor" stroke-width="46" stroke-linecap="round"/><path d="M140 0L209.28 40L140 80Z" fill="currentColor" stroke="currentColor" stroke-width="12" stroke-linejoin="round"/></g></svg>`;
 function renderNav(){
   const q = (TASK.quarantine_list?.result?.items || []).length, game = TASK.game?.result?.active;
   const bad = TODO.filter(x => x.lvl === "bad").length, warn = TODO.filter(x => x.lvl === "warn").length;
-  const uj = ULTRA.job, ub = uj?.status === "running" ? ["идёт", "ok"] : uj && !ULTRA.seen && (uj.stats?.threats || uj.stats?.bad) ? [uj.stats.threats || uj.stats.bad, uj.stats.threats ? "bad" : "warn"] : null;
-  const badge = {home: bad ? [bad, "bad"] : warn ? [warn, "warn"] : null, scan: q ? [q, "", `В карантине файлов: ${q} — они обезврежены. Открыть: вкладка «Карантин»`] : null, speed: game ? ["игра", "ok"] : null, ultra: ub};
-  $("#side").innerHTML = PAGES.filter(p => !p.dev || MODE === "dev").map(p => `<a class="nav${p.id === PAGE ? " on" : ""}" data-go="${p.id}" href="#">
-      <span class="ico">${icon(p.ico)}</span><span class="t">${esc(p.t)}</span>${badge[p.id] ? `<span class="cnt ${badge[p.id][1]}"${badge[p.id][2] ? ` title="${esc(badge[p.id][2])}"` : ""}>${badge[p.id][0]}</span>` : ""}</a>`).join("") +
-    "" ;
+  const uj = ULTRA.job, scanning = uj?.status === "running" || DEEP.data?.status === "running";
+  const ub = uj && !ULTRA.seen && uj.status !== "running" && (uj.stats?.threats || uj.stats?.bad) ? [uj.stats.threats || uj.stats.bad, uj.stats.threats ? "bad" : "warn"] : null;
+  const badge = {home: bad ? [bad, "bad"] : warn ? [warn, "warn"] : null,
+    scan: scanning ? ["идёт", "ok", "Сейчас идёт проверка"] : ub || (q ? [q, "", `В карантине файлов: ${q} — они обезврежены. Открыть: вкладка «Карантин»`] : null),
+    speed: game ? ["игра", "ok"] : null};
+  const item = p => `<a class="nav${p.id === PAGE ? " on" : ""}" data-go="${p.id}" href="#">
+      <span class="ico">${icon(p.ico)}</span><span class="t">${esc(p.t)}</span>${badge[p.id] ? `<span class="cnt ${badge[p.id][1]}"${badge[p.id][2] ? ` title="${esc(badge[p.id][2])}"` : ""}>${badge[p.id][0]}</span>` : ""}</a>`;
+  const vis = PAGES.filter(p => !p.dev || MODE === "dev");
+  $("#side").innerHTML = `<a class="brand" data-go="home" href="#" aria-label="ScanHub — на главную">${LOGO}<span>ScanHub</span></a>
+    <div class="nav-main">${vis.filter(p => !p.foot).map(item).join("")}</div>
+    <div class="nav-foot">${vis.filter(p => p.foot).map(item).join("")}
+      <a class="nav" data-open-settings href="#"><span class="ico">${icon("gear")}</span><span class="t">Настройки</span></a></div>
+    <div class="side-foot">
+      <a data-idea class="idea-link" title="Чего не хватает или что неудобно — автор читает всё">${icon("idea")}Предложить улучшение</a>
+      <div class="side-ver" data-noi18n>ScanHub ${esc(typeof VERSION === "string" ? VERSION : "")}</div></div>`;
   // число на вкладках (сейчас — «Карантин») обновляется вместе с боковым меню
   document.querySelectorAll(".tabs [data-tab-go]").forEach(b => {
     const n = tabCount(b.dataset.tabGo), c = b.querySelector(".cnt");
     if (n && c) c.textContent = n; else if (n) b.insertAdjacentHTML("beforeend", ` <span class="cnt">${n}</span>`); else c?.remove();
   });
-  $("#side").innerHTML += `<div class="side-foot">
-    <div><a data-idea class="idea-link" title="Чего не хватает или что неудобно — автор читает всё">${icon("idea")}Предложить улучшение</a></div>
-    <div class="side-ver" data-noi18n>ScanHub ${esc(typeof VERSION === "string" ? VERSION : "")}</div></div>`;
+  const al = $("#alertsBtn .tb-dot");
+  // точка на колокольчике — свежие (за сутки) предупреждения, которые ещё не открывали
+  try { if (al) al.hidden = !ALERTS.some(a => a.level !== "info" && Date.parse(a.t) > +(store.get("alertsSeen") || 0) && Date.now() - Date.parse(a.t) < 864e5) } catch {}
+  if (onTab("health", "alerts")) store.set("alertsSeen", String(Date.now()));
 }
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-open-settings]")) { e.preventDefault(); $("#settingsBtn").click() }
+});
 
 // ============================================================ «Подготовить ScanHub»: всё, без чего проверки неполные
 const PREP = {clamav: "ClamAV", atomscan: "Atomdrift", hollowshunter: "HollowsHunter", rootcerts: "Sigcheck", minersearch: "MinerSearch"};
@@ -1575,6 +1611,7 @@ setInterval(pollAlerts, 5000);
 
 // ============================================================ панели: реестр, подготовка, перерисовка
 function panelHtml(name, dev){
+  if (COMPOSITE[name]) return COMPOSITE[name].map(n => panelHtml(n, dev)).filter(Boolean).join("");
   const f = {deep: pDeep, apps: pApps, quar: pQuar, network: pNetwork, junk: pJunk, shortcuts: pShortcuts, drvstore: pDrvStore, envpath: pEnvPath,
     disk: pDisk, dups: pDups, empty: pEmpty, uninst: pUninst, debloat: pDebloat, winget: pWinget, boot: pBoot, game: pGame, memory: pMemory,
     noise: pNoise, privacy: pPrivacy, security: pSecurity, browsers: pBrowsers, ctx: pCtx, firewall: pFirewall, restore: pRestore, miners: pProtect, shred: pShred, changes: pChanges,
@@ -1582,6 +1619,7 @@ function panelHtml(name, dev){
   return f ? f(dev) : "";
 }
 function prepPanel(name){
+  if (COMPOSITE[name]) return COMPOSITE[name].forEach(prepPanel);
   const auto = {drivers: "drivers", miners: ["hosts", "watch"], network: "network", apps: "apps", hw: ["hwcheck", "hardware"], quar: "quarantine_list",
     junk: "junk_scan", shortcuts: "shortcuts", drvstore: "drvstore", envpath: "envpath", uninst: "programs", debloat: "appx", winget: "winget",
     boot: "startup", game: "game", privacy: "privacy", security: "security", browsers: "browsers", ctx: "ctx", firewall: "firewall", restore: "restore", crash: "diag", runtimes: "runtimes",

@@ -158,28 +158,18 @@ const ICONS = {
   net: '<path d="M2.5 9a14 14 0 0 1 19 0"/><path d="M5.5 12.5a9.5 9.5 0 0 1 13 0"/><path d="M8.7 16a5 5 0 0 1 6.6 0"/><circle cx="12" cy="19.3" r="1.1" fill="currentColor"/>',
   idea: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.3 1 2.1V16h5.2v-.1c0-.8.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
   bug: '<rect x="8" y="7" width="8" height="12" rx="4"/><path d="M9.5 7.5 8 5M14.5 7.5 16 5M8 11H4.5M19.5 11H16M8 15.5l-3 1.5M16 15.5l3 1.5M12 10v9"/>',
+  more: '<circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
+  bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  ram: '<rect x="3" y="7" width="18" height="9" rx="1.5"/><path d="M7 10v3M11 10v3M15 10v3M5 16v2.5M9 16v2.5M15 16v2.5M19 16v2.5"/>',
+  arrow: '<path d="m9 5.5 6.5 6.5L9 18.5"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   gear: '<circle cx="12" cy="12" r="2.8"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/><circle cx="12" cy="12" r="6.3"/>',
 };
 const icon = (name, cls = "") => ICONS[name] ? `<svg class="svg-ic ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>` : "";
 document.querySelectorAll("[data-ic]").forEach(el => { el.innerHTML = icon(el.dataset.ic) });
 
 // ============================================================ ПРОСТОЙ РЕЖИМ
-function renderHero(){
-  const d = tool("defender"), sys = d?.system;
-  let kind = "ok", title = "Компьютер под защитой", text = "Встроенный антивирус Windows работает, базы свежие.";
-  if (!sys) { kind = "warn"; title = "Проверяю защиту…"; text = "" }
-  else if (sys.realtime === false) { kind = "bad"; title = "Защита выключена"; text = "Защита в реальном времени Microsoft Defender отключена. Включи её в «Безопасность Windows» → «Защита от вирусов и угроз»." }
-  else if ((Date.now() - new Date(sys.updated)) / 864e5 > 3) { kind = "warn"; title = "Базы антивируса устарели"; text = `Последнее обновление — ${ago(sys.updated)}.` }
-  const last = HISTORY.find(h => h.batch || h.tool === "defender");
-  if (last && kind === "ok") text += ` Последняя проверка: ${ago(last.started)} — ${last.verdict?.[1]?.toLowerCase() || "готово"}.`;
-  const color = {ok:"var(--ok)", warn:"var(--warn)", bad:"var(--bad)"}[kind];
-  const mark = {ok:'<path d="m22 33 7 7 13-14" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
-                warn:'<path d="M32 18v16M32 42v1" stroke="#fff" stroke-width="5" stroke-linecap="round"/>',
-                bad:'<path d="m24 24 16 16M40 24 24 40" stroke="#fff" stroke-width="5" stroke-linecap="round"/>'}[kind];
-  $("#hero").innerHTML = `<svg class="shield" viewBox="0 0 64 64"><path d="M32 4 8 14v16c0 15 10.2 26.8 24 30 13.8-3.2 24-15 24-30V14z" fill="${color}"/>${mark}</svg>
-    <div><h2>${title}</h2><p>${esc(text)}</p>
-    ${kind === "warn" && sys ? `<p style="margin-top:8px"><button class="small" data-run="defender" data-mode="sigupdate">Обновить базы</button></p>` : ""}</div>`;
-}
+// renderHero — в hero.js (живой щит на главной)
 
 function simpleTileButtons(t){
   const s = t.state || {};

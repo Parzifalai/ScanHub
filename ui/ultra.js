@@ -310,7 +310,7 @@ async function pollUltra(){
       const dj = (r.job.steps || []).find(s => s.id === "deep" && s.job)?.job;
       if (dj) follow(dj, true, true);
     }
-    if (PAGE === "ultra") { const d = $("#ultraLog"); ULTRA.logOpen = d ? d.open : ULTRA.logOpen; redrawPanels() }
+    if (onTab("scan", "ultra")) { const d = $("#ultraLog"); ULTRA.logOpen = d ? d.open : ULTRA.logOpen; redrawPanels() }
     renderNav(); renderUltraCta();
     if (r.job?.status !== "running") break;
     await sleep(1500);
@@ -354,7 +354,7 @@ function renderUltraCta(){
 document.addEventListener("click", async e => {
   const el = e.target.closest("[data-ultra-start],[data-ultra-new],[data-ultra-back],[data-ultra-preset],[data-ultra-deep],[data-ultra-task]");
   if (!el) return;
-  if (el.hasAttribute("data-ultra-new")) { ULTRA.setup = true; if (PAGE !== "ultra") go("ultra"); else redrawPanels(); return }
+  if (el.hasAttribute("data-ultra-new")) { ULTRA.setup = true; if (!onTab("scan", "ultra")) go("scan", "ultra"); else redrawPanels(); return }
   if (el.hasAttribute("data-ultra-back")) { ULTRA.setup = false; return redrawPanels() }
   if (el.dataset.ultraPreset) {
     const p = el.dataset.ultraPreset, d = ultraDefaults();

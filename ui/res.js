@@ -95,13 +95,8 @@ function drawResInner(){
   if (PAGE === "home") {
     renderTodo();
     const top = M.top_cpu.filter(p => p.cpu >= 0.5).slice(0, 3);
+    homeStats();
     $("#sRes").innerHTML = `${alertHtml(M.suspicious, true)}
-      <div class="kpis" style="${M.suspicious?.length ? "margin-top:12px" : ""}">
-        <div class="kpi"><span class="k">Процессор</span><span class="v">${fmtPct(last(S.cpu))}${M.sensors?.cpu_temp ? `<small>${Math.round(M.sensors.cpu_temp)}°C</small>` : ""}</span>${spark(S.cpu, "var(--s1)")}</div>
-        ${M.sensors?.fans?.length ? `<div class="kpi"><span class="k">Вентиляторы</span><span class="v" style="font-size:20px">${M.sensors.fans.map(f => Math.round(f)).join(" / ")}<small>об/мин</small></span><span class="s">${esc(fanLevel(M.sensors.fans))}${M.sensors.fan_mode ? " · режим " + esc(M.sensors.fan_mode) : ""}</span></div>` : ""}
-        <div class="kpi"><span class="k">Память</span><span class="v">${(ramUsed / GB).toFixed(1)}<small>из ${(ramTot / GB).toFixed(0)} ГБ</small></span>${spark(S.ram, "var(--s1)")}</div>
-        ${g ? `<div class="kpi"><span class="k">Видеокарта</span><span class="v">${fmtPct(g.util)}<small>${g.temp ?? "—"}°C</small></span>${spark(S.gpu, "var(--s1)")}</div>` : ""}
-      </div>
       <div class="load">${top.length ? "Больше всего нагружают: " + top.map(p => `<b>${esc(p.name.replace(/\.exe$/i, ""))}</b> ${fmtPct(p.cpu)}`).join(", ") : "Компьютер почти не нагружен."}</div>
       ${cpuLine(M.cpu_why)}
       ${heatLine(M.heat)}
@@ -109,7 +104,7 @@ function drawResInner(){
       ${M.sensors_on === false && M.static?.lenovo_wmi ? `<div class="load"><a data-task-run="sensors_set" data-args='{"enable":true}'>Показать температуру процессора и скорость вентиляторов →</a> <span class="sub">(один раз попросит права администратора)</span></div>` : ""}`;
     return;
   }
-  if (PAGE !== "res") { if (PAGE === "speed" && SUB === "memory") redrawPanels(); return }
+  if (!onTab("speed", "res")) { if (onTab("speed", "memory")) redrawPanels(); return }
   const sensBusy = TASK.sensors_set?.status === "running";
   const sensCard = M.sensors_on && M.sensors_outdated
     ? `<div class="note info" style="margin-bottom:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:240px">Есть новая версия агента датчиков: научился читать обороты вентиляторов на Lenovo LOQ / новых Legion. Обновление один раз попросит UAC.</span>
@@ -258,7 +253,7 @@ function drawHeat(){
 }
 let metricsBusy = false;
 async function pollMetrics(){
-  const want = ["home", "res"].includes(PAGE) || (PAGE === "speed" && ["memory", "noise", "game"].includes(SUB)) || (PAGE === "health" && SUB === "hw");
+  const want = PAGE === "home" || onTab("speed", "res", "memory", "noise", "game") || onTab("health", "hwdrv");
   if (!want || metricsBusy || document.hidden) return;
   metricsBusy = true;
   try { M = await api("/api/metrics"); drawRes(); gpuLiveTick() } catch (e) { $("#sRes").innerHTML = `<div class="sub">${esc(e.message)}</div>` }
