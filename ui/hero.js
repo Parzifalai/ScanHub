@@ -201,7 +201,7 @@ function homeStats(){
     const free = sys.total - sys.used, pct = sys.percent, low = pct >= 87;
     tiles.push(`<div class="hs ${pct >= 93 ? "bad" : low ? "warn" : ""}"><span class="k">${icon("disk")}Свободно на диске ${esc(sys.mount.replace(/\\$/, ""))}</span>
       <b class="v">${fmtB(free).replace(/\s?(ГБ|МБ|ТБ)$/, "")}<small>${(fmtB(free).match(/(ГБ|МБ|ТБ)$/) || [""])[0]} из ${fmtB(sys.total)}</small></b>
-      <span class="n">${low ? `${100 - pct}% — Windows начнёт тормозить при 10%` : `занято ${pct}%`}</span>
+      <span class="n">${pct >= 90 ? "места почти нет — Windows уже может тормозить" : low ? `${Math.round(100 - pct)}% свободно — при 10% Windows начнёт тормозить` : `занято ${Math.round(pct)}%`}</span>
       <span class="hbar"><i style="width:${pct}%"></i></span></div>`);
   }
   el.innerHTML = tiles.slice(0, 4).join("") + `<span class="hs-go">Нагрузка подробно ${icon("arrow")}</span>`;

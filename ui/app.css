@@ -1331,3 +1331,31 @@ button.round{width:58px;height:58px;padding:0;border-radius:50%;display:grid;pla
   .shield-wrap *,.shield-wrap{animation:none!important;transition:none!important}
   .qa{transition:none} .qa:hover{transform:none}
 }
+
+/* «Что стоит сделать»: одна панель, строки через разделитель, знак — формой и цветом */
+.todo-pnl{background:linear-gradient(180deg,rgba(19,29,60,.72),rgba(12,19,42,.72));border:1px solid var(--line);border-radius:var(--r-pnl);padding:20px 24px 8px}
+.todo-pnl .sec-row{margin-bottom:6px}
+.svg-wrap{display:inline-flex;color:var(--accent2)} .svg-wrap .svg-ic{width:21px;height:21px}
+.todo-list{gap:0}
+.todo-list .check.todo-item{grid-template-columns:44px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 0;background:none;border:0;border-top:1px solid var(--line);border-radius:0}
+.todo-list .check.todo-item:first-child{border-top:0}
+.todo-item b{font:500 16px/1.3 var(--din)}
+.todo-item .sub{font-size:13.5px;margin-top:3px}
+.todo-item .acts{align-items:center}
+.todo-hidden{padding:10px 0 12px}
+.todo-empty{display:flex;gap:16px;align-items:center;padding:8px 0 16px}
+.todo-empty b{font:500 16px var(--din);display:block}
+.sign{width:40px;height:40px;display:grid;place-items:center;font:700 18px var(--din);flex:none}
+.sign.warn{color:#2A1A02;background:var(--warn);clip-path:polygon(50% 4%,97% 92%,3% 92%);padding-top:9px;font-size:17px}
+.sign.info{color:#fff;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6E9BFF,#2F63E8);box-shadow:0 0 18px -4px var(--glow);font:italic 700 19px Georgia,serif}
+.sign.bad{color:#fff;background:var(--bad);clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%)}
+.sign.ok{color:#04261A;border-radius:50%;background:var(--ok)}
+.sign.app{color:var(--accent2);border-radius:12px;background:rgba(47,99,232,.16)} .sign.app svg{width:24px;height:24px}
+.check.sh-self{box-shadow:none}
+/* «✦ Как решить» — тихая кнопка рядом с главной */
+.ai-btn{background:none;border:1px solid rgba(91,140,255,.3);color:var(--accent2)}
+.ai-btn:hover{background:rgba(47,99,232,.14);border-color:var(--accent2)}
+.todo-item button.small{height:36px;padding:0 14px;border-radius:11px;font-size:13.5px}
+.side{width:auto} .layout{grid-template-columns:260px minmax(0,1fr)}
+.side a.nav .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)} .todo-list .check.todo-item{grid-template-columns:40px minmax(0,1fr)} .todo-item .acts{grid-column:2;justify-content:flex-start}}

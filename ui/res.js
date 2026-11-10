@@ -97,10 +97,9 @@ function drawResInner(){
     const top = M.top_cpu.filter(p => p.cpu >= 0.5).slice(0, 3);
     homeStats();
     $("#sRes").innerHTML = `${alertHtml(M.suspicious, true)}
-      <div class="load">${top.length ? "Больше всего нагружают: " + top.map(p => `<b>${esc(p.name.replace(/\.exe$/i, ""))}</b> ${fmtPct(p.cpu)}`).join(", ") : "Компьютер почти не нагружен."}</div>
       ${cpuLine(M.cpu_why)}
       ${heatLine(M.heat)}
-      ${memLine()}
+      ${ramUsed / ramTot >= .85 ? memLine() : ""}
       ${M.sensors_on === false && M.static?.lenovo_wmi ? `<div class="load"><a data-task-run="sensors_set" data-args='{"enable":true}'>Показать температуру процессора и скорость вентиляторов →</a> <span class="sub">(один раз попросит права администратора)</span></div>` : ""}`;
     return;
   }

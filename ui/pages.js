@@ -298,12 +298,14 @@ function renderTodo(){
   const ack = todoAck();
   const all = computeTodo(), hidden = all.filter(x => x.lvl === "info" && ack.has(x.t));
   TODO = all.filter(x => !hidden.includes(x));
-  const ic = {bad: ["threat", "!"], warn: ["suspicious", "!"], info: ["running", "i"]};
-  const html = TODO.length ? `<h2 class="sec">Что стоит сделать</h2><div class="checks">${TODO.map(x => `<div class="check${x.app ? " sh-self" : ""}">
-      ${x.app ? `<span class="ic ic-app" title="Это про сам ScanHub, а не про компьютер">S</span>` : `<span class="ic ic-${ic[x.lvl][0]}">${ic[x.lvl][1]}</span>`}<span><b>${esc(x.t)}</b><span class="sub">${esc(x.s)}</span></span>
+  // знак повторяет смысл формой, а не только цветом: треугольник — стоит исправить, восьмиугольник — срочно, круг — к сведению
+  const sign = {bad: "!", warn: "!", info: "i"};
+  const head = n => `<div class="sec-row"><h2 class="sec"><span class="svg-wrap">${icon("scan")}</span>Что стоит сделать</h2><div class="grow"></div>${n ? `<span class="sub">${n} ${plural(n, "пункт", "пункта", "пунктов")}</span>` : ""}</div>`;
+  const html = TODO.length ? `<div class="todo-pnl">${head(TODO.length)}<div class="checks todo-list">${TODO.map(x => `<div class="check todo-item${x.app ? " sh-self" : ""}">
+      ${x.app ? `<span class="sign app" title="Это про сам ScanHub, а не про компьютер">${LOGO}</span>` : `<span class="sign ${x.lvl}" aria-hidden="true">${sign[x.lvl]}</span>`}<span><b>${esc(x.t)}</b><span class="sub">${esc(x.s)}</span></span>
       <span class="acts">${x.primary || x.app ? "" : aiBtn(x.t, x.s, {source: "Главная · Что стоит сделать"})}${x.b ? `<button class="small${x.lvl === "bad" || x.primary ? " primary" : ""}" ${x.b[1]}>${esc(x.b[0])}</button>` : ""}${x.b2 ? ` <button class="small" ${x.b2[1]}>${esc(x.b2[0])}</button>` : ""}${x.b3 ? ` <button class="small ghost" ${x.b3[1]} title="Открыть страницу ScanHub на GitHub — кнопка «Star» вверху справа">${esc(x.b3[0])}</button>` : ""}${x.b2 ? "" : x.lvl === "info" ? ` <button class="small" data-todo-ack="${esc(x.t)}" title="Убрать из списка">Понятно</button>` : ""}</span></div>`).join("")}</div>
-      ${hidden.length ? `<div class="sub" style="margin-top:6px">Скрыто советов: ${hidden.length}. <a data-todo-unack>Показать снова</a></div>` : ""}`
-    : `<h2 class="sec">Что стоит сделать</h2><div class="note info">Сейчас ничего срочного. 👍${hidden.length ? ` <a data-todo-unack>Показать скрытые советы (${hidden.length})</a>` : ""}</div>`;
+      ${hidden.length ? `<div class="sub todo-hidden">Скрыто советов: ${hidden.length}. <a data-todo-unack>Показать снова</a></div>` : ""}</div>`
+    : `<div class="todo-pnl">${head(0)}<div class="todo-empty"><span class="sign ok" aria-hidden="true">✓</span><span><b>Сейчас ничего срочного</b><span class="sub">Когда ScanHub найдёт, что стоит поправить, — это появится здесь.${hidden.length ? ` <a data-todo-unack>Показать скрытые советы (${hidden.length})</a>` : ""}</span></span></div></div>`;
   if (html === TODO_HTML) return;                // не перерисовывать без изменений (данные приходят каждые 1,5 с)
   TODO_HTML = html;
   $("#todo").innerHTML = html;
