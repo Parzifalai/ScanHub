@@ -29,7 +29,7 @@ function heroState(){
   const ultra = {t: "Ультра проверка", s: "всё сразу, около 40 минут", attr: `data-go-page="scan:ultra"`, ic: "ultra"};
   if (scan) return {kind: "scan", scan, title: "Идёт проверка",
     sub: `${scan.name}${scan.f != null ? ` — ${Math.round(scan.f * 100)}%` : ""}. Окно можно свернуть: ScanHub напишет, когда закончит.`,
-    btn: {t: "Открыть ход проверки", s: scan.name.toLowerCase(), attr: `data-go-page="${scan.go}"`, ic: "scan"}};
+    btn: {t: "Открыть ход проверки", s: scan.f != null ? `готово ${Math.round(scan.f * 100)}%` : "можно свернуть окно", attr: `data-go-page="${scan.go}"`, ic: "scan"}};
   if (sys?.realtime === false) return {kind: "bad", title: "Защита выключена",
     sub: "Защита в реальном времени Microsoft Defender отключена — компьютер не защищён от новых вирусов.",
     btn: {t: "Включить защиту", s: "откроется «Безопасность Windows»", attr: `data-launch="threatsettings"`, ic: "scan"}};

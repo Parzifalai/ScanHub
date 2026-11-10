@@ -1364,3 +1364,10 @@ button.round{width:58px;height:58px;padding:0;border-radius:50%;display:grid;pla
 :root{--ui:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif}
 .action > span,.action span:not(:first-child),.qa > span:last-child,.hero-menu span span,.hstats .k,.hstats .n,.tile p,button.pick span{font-family:var(--ui)}
 .pnl .result{background:none;border:0;box-shadow:none}
+
+.view .hero{text-align:left}
+@media (max-width:620px){
+  header{flex-wrap:wrap;row-gap:8px;padding:10px 12px 8px} header .grow{display:none} header .seg{order:20;flex-basis:100%;justify-content:center}
+  header .tb.ic-only{width:36px} .tb-sep{display:none}
+  .hero-text h2{font-size:28px}
+}
