@@ -1395,3 +1395,13 @@ dialog label.switch{display:flex;align-items:flex-start;gap:10px} dialog label.s
 .sum-card .head{gap:16px;align-items:center}
 .sum-ic{width:44px;height:44px;flex:none;border-radius:14px;display:grid;place-items:center;font-size:20px;background:rgba(47,99,232,.18);color:var(--accent2)}
 .sum-card .sub{display:block;max-width:80ch;margin-top:3px}
+/* своё окно ScanHub: кнопки окна в правом верхнем углу, как у Windows, но в цвет шапки */
+.wincaps{display:flex;align-self:flex-start;margin:-14px -34px 0 8px;height:42px}
+.wincaps[hidden]{display:none}
+.wincaps button{width:46px;height:42px;padding:0;border:0;border-radius:0;background:none;color:var(--muted);font:10px "Segoe Fluent Icons","Segoe MDL2 Assets";transition:background .1s}
+.wincaps button:hover{background:rgba(122,156,255,.12);color:var(--text)}
+.wincaps button.close:hover{background:#C42B1C;color:#fff}
+body:not(.win-max) .wincaps .restore,body.win-max .wincaps .maxi{display:none}
+body.in-host header{user-select:none}
+@media (max-width:900px){.wincaps{margin:-12px -16px 0 4px}}
+@media (max-width:620px){.wincaps{margin:-10px -12px 0 2px}}

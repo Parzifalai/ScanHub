@@ -1,7 +1,8 @@
 // ScanHub.exe — запускалка: открывает ScanHub без консольного окна.
 // Ищет Python: сначала встроенный (папка python рядом — портативная версия), потом установленный (pythonw в PATH).
 // Все аргументы передаёт дальше (например, --check "файл" из меню «Проверить в ScanHub»).
-// Сборка: csc /target:winexe /win32icon:..\ui\scanhub.ico /out:..\ScanHub.exe ScanHub.cs
+// Сборка (из папки launcher): csc /target:winexe /win32icon:..\ui\scanhub.ico /out:..\ScanHub.exe
+//   /r:..\window\Microsoft.Web.WebView2.Core.dll /r:..\window\Microsoft.Web.WebView2.WinForms.dll ScanHub.cs Window.cs
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -45,6 +46,9 @@ static class Launcher
     static int Main(string[] args)
     {
         string root = AppDomain.CurrentDomain.BaseDirectory;
+        // окно ScanHub (его открывает сервер): ScanHub.exe --window <адрес> <папка профиля> — Window.cs
+        if (args.Length >= 2 && args[0] == "--window")
+            return WindowHost.Run(args[1], args.Length > 2 ? args[2] : Path.Combine(root, "data", "webview"));
         string script = Path.Combine(root, "scanhub.py");
         if (!File.Exists(script))
         {

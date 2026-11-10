@@ -216,3 +216,18 @@ function homeStats(){
   }
   el.innerHTML = tiles.slice(0, 4).join("") + `<span class="hs-go">${L("Нагрузка подробно", "Load in detail")} ${icon("arrow")}</span>`;
 }
+
+// ---------- своё окно ScanHub (ScanHub.exe --window, WebView2): кнопки окна в шапке, перетаскивание за пустое место шапки
+const HOST = window.chrome?.webview;
+if (HOST) {
+  document.body.classList.add("in-host");
+  $("#wincaps").hidden = false;
+  const free = e => e.target.closest("header") && !e.target.closest("button, a, input, select, textarea, label, .seg, .wincaps");
+  document.addEventListener("mousedown", e => {
+    if (e.button !== 0 || !free(e)) return;
+    e.preventDefault();
+    HOST.postMessage(e.detail >= 2 ? "max" : "drag");              // двойной щелчок — развернуть, как у обычного окна
+  });
+  document.addEventListener("click", e => { const b = e.target.closest("[data-win]"); if (b) HOST.postMessage(b.dataset.win) });
+  HOST.addEventListener("message", e => { if (typeof e.data === "string" && e.data.startsWith("state:")) document.body.classList.toggle("win-max", e.data === "state:max") });
+}

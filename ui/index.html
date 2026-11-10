@@ -28,6 +28,8 @@
     <button class="tb ic-only" id="settingsBtn" title="Настройки"><span data-ic="gear"></span></button>
     <span class="tb-sep"></span>
     <button class="tb" id="quitBtn" title="Закрыть ScanHub полностью — сразу, а не через 2 минуты после закрытия окна"><span data-ic="power"></span><span class="tb-t">Выйти</span></button>
+    <!-- кнопки окна — только в своём окне ScanHub (WebView2), в Edge их рисует сам браузер -->
+    <div class="wincaps" id="wincaps" hidden data-noi18n><button data-win="min" title="Свернуть">&#xE921;</button><button data-win="max" class="maxi" title="Развернуть">&#xE922;</button><button data-win="max" class="restore" title="Свернуть в окно">&#xE923;</button><button data-win="close" class="close" title="Закрыть окно">&#xE8BB;</button></div>
   </header>
   <main>
     <div id="pageHead"></div>

@@ -2632,6 +2632,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         u = urllib.parse.urlparse(self.path)
         q = dict(urllib.parse.parse_qsl(u.query))
         if u.path in ("/", "/index.html"):
+            WIN_SEEN[0] = time.time()                 # окно открылось (для запасного пути через Edge)
             html = open(UI_FILE, encoding="utf-8").read().replace("__TOKEN__", TOKEN).replace("__VERSION__", VERSION)
             return self.send(200, html.encode("utf-8"), "text/html; charset=utf-8")
         if u.path in STATIC:
@@ -3161,8 +3162,55 @@ def prune_window_profile():
                 f.write(VERSION)
 
 
+WIN_SEEN = [0.0]
+
+
+def _webview2_ok():
+    """Движок WebView2 есть в Windows 11 всегда; в Windows 10 — если его поставили Edge, Office или другие программы."""
+    import winreg
+    guid = r"{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+    for root, key in ((winreg.HKEY_LOCAL_MACHINE, rf"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{guid}"),
+                      (winreg.HKEY_LOCAL_MACHINE, rf"SOFTWARE\Microsoft\EdgeUpdate\Clients\{guid}"),
+                      (winreg.HKEY_CURRENT_USER, rf"Software\Microsoft\EdgeUpdate\Clients\{guid}")):
+        try:
+            with winreg.OpenKey(root, key) as k:
+                v = winreg.QueryValueEx(k, "pv")[0]
+                if v and v != "0.0.0.0":
+                    return True
+        except OSError:
+            continue
+    return False
+
+
 def open_window():
+    """Своё окно ScanHub (ScanHub.exe --window, WebView2, без рамки Edge). Если движка нет или окно не открыло страницу
+    за 25 с — как раньше, через Edge. config window = "edge" — всегда через Edge."""
     url = f"http://{HOST}:{PORT}/"
+    host = os.path.join(ROOT, "ScanHub.exe")
+    if (os.path.exists(host) and os.path.exists(os.path.join(ROOT, "window", "Microsoft.Web.WebView2.Core.dll"))
+            and config().get("window") != "edge" and _webview2_ok()):
+        t0 = time.time()
+        try:
+            p = subprocess.Popen([host, "--window", url, os.path.join(DATA, "webview")])
+
+            def fallback():
+                for _ in range(50):
+                    time.sleep(0.5)
+                    if WIN_SEEN[0] >= t0:
+                        return
+                    if p.poll() is not None and p.returncode != 0:
+                        break
+                if WIN_SEEN[0] < t0:
+                    report.record("своё окно ScanHub", RuntimeError(f"не открылось (код {p.poll()}) — открываю через Edge"))
+                    _open_edge(url)
+            threading.Thread(target=fallback, daemon=True).start()
+            return
+        except OSError:
+            pass
+    _open_edge(url)
+
+
+def _open_edge(url):
     if os.path.exists(EDGE):
         prune_window_profile()
         # отдельный чистый профиль: расширения обычного браузера с доступом «ко всем сайтам» не видят окно ScanHub
