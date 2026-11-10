@@ -262,7 +262,7 @@ function ultraDone(j, dev){
   const recOther = recs.filter(r => r.kind !== "tools" && r.t !== "Malwarebytes");
   return pnl(`<div class="head"><div class="result" style="padding:0;border:0;background:none"><div class="big"><div class="icon ${icon[0]}">${icon[1]}</div>
       <div><h3 style="margin:0">${esc(title)}</h3><div class="sub">ультра проверка ${j.status === "stopped" ? "остановлена" : "закончена"} ${esc(ago(j.finished))} · ${esc((j.finished || "").replace("T", " "))}</div></div></div></div>
-      <div class="grow"></div>${j.status === "done" && !allDone ? `<button class="primary" data-fix-open="1">Исправить по шагам</button>` : ""}<button data-ultra-pdf title="Итоги в PDF — отправить другу или на форум помощи. Имя пользователя и компьютера заменяются">Отчёт PDF</button><button data-ultra-new>Новая проверка</button></div>
+      <div class="grow"></div>${j.status === "done" && !allDone ? `<button class="primary" data-fix-open="1">Исправить по шагам</button>` : ""}<button data-sum-ultra title="Весь итог одним текстом — вставь в Claude, ChatGPT или Gemini и получи оценку: коротко и подробно">Сводка для ИИ</button><button data-ultra-pdf title="Итоги в PDF — отправить другу или на форум помощи. Имя пользователя и компьютера заменяются">Отчёт PDF</button><button data-ultra-new>Новая проверка</button></div>
     ${j.status === "done" && !allDone ? `<div class="note info">Всё найденное можно исправить по шагам: что ScanHub умеет — он сделает сам по кнопке, остальное подскажет, как сделать вручную. Исправленное отмечается здесь само.</div>` : ""}
     <div class="stats big-stats">${stat}</div>
     ${ultraCompare(j.compare)}

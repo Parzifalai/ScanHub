@@ -187,6 +187,7 @@ function hSpark(values, color, max = 100){
     <path d="${d} L200 34 L0 34Z" fill="url(#${id})"/><path d="${d}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
     <circle cx="${pts.at(-1)[0]}" cy="${pts.at(-1)[1]}" r="3" fill="${color}"/></svg>`;
 }
+const GO = `data-go-page="speed:res" title="Открыть нагрузку на компьютер: процессор, память, видеокарта, диски, процессы"`;
 function homeStats(){
   const el = $("#hStats");
   if (!el || !M?.series) return;
@@ -197,24 +198,32 @@ function homeStats(){
   const tiles = [];
   if (sv != null) {
     const [lvl] = stabVerdict(sv);
-    tiles.push(`<div class="hs ${lvl === "ok" ? "" : lvl}"><span class="k">${icon("health")}Стабильность Windows</span><b class="v">${sv.toFixed(1).replace(".", ",")}<small>из 10</small></b>
+    tiles.push(`<div class="hs ${lvl === "ok" ? "" : lvl}" ${GO}><span class="k">${icon("health")}Стабильность Windows</span><b class="v">${sv.toFixed(1).replace(".", ",")}<small>из 10</small></b>
       <span class="n">${esc(stabVerdict(sv)[1])}</span>${hSpark(stab.slice(-28).map(x => x.v), "#5B8CFF", 10)}</div>`);
   } else if (g) {
-    tiles.push(`<div class="hs"><span class="k">${icon("game")}Видеокарта</span><b class="v">${Math.round(g.util ?? 0)}<small>%${g.temp != null ? ` · ${g.temp}°C` : ""}</small></b>
+    tiles.push(`<div class="hs" ${GO}><span class="k">${icon("game")}Видеокарта</span><b class="v">${Math.round(g.util ?? 0)}<small>%${g.temp != null ? ` · ${g.temp}°C` : ""}</small></b>
       <span class="n">${esc(g.name || "")}</span>${hSpark(S.gpu, "#7BA3FF")}</div>`);
   }
-  tiles.push(`<div class="hs"><span class="k">${icon("chip")}Процессор</span><b class="v">${Math.round(cpu ?? 0)}<small>%${M.sensors?.cpu_temp ? ` · ${Math.round(M.sensors.cpu_temp)}°C` : ""}</small></b>
+  tiles.push(`<div class="hs" ${GO}><span class="k">${icon("chip")}Процессор</span><b class="v">${Math.round(cpu ?? 0)}<small>%${M.sensors?.cpu_temp ? ` · ${Math.round(M.sensors.cpu_temp)}°C` : ""}</small></b>
     <span class="n">${cpu < 15 ? L("почти не нагружен", "barely loaded") : cpu < 60 ? L("обычная нагрузка", "normal load") : L("нагружен сильно", "heavily loaded")}</span>${hSpark(S.cpu, "#7BA3FF")}</div>`);
-  tiles.push(`<div class="hs"><span class="k">${icon("ram")}Оперативная память</span><b class="v">${Math.round(ramU / ramT * 100)}<small>%</small></b>
-    <span class="n">${L(`${(ramU / GB).toFixed(1).replace(".", ",")} из ${(ramT / GB).toFixed(0)} ГБ занято`, `${(ramU / GB).toFixed(1)} of ${(ramT / GB).toFixed(0)} GB in use`)}</span>${hSpark(S.ram, "#34C98A")}</div>`);
+  // очистка памяти прямо здесь — как Mem Reduct (полная, если её включили; иначе быстрая — сжать память неактивных программ)
+  const memBusy = ["mem_quick", "mem_full"].some(n => TASK[n]?.status === "running");
+  const memLast = [TASK.mem_full, TASK.mem_quick].filter(t => t?.result && t.finished && Date.now() - Date.parse(t.finished) < 120e3)
+    .sort((a, b) => (b.finished || "").localeCompare(a.finished || ""))[0]?.result;
+  const memNote = memBusy ? L("чищу память…", "freeing memory…")
+    : memLast ? L(`освобождено ${fmtB(memLast.freed)} · было ${Math.round(memLast.before.percent)}%`, `freed ${fmtB(memLast.freed)} · was ${Math.round(memLast.before.percent)}%`)
+    : L(`${(ramU / GB).toFixed(1).replace(".", ",")} из ${(ramT / GB).toFixed(0)} ГБ занято`, `${(ramU / GB).toFixed(1)} of ${(ramT / GB).toFixed(0)} GB in use`);
+  tiles.push(`<div class="hs hs-ram"><span class="k">${icon("ram")}Оперативная память</span><b class="v">${Math.round(ramU / ramT * 100)}<small>%</small></b>
+    <button class="hs-act" data-memclean ${memBusy ? "disabled" : ""} title="${esc(L("Освободить оперативную память — как Mem Reduct. Windows и сама отдаёт память программам, когда нужно; очистка помогает, если игра или программа подтормаживает из-за забитой памяти.", "Free up RAM — like Mem Reduct. Windows hands memory to programs by itself when needed; cleaning helps when a game or program stutters because memory is full."))}">${memBusy ? L("Чищу…", "Cleaning…") : L("Очистить", "Free up")}</button>
+    <span class="n${memLast ? " ok" : ""}">${memNote}</span>${hSpark(S.ram, "#34C98A")}</div>`);
   if (sys) {
     const free = sys.total - sys.used, pct = sys.percent, low = pct >= 87;
-    tiles.push(`<div class="hs ${pct >= 93 ? "bad" : low ? "warn" : ""}"><span class="k">${icon("disk")}Свободно на диске ${esc(sys.mount.replace(/\\$/, ""))}</span>
+    tiles.push(`<div class="hs ${pct >= 93 ? "bad" : low ? "warn" : ""}" ${GO}><span class="k">${icon("disk")}Свободно на диске ${esc(sys.mount.replace(/\\$/, ""))}</span>
       <b class="v">${fmtB(free).replace(/\s?(ГБ|МБ|ТБ)$/, "")}<small>${(u => L(u, {"ГБ": "GB", "МБ": "MB", "ТБ": "TB"}[u] || u))((fmtB(free).match(/(ГБ|МБ|ТБ)$/) || [""])[0])} ${L("из", "of")} ${fmtB(sys.total)}</small></b>
       <span class="n">${pct >= 90 ? L("места почти нет — Windows уже может тормозить", "almost full — Windows may already slow down") : low ? L(`${Math.round(100 - pct)}% свободно — при 10% Windows начнёт тормозить`, `${Math.round(100 - pct)}% free — Windows slows down below 10%`) : L(`занято ${Math.round(pct)}%`, `${Math.round(pct)}% used`)}</span>
       <span class="hbar"><i style="width:${pct}%"></i></span></div>`);
   }
-  el.innerHTML = tiles.slice(0, 4).join("") + `<span class="hs-go">${L("Нагрузка подробно", "Load in detail")} ${icon("arrow")}</span>`;
+  el.innerHTML = tiles.slice(0, 4).join("") + `<button class="hs-go" ${GO}>${L("Нагрузка подробно", "Load in detail")} ${icon("arrow")}</button>`;
 }
 
 // ---------- своё окно ScanHub (ScanHub.exe --window, WebView2): кнопки окна в шапке, перетаскивание за пустое место шапки
