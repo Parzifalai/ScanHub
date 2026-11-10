@@ -92,7 +92,7 @@ class Watcher:
         if gpu2 and self._held("idle_gpu", idle is not None and idle >= 180 and sum(gpu2) / len(gpu2) >= 40, 5):
             c = ((snap.get("heat") or {}).get("culprits") or [{}])[0]
             self._fire("idle_gpu", "idle_gpu", "warn", f"Видеокарта загружена на {sum(gpu2) / len(gpu2):.0f}% в простое",
-                       f"Грузит {c.get('name')}." if c.get("name") else "Источник не определён — открой «Ресурсы».", {"page": "res"})
+                       f"Грузит {c.get('name')}." if c.get("name") else "Источник не определён — открой «Скорость и игры → Нагрузка сейчас».", {"page": "res"})
         sn = snap.get("sensors") or {}
         ct = sn.get("cpu_temp")
         if self._held("cpu_hot", ct is not None and ct >= 95, 30):

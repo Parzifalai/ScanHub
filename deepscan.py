@@ -990,7 +990,7 @@ class DeepScan:
             if h in mal and os.path.isfile(h["path"]):
                 s["files"].append({"path": h["path"], "name": "вредоносный драйвер", "engine": "LOLDrivers"})
         if not r["blocklist"]:
-            s["findings"].append("⚠ блок-лист уязвимых драйверов Microsoft выключен — включи в «Приватность и защита → Защита Windows»")
+            s["findings"].append("⚠ блок-лист уязвимых драйверов Microsoft выключен — включи в «Защита от вирусов → Защита Windows»")
         s.update(verdict="threat" if mal else "suspicious" if live else "unknown" if r["hits"] else "clean",
                  label=f"вредоносных: {len(mal)}" if mal else f"уязвимых в работе: {len(live)}" if live
                        else "уязвимый драйвер отключён — перезагрузи компьютер" if any(intel.pending_driver(h) for h in r["hits"])

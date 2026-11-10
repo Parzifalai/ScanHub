@@ -1055,7 +1055,7 @@ def run(builtin, mode_id, target, emit, stopped, details):
             emit(("  ✕ " if h["category"] == "malicious" else "  ! ") + _drv_text(h, r))
             emit(f"      {h['path']} · {h['link']}")
             details.append(h)
-        emit("  блок-лист уязвимых драйверов Microsoft: " + ("включён" if r["blocklist"] else "ВЫКЛЮЧЕН — включи в «Приватность и защита → Защита Windows»")
+        emit("  блок-лист уязвимых драйверов Microsoft: " + ("включён" if r["blocklist"] else "ВЫКЛЮЧЕН — включи в «Защита от вирусов → Защита Windows»")
              + "; целостность памяти: " + ("включена" if r["hvci"] else "выключена"))
         mal = [h for h in r["hits"] if h["category"] == "malicious"]
         live = [h for h in r["hits"] if h["category"] != "malicious" and live_driver(h, r)]

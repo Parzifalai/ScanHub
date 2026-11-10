@@ -128,7 +128,7 @@ def categories():
              paths=_g(LA + r"\Google\Chrome\User Data\OptGuideOnDeviceModel", LA + r"\Google\Chrome Beta\User Data\OptGuideOnDeviceModel",
                       LA + r"\Google\Chrome SxS\User Data\OptGuideOnDeviceModel"), safe=False,
              desc="Chrome сам скачивает ИИ-модель (файл weights.bin, до 4 ГБ) для подсказок «Помоги написать» и встроенного ИИ сайтов. Если этим "
-                  "не пользуешься — удаляй. Чтобы Chrome не скачал её снова, включи «Chrome: не скачивать ИИ-модель» в «Приватность и защита → "
+                  "не пользуешься — удаляй. Чтобы Chrome не скачал её снова, включи «Chrome: не скачивать ИИ-модель» в «Приватность → "
                   "Приватность». Закрой Chrome перед очисткой."),
         # ---- разработка
         dict(id="devcache", grp="Разработка", label="Кэш пакетов: pip, npm, NuGet, Yarn", paths=_g(LA + r"\pip\cache", LA + r"\npm-cache", RA + r"\npm-cache",
@@ -426,10 +426,10 @@ def children_of(path, limit=60):
 HINTS = [
     (r"\\windows\\winsxs$", "Хранилище компонентов Windows. Вручную не удалять! Уменьшить можно через «Очистку диска Windows» → «Очистка обновлений Windows»."),
     (r"\\windows\\installer$", "Копии установщиков программ, нужны для их удаления и восстановления. Вручную не удалять."),
-    (r"\\windows\\softwaredistribution", "Загрузки Windows Update — очищаются в «Очистка → Мусор»."),
-    (r"\\appdata\\local\\temp$", "Временные файлы — очищаются в «Очистка → Мусор»."),
+    (r"\\windows\\softwaredistribution", "Загрузки Windows Update — очищаются в «Очистка и место → Мусор и кэши»."),
+    (r"\\appdata\\local\\temp$", "Временные файлы — очищаются в «Очистка и место → Мусор и кэши»."),
     (r"\\appdata\\local\\packages$", "Данные приложений из Microsoft Store. Чистить вручную не стоит — удаляй само приложение."),
-    (r"\\\$recycle\.bin$", "Корзина — очищается в «Очистка → Мусор»."),
+    (r"\\\$recycle\.bin$", "Корзина — очищается в «Очистка и место → Мусор и кэши»."),
     (r"\\steamapps\\common$", "Установленные игры Steam. Ненужную игру удаляй через Steam."),
     (r"\\system volume information$", "Точки восстановления и служебные данные Windows. Управляются через «Защиту системы»."),
     (r"\\hiberfil\.sys$|^[a-z]:\\$", ""),

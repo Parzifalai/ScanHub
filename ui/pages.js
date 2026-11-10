@@ -1671,7 +1671,7 @@ function taskToast2(name, t, args){
     recycle: () => [`В Корзину: ${r.removed}`, r.errors?.length ? `не удалось: ${r.errors.length}` : "место освободится после очистки Корзины", r.errors?.length ? "warn" : "ok"],
     shortcuts_remove: () => [`Удалено ярлыков: ${r.removed}`, "копии сохранены"], envpath_fix: () => ["PATH очищен", "терминалы увидят изменения после перезапуска" + rp],
     app_links_create: () => [r.ok ? "Ярлык создан" : "Ярлык создан не везде", "на рабочем столе и в меню «Пуск»", r.ok ? "ok" : "warn"],
-    net_diag: () => [r.verdict || "Проверка интернета готова", "подробности — в «Скорость → Интернет»", /в порядке/.test(r.verdict || "") ? "ok" : "warn"],
+    net_diag: () => [r.verdict || "Проверка интернета готова", "подробности — в «Скорость и игры → Интернет»", /в порядке/.test(r.verdict || "") ? "ok" : "warn"],
     driver_disable: () => ["Драйвер отключён", "перестанет загружаться после перезагрузки компьютера"],
     driver_restore: () => ["Драйвер включён обратно", "снова будет загружаться при включении компьютера"],
     drvstore_remove: () => [`Удалено старых драйверов: ${r.removed}`, (r.failed?.length ? `не удалось: ${r.failed.length}` : "") + rp, r.failed?.length ? "warn" : "ok"],
@@ -1828,7 +1828,7 @@ async function dropScan(dt){
   const ents = [...dt.items].filter(i => i.kind === "file").map(i => ({file: i.getAsFile(), dir: !!i.webkitGetAsEntry?.()?.isDirectory})).filter(x => x.file);
   if (!ents.length) return;
   const tools = TOOLS.filter(t => t.ready && !t.data_missing && t.modes.some(m => m.multi));
-  if (!tools.length) return say("Сначала установи хотя бы один сканер — в разделе «Сканеры» или «Проверка на вирусы».", "Нечем проверять");
+  if (!tools.length) return say("Сначала установи хотя бы один сканер — в разделе «Сканеры» или «Защита от вирусов».", "Нечем проверять");
   if (ents.some(x => x.dir) && ents.length > 1) return say("Перетащи папку отдельно от других файлов — или выбери её кнопкой «Проверить папку».", "Папку — по одной");
   let paths;
   try { paths = (await api("/api/drop/locate", {files: ents.map(x => ({name: x.file.name, size: x.file.size, mtime: x.file.lastModified, dir: x.dir}))})).paths }
@@ -1959,7 +1959,7 @@ document.addEventListener("click", async e => {
   if (el.dataset.leftSkip) { const t = TASK[el.dataset.leftSkip]?.result; if (t) t.leftovers_done = true; return redrawPanels() }
   if (el.dataset.quar) {
     const files = JSON.parse(el.dataset.quar);
-    if (!await ask(files.length > 1 ? `Убрать в карантин ${files.length} файлов? Они перестанут запускаться; вернуть можно в «Проверка на вирусы → Карантин».`
+    if (!await ask(files.length > 1 ? `Убрать в карантин ${files.length} файлов? Они перестанут запускаться; вернуть можно в «Защита от вирусов → Карантин».`
                                   : `Убрать в карантин ${files[0].path.split("\\").pop()}? Файл перестанет запускаться; вернуть можно в «Карантине».`)) return;
     const args = {files}, t = await runTask("quarantine", args);
     return afterTask("quarantine", args, t);

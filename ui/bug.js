@@ -23,7 +23,7 @@ async function bugReport(prefill = {}){
     <label class="bug-f"><span class="bug-h"><span id="bugTextH">Что случилось</span> <span class="sub">— обязательно</span></span>
       <textarea id="bugText" rows="4"></textarea></label>
     <label class="bug-f" id="bugStepsF"><span class="bug-h">Что делал перед этим <span class="sub">— по желанию, очень помогает</span></span>
-      <textarea id="bugSteps" rows="3" placeholder="1. Открыл «Очистка» 2. Отметил «Временные файлы» 3. Нажал «Очистить»"></textarea></label>
+      <textarea id="bugSteps" rows="3" placeholder="1. Открыл «Очистка и место» 2. Отметил «Временные файлы» 3. Нажал «Очистить»"></textarea></label>
     <div class="bug-f"><span class="bug-h">Снимки экрана <span class="sub">— по желанию, до трёх. Можно вставить Ctrl+V или перетащить сюда</span></span>
       <div class="bug-shots" id="bugShots"></div>
       <div class="row"><button class="small" type="button" data-bug-shot>Добавить снимок</button><input type="file" id="bugShotFile" accept="image/png,image/jpeg,image/webp" multiple hidden>

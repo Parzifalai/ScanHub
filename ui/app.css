@@ -1359,3 +1359,8 @@ button.round{width:58px;height:58px;padding:0;border-radius:50%;display:grid;pla
 .side{width:auto} .layout{grid-template-columns:260px minmax(0,1fr)}
 .side a.nav .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)} .todo-list .check.todo-item{grid-template-columns:40px minmax(0,1fr)} .todo-item .acts{grid-column:2;justify-content:flex-start}}
+
+/* пояснения внутри кнопок-карточек — обычным шрифтом для текста, заголовки — Bahnschrift */
+:root{--ui:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif}
+.action > span,.action span:not(:first-child),.qa > span:last-child,.hero-menu span span,.hstats .k,.hstats .n,.tile p,button.pick span{font-family:var(--ui)}
+.pnl .result{background:none;border:0;box-shadow:none}

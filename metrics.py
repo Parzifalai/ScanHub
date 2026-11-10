@@ -857,7 +857,7 @@ while ($true) {
                 "sensors": {k: v for k, v in sn.items() if k != "raw"} if sn else None,
                 "device": {"maker": self.static.get("maker"), "model": self.static.get("family") or self.static.get("model"),
                            "laptop": self.static.get("laptop")},
-                "note": "" if sn else ("Скорость вентиляторов и температуру процессора можно добавить: «Ресурсы» → «Включить датчики» "
+                "note": "" if sn else ("Скорость вентиляторов и температуру процессора можно добавить: «Скорость и игры → Нагрузка сейчас» → «Включить датчики» "
                                        "(один раз попросит права администратора)." if self.static.get("lenovo_wmi") else
                                        "Температура процессора и обороты вентиляторов на этом устройстве недоступны без датчиков "
                                        "производителя — оцениваю по нагрузке и фоновым задачам.")}

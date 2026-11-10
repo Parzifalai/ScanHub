@@ -433,7 +433,7 @@ function taskToast(name, t, args = {}){
     mem_quick: () => [`Освобождено ${fmtB(r.freed || 0)} памяти`, `занято ${Math.round(r.before?.percent)}% → ${Math.round(r.after?.percent)}%`],
     mem_full: () => [`Освобождено ${fmtB(r.freed || 0)} памяти`, `полная очистка · занято ${Math.round(r.before?.percent)}% → ${Math.round(r.after?.percent)}%`],
     memclean_set: () => r.enabled ? ["Полная очистка памяти включена", "теперь кнопка чистит как Mem Reduct"] : ["Полная очистка памяти выключена", "", "info"],
-    sensors_set: () => r.enabled ? ["Датчики включены", "температура процессора и вентиляторы — во вкладке «Ресурсы»"] : ["Датчики выключены", "", "info"],
+    sensors_set: () => r.enabled ? ["Датчики включены", "температура процессора и вентиляторы — в «Скорость и игры → Нагрузка сейчас»"] : ["Датчики выключены", "", "info"],
   }[name];
   if (!msg) return taskToast2(name, t, args);
   const [title, text, kind] = msg();
@@ -641,7 +641,7 @@ document.addEventListener("click", async e => {
       ${found.length ? `<ul class="mdl-list">${found.map(t => `<li>${esc(t.title)}</li>`).join("")}</ul>` : `<p class="sub">Вне своей папки ScanHub ничего не оставил.</p>`}
       <label class="switch" style="margin-top:10px"><input type="checkbox" id="unFolder" checked> <span>Удалить и саму папку ScanHub
         <span class="hint" style="display:block">${esc(info.root)} — программа, история проверок, ключи${info.quarantine ? `, карантин (${info.quarantine} файлов — они удалятся навсегда)` : ""}. Папка удалится через несколько секунд после того, как окно закроется.</span></span></label>
-      ${info.undo ? `<div class="note warn" style="margin-top:10px">Изменения настроек Windows, которые ты делал через ScanHub, останутся (их можно отменить: ${info.undo}). Если хочешь вернуть как было — сначала открой «Приватность и защита → Что изменил ScanHub». <a data-go-page="privacy:changes">Открыть</a></div>` : ""}
+      ${info.undo ? `<div class="note warn" style="margin-top:10px">Изменения настроек Windows, которые ты делал через ScanHub, останутся (их можно отменить: ${info.undo}). Если хочешь вернуть как было — сначала открой «Приватность → Что изменил ScanHub». <a data-go-page="privacy:changes">Открыть</a></div>` : ""}
       ${admin ? `<p class="sub" style="margin-top:8px">Для задач планировщика и файла hosts появится одно окно UAC (в нём будет «Python» — это ScanHub).</p>` : ""}`;
     if (!await modal({title: "Удалить ScanHub с компьютера?", html, ok: "Удалить ScanHub", cancel: "Отмена", danger: true, icon: "!"})) return;
     const folder = !!document.getElementById("unFolder")?.checked;

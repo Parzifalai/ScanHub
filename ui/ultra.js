@@ -251,7 +251,7 @@ function ultraDone(j, dev){
     j.finished ? `<span>заняло <b>${elapsedText(j.started, j.finished)}</b></span>` : ""].join("");
   const solvedNote = i => fixedNow(i) ? `<div class="note ok-note" style="margin-top:8px">✓ ${CRASH_RE.test(i.t) ? "Сбои были разовыми и больше не повторяются — делать ничего не нужно." : "Уже исправлено — ScanHub проверил это сейчас."}</div>`
     : marked(i) ? `<div class="note ok-note" style="margin-top:8px">✓ ${minorItem(i) ? "Принято к сведению" : "Отмечено как сделанное"}. <a data-uunmark="${esc(i.t)}">Вернуть в список</a></div>`
-    : i.files_done ? `<div class="note ok-note" style="margin-top:8px">✓ Найденные файлы уже обезврежены: убраны в карантин или удалены. Вернуть из карантина можно в «Проверка на вирусы → Карантин».</div>` : "";
+    : i.files_done ? `<div class="note ok-note" style="margin-top:8px">✓ Найденные файлы уже обезврежены: убраны в карантин или удалены. Вернуть из карантина можно в «Защита от вирусов → Карантин».</div>` : "";
   const nowLine = i => { const s = stateNow(i); return s && !s.ok && s.text ? `<span class="sub now">${esc(s.text)}</span>` : "" };
   const recs = j.recs || [];
   // Malwarebytes теперь отдельная плитка среди сканеров; в старых итогах он был ссылкой

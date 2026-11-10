@@ -87,7 +87,7 @@ document.addEventListener("click", async e => {
   q.querySelector("span:last-child").textContent = on ? "Выключаю…" : "Включаю… подтверди окно UAC";
   try { FPS = await api("/api/fps", {action: on ? "stop" : "start", corner: FPS?.corner}) } catch (err) { toast("Не получилось", err.message, "warn") }
   q.disabled = false; qaFpsDraw();
-  if (!on && FPS?.on) toast("FPS включён", "запусти игру — цифры появятся в углу экрана. Настройки — «Скорость → Игровой режим»", "ok", 7000);
+  if (!on && FPS?.on) toast("FPS включён", "запусти игру — цифры появятся в углу экрана. Настройки — «Скорость и игры → Игровой режим и FPS»", "ok", 7000);
 });
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-fps],[data-fps-corner],[data-fps-style]");
