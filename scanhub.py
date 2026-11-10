@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "2.0.5"
+VERSION = "2.0.6"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -770,6 +770,7 @@ def start_job(tid, mode_id, target, batch=None):
            "log": os.path.join(LOGS, f"{jid}.log"), "progress": None, "listfile": listfile}
     jobs[jid] = job
     if smart_note:
+        job["files"] = files                                   # для сводки: какие именно файлы проверены
         job["lines"].append(smart_note)
         if cmd is None:
             job["lines"].append("В папке нет файлов, которые стоит проверять этим сканером.")
@@ -2679,10 +2680,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if not j:
                 return self.send(404, {"error": "нет задачи"})
             since = int(q.get("since", 0))
-            view = _alive_files(json.loads(json.dumps({k: v for k, v in j.copy().items() if k != "lines"}, default=str)))
+            view = _alive_files(json.loads(json.dumps({k: v for k, v in j.copy().items() if k not in ("lines", "files")}, default=str)))
             return self.send(200, {**view, "lines": j["lines"][since:], "total": len(j["lines"])})
         if u.path == "/api/jobs":
-            return self.send(200, {"jobs": [{k: v for k, v in j.copy().items() if k != "lines"}
+            return self.send(200, {"jobs": [{k: v for k, v in j.copy().items() if k not in ("lines", "files")}
                                             for j in list(jobs.values()) if j["status"] == "running"]})
         if u.path == "/api/metrics":
             if not metrics:

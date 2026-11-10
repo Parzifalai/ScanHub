@@ -1,0 +1,15 @@
+Filescan считает опасным — но файл подписан	Filescan considers it dangerous — but the file is signed by
+Hybrid Analysis держит его в белом списке	Hybrid Analysis keeps it on its whitelist
+VirusTotal знает этот файл с	VirusTotal has known this file since
+Журнал сканера (итог и ошибки):	-
+Журнал сканера (последние строки):	-
+антивирусы песочницы это не подтвердили	the sandbox antiviruses did not confirm it
+база вирусов старше 7 дней	-
+в базе CIRCL отмечен как вредоносный (доверие к этой записи низкое	marked as malicious in the CIRCL database (trust in this record is low
+года, репутация	, reputation
+единичные срабатывания из десятков обычно ложные	single detections out of dozens are usually false
+никто	-
+остальные движки	-
+сработали	-
+тревог по этому файлу от разных сервисов:	alerts for this file from different services:
+это известный оригинальный файл (база NIST NSRL)	it is a known original file (NIST NSRL database)

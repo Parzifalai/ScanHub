@@ -137,6 +137,27 @@ def _hashes(p):
     return {n.upper().replace("SHA", "SHA-"): h.hexdigest() for n, h in hs.items()}
 
 
+_PROGRESS = re.compile(r"^\s*[⠀-⣿]|[━╸]|^\s*\d+/\d+\s+(\d+/s|Estimating)|Estimating…|^[\s─-]+$")
+
+
+def _clean_lines(lines):
+    """Строки журнала без полосок хода: сканеры перерисовывают строку через \\r — оставляем только смысловые."""
+    out = []
+    for raw in lines:
+        for l in str(raw).split("\r"):
+            if not l.strip() or _PROGRESS.search(l):
+                continue
+            if l.startswith("LibClamAV Warning:"):
+                t = l[len("LibClamAV Warning:"):].strip(" *")
+                if not t or "Please update" in t:
+                    continue
+                if "older than 7 days" in t:
+                    t = "база вирусов старше 7 дней"
+                l = "ClamAV: " + t
+            out.append(l.rstrip())
+    return out
+
+
 def _log_tail(job, n=80):
     lines = list(job.get("lines") or [])
     if not lines and job.get("log") and os.path.exists(job["log"]):
@@ -144,11 +165,17 @@ def _log_tail(job, n=80):
             lines = open(job["log"], encoding="utf-8", errors="replace").read().splitlines()
         except OSError:
             pass
-    lines = [l for l in lines if l.strip()]
-    return lines[-n:]
+    return _clean_lines(lines)[-n:]
+
+
+# у онлайн-сервисов подробности уже есть выше — из журнала берём только итог и ошибки
+_IMPORTANT = re.compile(r"^\s*(Итог|\[ScanHub\])|ошибк|не удалось|нет доступа|отказ|error|failed", re.I)
 
 
 def _files_of(job, limit=600):
+    if job.get("files"):                                      # быстрая проверка папки: отобранные файлы
+        names = list(job["files"])
+        return names[:limit], len(names)
     lf = job.get("listfile")
     if lf and os.path.exists(lf):
         try:
@@ -156,11 +183,16 @@ def _files_of(job, limit=600):
             return names[:limit], len(names)
         except OSError:
             pass
-    return [], 0
+    names = [d["file"] for d in job.get("details") or [] if isinstance(d, dict) and d.get("file")]
+    return names[:limit], len(names)
+
+
+_CAT = {"undetected": "чисто", "harmless": "чисто", "type-unsupported": "не поддерживает такой тип файла",
+        "timeout": "не успел", "confirmed-timeout": "не успел", "failure": "ошибка"}
 
 
 def _compact_details(details):
-    """Ответы VirusTotal/MetaDefender: каждый движок — одной строкой «движок: категория — название угрозы», сработавшие первыми."""
+    """Ответы VirusTotal/MetaDefender: поимённо — только сработавшие движки, остальные — числами."""
     if not isinstance(details, list):
         return details
     out = []
@@ -168,10 +200,37 @@ def _compact_details(details):
         if not isinstance(d, dict) or not isinstance(d.get("engines"), list):
             out.append(d)
             continue
-        eng = sorted(d["engines"], key=lambda e: e.get("c") not in ("malicious", "suspicious"))
+        hits = [e for e in d["engines"] if e.get("c") in ("malicious", "suspicious")]
+        rest = {}
+        for e in d["engines"]:
+            if e.get("c") not in ("malicious", "suspicious"):
+                k = _CAT.get(e.get("c"), e.get("c") or "?")
+                rest[k] = rest.get(k, 0) + 1
         d = {k: v for k, v in d.items() if k != "engines"}
-        d["движки"] = [f"{e.get('e')}: {e.get('c')}" + (f" — {e.get('r')}" if e.get("r") else "") for e in eng]
+        d["сработали"] = [f"{e.get('e')}: {e.get('c')}" + (f" — {e.get('r')}" if e.get("r") else "") for e in hits] or "никто"
+        d["остальные движки"] = ", ".join(f"{k} — {v}" for k, v in sorted(rest.items(), key=lambda x: -x[1])) or "—"
         out.append(d)
+    return out
+
+
+def _folder_list(p, limit=80):
+    """Что лежит в папке (верхний уровень): папки со знаком \\, файлы с размером."""
+    try:
+        names = sorted(os.listdir(p), key=lambda n: (not os.path.isdir(os.path.join(p, n)), n.lower()))
+    except OSError as e:
+        return f"нет доступа: {e.strerror}"
+    out = []
+    for n in names[:limit]:
+        fp = os.path.join(p, n)
+        if os.path.isdir(fp):
+            out.append(n + "\\")
+            continue
+        try:
+            out.append(f"{n} ({assistant._size(os.path.getsize(fp))})")
+        except OSError:
+            out.append(n)
+    if len(names) > limit:
+        out.append(f"… и ещё {len(names) - limit}")
     return out
 
 
@@ -192,6 +251,8 @@ def check_summary(jobs, job_ids, verdict=None, target="", excluded=None, version
                 info["хэши"] = _hashes(target)
             except OSError as e:
                 info["хэши"] = f"не прочитать: {e}"
+        if os.path.isdir(target):
+            info["внутри"] = _folder_list(target)
         out.append(_block(info))
     else:
         out.append(f"Путь: {target or '—'}" + (" (файла уже нет на диске)" if target else "") + "\n")
@@ -220,8 +281,12 @@ def check_summary(jobs, job_ids, verdict=None, target="", excluded=None, version
         if r.get("details"):
             out.append("Подробности сервиса:\n" + _block(_compact_details(r["details"])))
         tail = _log_tail(r)
-        if tail:
-            out.append(f"Журнал сканера (последние {len(tail)} строк):\n" + _block("\n".join(tail)))
+        if r.get("details"):
+            tail = [l for l in tail if _IMPORTANT.search(l)]
+            if tail:
+                out.append("Журнал сканера (итог и ошибки):\n" + _block("\n".join(tail)))
+        elif tail:
+            out.append("Журнал сканера (последние строки):\n" + _block("\n".join(tail)))
 
     files, total = [], 0
     for r in rows:

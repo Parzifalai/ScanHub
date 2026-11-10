@@ -372,27 +372,47 @@ function adviceOf(rows, b){
   if (def?.verdict?.[0] === "threat") strong.push("Microsoft Defender нашёл угрозу");
   if (clam?.verdict?.[0] === "threat") strong.push("ClamAV нашёл угрозу, и перепроверка её подтвердила");
   for (const s of sigs.filter(s => s.status === "HashMismatch")) strong.push(`${s.name}: цифровая подпись повреждена — файл изменили после того, как его подписал издатель`);
+  // давно известный честный файл: есть в NSRL, в белом списке Hybrid Analysis или годами на VirusTotal с хорошей репутацией
+  const known = (circl?.details || []).filter(d => d.known && !d.malicious);
+  const vtOf = f => (vt?.details || []).find(d => lc(d.file) === lc(f));
+  const trusted = f => {
+    if (known.some(d => lc(d.file) === lc(f))) return "это известный оригинальный файл (база NIST NSRL)";
+    if ((ha?.details || []).some(d => lc(d.file) === lc(f) && d.raw === "whitelisted")) return "Hybrid Analysis держит его в белом списке";
+    const v = vtOf(f);
+    if (v && (v.reputation || 0) >= 10 && v.first && v.first < Date.now() / 1000 - 365 * 86400 && (v.positives || 0) <= 3)
+      return `VirusTotal знает этот файл с ${new Date(v.first * 1000).getFullYear()} года, репутация +${v.reputation}`;
+    return null;
+  };
+  // слабые сигналы по одному файлу: если у незнакомого файла их от 3 сервисов — это уже повод насторожиться
+  const flags = {}, pend = [];
+  const soft = (f, txt, lvl, why = "") => {
+    flags[lc(f)] = (flags[lc(f)] || 0) + 1;
+    const t = trusted(f);
+    if (t) weak.push(`${txt} — но ${t}`); else if (lvl) lvl.push(txt); else pend.push({f, txt, why});
+  };
   for (const [r, site] of [[vt, "VirusTotal"], [md, "MetaDefender"]]) for (const d of r?.details || []) {
     const hits = (d.engines || []).filter(e => e.c === "malicious" || e.c === "suspicious");
     if (!hits.length) continue;
     const mal = d.positives || 0, heur = hits.every(e => ML_NAME.test(e.r)), sg = signer(d.file);
     const who = hits.slice(0, 3).map(e => e.e).join(", ") + (hits.length > 3 ? "…" : "");
     const txt = `${d.name}: на ${site} тревогу подняли ${hits.length} из ${d.total} антивирусов (${who})`;
-    if (mal >= 6 || (mal >= 3 && !heur && !sg)) strong.push(txt);
+    if (mal >= 6 || (mal >= 3 && !heur && !sg && !trusted(d.file))) strong.push(txt);
     else if (sg && mal <= 4) weak.push(`${txt} — файл подписан «${sg}», похоже на ложную тревогу`);
     else if (heur && hits.length <= 2) weak.push(`${txt} — сработала только эвристика или ИИ, обычно это ложная тревога`);
-    else medium.push(txt);
+    else if (hits.length <= 2 && (d.total || 0) >= 20) soft(d.file, txt, null, " — единичные срабатывания из десятков обычно ложные");
+    else soft(d.file, txt, medium);
   }
   // подробностей нет (итог восстановлен из истории после перезапуска) — учитываем хотя бы сам вердикт
   for (const r of [vt, fs, md, ha]) if (r && !(r.details || []).length && ["threat", "suspicious"].includes(r.verdict?.[0]))
     (r.verdict[0] === "threat" ? medium : weak).push(`${r.tool_name}: ${lc(r.verdict[1])} — подробности недоступны, проверь файл ещё раз`);
   for (const d of fs?.details || []) {
-    if (d.verdict === "threat") (signer(d.file) ? weak : medium).push(`${d.name}: Filescan считает опасным` + (signer(d.file) ? ` — но файл подписан «${signer(d.file)}»` : ""));
+    if (d.verdict === "threat") signer(d.file) ? weak.push(`${d.name}: Filescan считает опасным — но файл подписан «${signer(d.file)}»`) : soft(d.file, `${d.name}: Filescan считает опасным`, medium);
     else if (d.verdict === "suspicious") weak.push(`${d.name}: Filescan насторожился — у него много ложных тревог на библиотеках и установщиках`);
   }
   for (const d of ha?.details || []) {
     const fam = d.family ? `, семейство ${d.family}` : "", sc = d.score != null ? ` (оценка ${d.score}/100${fam})` : fam;
-    if (d.verdict === "threat") (signer(d.file) ? weak : medium).push(`${d.name}: в песочнице Hybrid Analysis файл вёл себя как вредонос${sc}` + (signer(d.file) ? ` — но файл подписан «${signer(d.file)}»` : ""));
+    if (d.verdict === "threat") signer(d.file) ? weak.push(`${d.name}: в песочнице Hybrid Analysis файл вёл себя как вредонос${sc} — но файл подписан «${signer(d.file)}»`)
+      : soft(d.file, `${d.name}: в песочнице Hybrid Analysis файл вёл себя как вредонос${sc}` + (d.multiscan === 0 ? ", антивирусы песочницы это не подтвердили" : ""), medium);
     else if (d.verdict === "suspicious") weak.push(`${d.name}: песочница Hybrid Analysis насторожилась${sc} — у установщиков и системных утилит так бывает часто`);
   }
   if (atom && ["threat", "suspicious"].includes(atom.verdict?.[0])) {
@@ -403,10 +423,12 @@ function adviceOf(rows, b){
     }
   }
   if (yara?.verdict?.[0] === "threat") (yara.found || []).forEach(f => (signer(f.path) ? weak : medium).push(`${name(f.path)}: правила YARA — ${f.name || "совпадение с признаками вредоноса"}`));
-  // файл есть в базе известных дистрибутивов (NIST NSRL) — сигналы эвристик почти наверняка ложные
-  const known = (circl?.details || []).filter(d => d.known && !d.malicious);
-  for (const d of circl?.details || []) if (d.malicious) strong.push(`${d.name}: в базе известных файлов CIRCL отмечен как вредоносный`);
-  if (known.length && !strong.length && medium.length) { weak.push(...medium.map(x => x + " — но это известный оригинальный файл из дистрибутива (база NIST NSRL)")); medium.length = 0 }
+  // CIRCL: запись «вредоносный» с доверием ниже 50 — из сомнительной базы, сама по себе не приговор
+  for (const d of circl?.details || []) if (d.malicious) {
+    if ((d.trust ?? 100) >= 50) strong.push(`${d.name}: в базе известных файлов CIRCL отмечен как вредоносный`);
+    else soft(d.file, `${d.name}: в базе CIRCL отмечен как вредоносный (доверие к этой записи низкое — ${d.trust}/100)`, medium);
+  }
+  for (const p of pend) { const n = flags[lc(p.f)]; n >= 3 ? medium.push(`${p.txt} — тревог по этому файлу от разных сервисов: ${n}`) : weak.push(p.txt + p.why) }
   // насколько полной была проверка
   const okRows = done.filter(r => ["clean", "unknown", "threat", "suspicious"].includes(r.verdict?.[0]));
   const engines = ["defender", "clamav", "virustotal"].filter(id => ["clean", "unknown", "threat", "suspicious"].includes(by(id)?.verdict?.[0]));
