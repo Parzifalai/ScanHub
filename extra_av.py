@@ -172,6 +172,7 @@ def parse(tid, res, rep):
 
 UIA_PS = r"""
 $ErrorActionPreference = 'SilentlyContinue'
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
 $a = $env:SH_ARGS | ConvertFrom-Json
 $deadline = (Get-Date).AddSeconds([int]$a.seconds)
@@ -241,8 +242,8 @@ def launch_gui(tid, exe, log):
         env = dict(os.environ, SH_ARGS=json.dumps({"procs": GUI_PROCS[tid], "steps": GUI_STEPS[tid], "seconds": 360}))
         try:
             r = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", UIA_PS], env=env,
-                               capture_output=True, text=True, timeout=420, creationflags=NO_WINDOW)
-            for line in (r.stdout or "").splitlines():
+                               capture_output=True, timeout=420, creationflags=NO_WINDOW)
+            for line in r.stdout.decode("utf-8", "replace").splitlines():
                 if line.startswith("clicked "):
                     res["clicked"].append(line[8:])
                     log(f"  {NAMES[tid]}: нажал «{line.split(': ', 1)[-1]}»")

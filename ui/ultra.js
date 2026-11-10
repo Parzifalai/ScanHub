@@ -25,7 +25,8 @@ function ultraMins(S){
 function ultraUac(S){
   const has = (step, ...ids) => S.steps.includes(step) && ids.some(i => S.opts[step]?.includes(i));
   // всё после глубокой проверки, что требует администратора, идёт одним окном
-  return (S.steps.includes("deep") ? 1 : 0) + (has("clean", "junk", "junk_more", "drv") || has("health", "sfc", "disk") ? 1 : 0);
+  return (S.steps.includes("deep") ? 1 : 0) + (has("clean", "junk", "junk_more", "drv") || has("health", "sfc", "disk") ? 1 : 0) +
+    (has("extra", "kvrt", "msert", "adwcleaner", "emsisoft", "cureit") ? 1 : 0);
 }
 const minsText = m => m >= 60 ? `${Math.floor(m / 60)} ч ${m % 60 ? m % 60 + " мин" : ""}`.trim() : `${m} мин`;
 const timesText = n => `${n} ${n === 1 ? "раз" : "раза"}`;
@@ -80,8 +81,9 @@ function ultraSetup(){
       "Ничего важного ScanHub не удаляет: в очистке только мусор и кэши, у ярлыков и настроек сохраняются копии. Всё, что нужно решить тебе (удалить, выключить, поменять), будет в итогах кнопками.")}
     <div class="row-tools"><button data-ultra-preset="all">Отметить всё</button><button data-ultra-preset="default">Как по умолчанию</button><button data-ultra-preset="none">Снять всё</button></div>
     <div class="usteps">${rows}</div>
-    <div class="note info">В конце ScanHub посоветует, что сделать вручную: проверить компьютер Dr.Web CureIt!, KVRT, ESET Online Scanner, Malwarebytes, MinerSearch и Microsoft Safety Scanner
-      (они работают только своим окном), удалить лишние встроенные приложения и пересмотреть автозагрузку.</div>
+    <div class="note info">${S.steps.includes("extra")
+      ? "Дополнительные антивирусы идут последними: полная проверка всех дисков может занять несколько часов — окно можно свернуть, а любой антивирус пропустить кнопкой. В конце ScanHub посоветует, что сделать вручную: удалить лишние встроенные приложения и пересмотреть автозагрузку."
+      : "В конце ScanHub посоветует, что сделать вручную: проверить компьютер Dr.Web CureIt!, KVRT, ESET Online Scanner, Malwarebytes и Microsoft Safety Scanner (или включи шаг «Дополнительные антивирусы» — ScanHub запустит их сам), удалить лишние встроенные приложения и пересмотреть автозагрузку."}</div>
     <div class="stickybar"><span>Шагов: <b>${S.steps.length}</b> · около <b>${minsText(mins)}</b>${uac ? ` · Windows попросит права администратора ${timesText(uac)}` : ""}</span><div class="grow"></div>
       ${ULTRA.job ? `<button data-ultra-back>К прошлым итогам</button>` : ""}<button class="primary" data-ultra-start ${S.steps.length ? "" : "disabled"}>Начать ультра проверку</button></div>`);
 }
