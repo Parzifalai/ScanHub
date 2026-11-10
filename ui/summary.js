@@ -37,7 +37,7 @@ async function sumOpen(kind, args){
   const show = () => {
     wrap.querySelector(".sum-body").innerHTML = `<textarea class="sum-text" readonly spellcheck="false" data-noi18n></textarea>`;
     wrap.querySelector(".sum-text").value = cur();
-    $("#sumSize").textContent = `${Math.round(cur().length / 1000)} тыс. знаков`;
+    $("#sumSize").textContent = `${Math.round(cur().length / 1000)} тыс. знаков` + (cur().length > 60000 ? " · если чат не принимает такой длинный текст — «Сохранить файлом» и прикрепи файл" : "");
   };
   show();
   $("#sumPriv").onchange = show;

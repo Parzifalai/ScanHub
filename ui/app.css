@@ -1417,3 +1417,4 @@ body.in-host header{user-select:none}
 .hs .n.ok{color:var(--ok)}
 button.hs-go{border:0;border-top:1px solid var(--line);border-radius:0;background:none;font:500 12px var(--din);cursor:pointer}
 button.hs-go:hover{color:var(--accent2);background:rgba(122,156,255,.05)}
+.hs-act{top:42px}
