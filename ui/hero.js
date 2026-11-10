@@ -115,6 +115,7 @@ function renderHero(){
           <button data-act="quick">${icon("quick")}<span><b>Быстрая проверка</b><span>Defender: память, автозагрузка и системные папки. 2–5 минут</span></span></button>
           <button data-go-page="scan:deep">${icon("deep")}<span><b>Глубокая проверка</b><span>Все сканеры по очереди. 15–40 минут</span></span></button>
           <button data-act="pick">${icon("file")}<span><b>Проверить файл или папку</b><span>Скачанную программу, «Загрузки», флешку</span></span></button>
+          <button data-sum-pc>${icon("health")}<span><b>Сводка ПК для ИИ</b><span>Всё о компьютере одним текстом — для оценки в Claude или ChatGPT</span></span></button>
         </div></div></div>`;
     heroTilt(box.querySelector(".shield-wrap"));
   }

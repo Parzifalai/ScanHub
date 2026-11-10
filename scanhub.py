@@ -1621,6 +1621,13 @@ def _only_found(name, args):
     return a
 
 
+def _summary_save(kind, private):
+    import summary
+    path = summary.save_copy(kind, private)
+    subprocess.Popen(["explorer", "/select,", path])
+    return {"path": path}
+
+
 def _task_fn(name, args):
     args = _only_found(name, args)
     run_el = deepscan.run_elevated
@@ -1629,6 +1636,11 @@ def _task_fn(name, args):
     lazy = {
         # ---- очистка и место на диске
         "prepare": lambda: prepare(prog, args.get("_cancel") or (lambda: False), bool(args.get("trails"))),
+        # ---- сводки для второго мнения ИИ
+        "check_summary": lambda: __import__("summary").check_summary(jobs, [str(j) for j in args.get("jobs") or []], args.get("verdict"),
+                                                                    str(args.get("target") or ""), args.get("excluded"), VERSION),
+        "pc_summary": lambda: __import__("summary").pc_summary(prog, VERSION),
+        "summary_save": lambda: _summary_save(args.get("kind") if args.get("kind") in ("check", "pc") else "check", args.get("private", True) is not False),
         "junk_scan": lambda: pcclean.junk_scan(),
         "junk_clean": lambda: pcclean.junk_clean(list(args.get("ids", [])), run_el, prog,
                                                  {c["id"]: c.get("size", 0) for c in (_last("junk_scan") or {}).get("categories", [])}),
@@ -3049,7 +3061,7 @@ STATIC = {"/logo.svg": "image/svg+xml", "/logo-small.svg": "image/svg+xml", "/ic
           "/pages.js": "text/javascript; charset=utf-8", "/ultra.js": "text/javascript; charset=utf-8", "/fix.js": "text/javascript; charset=utf-8",
           "/ai.js": "text/javascript; charset=utf-8", "/bug.js": "text/javascript; charset=utf-8",
           "/history.js": "text/javascript; charset=utf-8", "/i18n.js": "text/javascript; charset=utf-8",
-          "/devices.js": "text/javascript; charset=utf-8", "/phone.js": "text/javascript; charset=utf-8", "/setup.js": "text/javascript; charset=utf-8", "/game.js": "text/javascript; charset=utf-8", "/hero.js": "text/javascript; charset=utf-8",
+          "/devices.js": "text/javascript; charset=utf-8", "/phone.js": "text/javascript; charset=utf-8", "/setup.js": "text/javascript; charset=utf-8", "/game.js": "text/javascript; charset=utf-8", "/hero.js": "text/javascript; charset=utf-8", "/summary.js": "text/javascript; charset=utf-8",
           "/en.json": "application/json; charset=utf-8"}
 
 

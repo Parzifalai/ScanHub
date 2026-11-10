@@ -1383,3 +1383,15 @@ dialog label.switch{display:flex;align-items:flex-start;gap:10px} dialog label.s
 .hs-go{grid-column:1/-1;position:static;opacity:1;display:flex;justify-content:flex-end;align-items:center;gap:4px;padding:9px 18px;border-top:1px solid var(--line);color:var(--muted);transition:color .2s}
 .hstats:hover .hs-go,.hstats:focus-visible .hs-go{color:var(--accent2)}
 .hs:nth-child(3),.hs:nth-child(4){border-bottom:0}
+/* сводки для ИИ */
+.sum-dlg{width:min(900px,100%)}
+.sum-lead{margin:0!important}
+.sum-body{min-height:120px}
+.sum-wait{display:flex;gap:12px;align-items:center;padding:30px 4px;color:var(--muted)}
+.sum-wait .spin{width:22px;height:22px;border-width:2px;color:var(--accent2)}
+.sum-text{width:100%;height:min(52vh,460px);resize:vertical;font:12px/1.5 var(--mono);background:rgba(5,9,20,.6)!important;color:var(--text);border-radius:12px;padding:12px}
+.sum-priv{display:flex;gap:10px;align-items:flex-start;font-size:13.5px}
+.sum-dlg .mdl-btns .grow{flex:1;text-align:left;align-self:center}
+.sum-card .head{gap:16px;align-items:center}
+.sum-ic{width:44px;height:44px;flex:none;border-radius:14px;display:grid;place-items:center;font-size:20px;background:rgba(47,99,232,.18);color:var(--accent2)}
+.sum-card .sub{display:block;max-width:80ch;margin-top:3px}

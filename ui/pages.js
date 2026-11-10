@@ -538,10 +538,12 @@ function renderSimpleResult(){
     fix: tool(r.tool)?.needs_data ? {run: [r.tool, tool(r.tool).needs_data.mode]} : null}))
     .concat((b.excluded || []).map(t => ({step: t.name, text: t.reason, fix: t.fix})));
   const found = running ? [] : rows.flatMap(r => r.found || []);
+  LAST_CHECK_SUM = running ? null : {jobs: b.jobs, target: b.target || "", excluded: (b.excluded || []).map(x => ({name: x.name, reason: x.reason})),
+    verdict: {title: String(title).replace(/<[^>]+>/g, ""), text: String(text).replace(/<[^>]+>/g, ""), why: adv?.why || [], notes: adv?.notes || []}};
   box.hidden = false;
   box.innerHTML = `<div class="result">
     <div class="big"><div class="icon ${cls}">${icon}</div><div><h3>${title}</h3>${b.target ? `<div class="what">${esc(b.dropped ? b.label + " · проверена копия" : b.target)}</div>` : ""}</div>
-      <div style="flex:1"></div>${running ? `<button class="small danger" data-stop-batch="${esc(simpleBatch)}">Остановить</button>` : `${aiBtn(title + (b.target ? " — " + b.target.split("\\").pop() : ""), [text, ...(adv?.why || []), ...(adv?.notes || []), ...rows.map(r => `${r.tool_name}: ${plain(r)}`)].join(" · "), {source: "Проверка файла"})}<button class="small" id="sResClose">Скрыть</button>`}</div>
+      <div style="flex:1"></div>${running ? `<button class="small danger" data-stop-batch="${esc(simpleBatch)}">Остановить</button>` : `${aiBtn(title + (b.target ? " — " + b.target.split("\\").pop() : ""), [text, ...(adv?.why || []), ...(adv?.notes || []), ...rows.map(r => `${r.tool_name}: ${plain(r)}`)].join(" · "), {source: "Проверка файла"})}<button class="small" data-sum-check title="Полная сводка этой проверки — вставь в чат с ИИ (Claude, ChatGPT) и получи второе мнение">Скопировать сводку для ИИ</button><button class="small" id="sResClose">Скрыть</button>`}</div>
     <div>${text}</div>
     ${adv?.why?.length ? `<ul class="why">${adv.why.map(w => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}
     ${adv?.notes?.length ? `<div class="sub">${adv.notes.map(esc).join(" ")}</div>` : ""}
@@ -1611,13 +1613,20 @@ async function pollAlerts(){
 }
 setInterval(pollAlerts, 5000);
 
+// карточка «Полная сводка ПК для ИИ» — сверху «Здоровье ПК → Обзор»
+function sumPcCard(){
+  return `<div class="pnl sum-card"><div class="head"><span class="sum-ic">✦</span><div class="grow"><h3>Полная сводка компьютера для ИИ</h3>
+    <span class="sub">Всё, что знает ScanHub: защита, находки, сбои, железо, диски, программы, автозагрузка, драйверы, приватность, браузеры, сеть. Скопируй и вставь в Claude, ChatGPT или Gemini — получишь оценку системы.</span></div>
+    <button class="primary" data-sum-pc>Собрать сводку</button></div></div>`;
+}
+
 // ============================================================ панели: реестр, подготовка, перерисовка
 function panelHtml(name, dev){
   if (COMPOSITE[name]) return COMPOSITE[name].map(n => panelHtml(n, dev)).filter(Boolean).join("");
   const f = {deep: pDeep, apps: pApps, quar: pQuar, network: pNetwork, junk: pJunk, shortcuts: pShortcuts, drvstore: pDrvStore, envpath: pEnvPath,
     disk: pDisk, dups: pDups, empty: pEmpty, uninst: pUninst, debloat: pDebloat, winget: pWinget, boot: pBoot, game: pGame, memory: pMemory,
     noise: pNoise, privacy: pPrivacy, security: pSecurity, browsers: pBrowsers, ctx: pCtx, firewall: pFirewall, restore: pRestore, miners: pProtect, shred: pShred, changes: pChanges,
-    health: pHealth, drivers: pDrivers, hw: pHw, history: pHistory, net: pNet, crash: pCrash, runtimes: pRuntimes, alerts: pAlerts, ultra: pUltra, devices: pDevices, phone: pPhone}[name];
+    health: d => sumPcCard() + pHealth(d), drivers: pDrivers, hw: pHw, history: pHistory, net: pNet, crash: pCrash, runtimes: pRuntimes, alerts: pAlerts, ultra: pUltra, devices: pDevices, phone: pPhone}[name];
   return f ? f(dev) : "";
 }
 function prepPanel(name){
