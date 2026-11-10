@@ -1,0 +1,93 @@
+% свободно — при 10% Windows начнёт тормозить	% free — Windows slows down below 10%
+Chrome сам скачивает ИИ-модель (файл weights.bin, до 4 ГБ) для подсказок «Помоги написать» и встроенного ИИ сайтов. Если этим не пользуешься — удаляй. Чтобы Chrome не скачал её снова, включи «Chrome: не скачивать ИИ-модель» в «Приватность → Приватность». Закрой Chrome перед очисткой.	Chrome downloads an AI model by itself (weights.bin, up to 4 GB) for “Help me write” and built-in site AI. If you don't use them — delete it. To stop Chrome downloading it again, turn on “Chrome: don't download the AI model” in “Privacy → Privacy”. Close Chrome before cleaning.
+Defender: память, автозагрузка и системные папки. 2–5 минут	Defender: memory, startup and system folders. 2–5 minutes
+Microsoft Defender обновлял базы	Microsoft Defender last updated definitions
+Microsoft Defender, около минуты	Microsoft Defender, about a minute
+ВЫКЛЮЧЕН — включи в «Защита от вирусов → Защита Windows»	OFF — turn it on in “Virus protection → Windows protection”
+Вернуть можно в «Защита от вирусов → Карантин».	You can restore it in “Virus protection → Quarantine”.
+Вернуть: «Защита от вирусов → Карантин» → «Вернуть».	To restore: “Virus protection → Quarantine” → “Restore”.
+Вирусов не найдено	No viruses found
+Включить защиту	Turn protection on
+Вместе с остатками в папках и реестре	Together with leftovers in folders and the registry
+Временные файлы — очищаются в «Очистка и место → Мусор и кэши».	Temporary files — cleaned in “Cleanup & space → Junk and caches”.
+Все быстрые действия	All quick actions
+Все сканеры по очереди. 15–40 минут	All scanners one by one. 15–40 minutes
+Встроенные защиты от вирусов и взлома. Исходные значения сохраняются — «Защита от вирусов → Защита Windows → вернуть как было» восстановит их. Часть заработает после перезагрузки.	Built-in Windows protections against viruses and attacks. Original values are saved — “Virus protection → Windows protection → restore” brings them back. Some take effect after a restart.
+Вся история	Full history
+Выключение работает как в Диспетчере задач: программа остаётся установленной, просто не стартует сама. Включить обратно можно в «Программы → Автозагрузка». Обычно смело выключают лаунчеры игр, мессенджеры и «помощники» обновлений; антивирус и драйверы (звук, тачпад, Lenovo) лучше оставить. Отмечены только записи удалённых программ — остальное решай сам.	Turning off works like in Task Manager: the program stays installed, it just doesn't start by itself. You can turn it back on in “Programs → Startup”. Game launchers, messengers and update “helpers” are usually safe to turn off; keep the antivirus and drivers (sound, touchpad, Lenovo). Only entries of uninstalled programs are ticked — the rest is your call.
+Выключить: «Приватность → Точки восстановления».	To turn off: “Privacy → Restore points”.
+ГБ занято	GB in use
+Дубликаты и пустые папки	Duplicates and empty folders
+Если хочешь вернуть как было — сначала открой «Приватность → Что изменил ScanHub».	If you want to undo it — first open “Privacy → What ScanHub changed”.
+Загрузки Windows Update — очищаются в «Очистка и место → Мусор и кэши».	Windows Update downloads — cleaned in “Cleanup & space → Junk and caches”.
+Защита Windows работает, базы свежие, замечаний нет.	Windows protection is on, definitions are fresh, nothing to fix.
+Защита в реальном времени Microsoft Defender отключена — компьютер не защищён от новых вирусов.	Microsoft Defender real-time protection is off — the PC isn't protected from new viruses.
+Защита включена	Protection is on
+Защита от вирусов	Virus protection
+И ещё	And more
+Игровой режим и FPS	Game mode and FPS
+Игровой режим и FPS, нагрузка на компьютер прямо сейчас, шум вентиляторов, оперативная память и медленный интернет.	Game mode and FPS, PC load right now, fan noise, RAM and slow internet.
+Идёт проверка	Scanning
+История проверок	Scan history
+Источник не определён — открой «Скорость и игры → Нагрузка сейчас».	Source unknown — open “Speed & games → Load now”.
+Карантин переносит файл в папку ScanHub и кодирует его — запуститься он больше не сможет, а если это ложная тревога, его можно вернуть в «Защита от вирусов → Карантин». Если файл знаком и на него ругаются 1–2 антивируса из 70 — скорее всего, это ложная тревога: пропусти этот шаг.	Quarantine moves the file into the ScanHub folder and encodes it — it can't run any more, and if it was a false alarm you can restore it in “Virus protection → Quarantine”. If you know the file and only 1–2 antiviruses out of 70 flag it, it's most likely a false alarm: skip this step.
+Когда ScanHub найдёт, что стоит поправить, — это появится здесь.	When ScanHub finds something worth fixing, it will show up here.
+Комплектующие и драйверы	Hardware and drivers
+Корзина — очищается в «Очистка и место → Мусор и кэши».	Recycle Bin — emptied in “Cleanup & space → Junk and caches”.
+Нагрузка подробно	Load in detail
+Нагрузка сейчас	Load now
+Найденные файлы уже обезврежены: убраны в карантин или удалены. Вернуть из карантина можно в «Защита от вирусов → Карантин».	The files found are already neutralised: quarantined or deleted. You can restore from quarantine in “Virus protection → Quarantine”.
+Новые вирусы он может не узнать.	It may miss new viruses.
+Нужно вмешаться	Needs your attention
+Обзор	Overview
+Общий обзор, сбои и их причины, устройства (клавиатура, мышь, микрофон, звук, камера), комплектующие и драйверы, компоненты для программ и история.	Overview, crashes and their causes, devices (keyboard, mouse, microphone, sound, camera), hardware and drivers, program components and history.
+Окно можно свернуть: ScanHub напишет, когда закончит.	You can minimise the window — ScanHub will tell you when it's done.
+Открой «Защита от вирусов → Браузеры»: у каждого расширения написано, что с ним не так.	Open “Virus protection → Browsers”: each extension says what's wrong with it.
+Открой «Здоровье ПК → Комплектующие и драйверы» — там видно, какое устройство и почему не работает.	Open “PC health → Hardware and drivers” — it shows which device isn't working and why.
+Открой «Очистка и место → Что занимает место» и выбери этот диск.	Open “Cleanup & space → What takes up space” and pick this drive.
+Открыть нагрузку на компьютер: процессор, память, видеокарта, диски, процессы	Open PC load: CPU, memory, graphics card, disks, processes
+Открыть ход проверки	Show progress
+Очистка и место	Cleanup & space
+Память, видеокарта, экран, зарядка, BIOS — несколько секунд	Memory, graphics card, display, charger, BIOS — a few seconds
+Показать, что нашлось	Show what was found
+Последняя проверка	Last scan
+Предупреждения ScanHub	ScanHub alerts
+Проверки файлов и всего компьютера, карантин, расширения браузеров и встроенная защита Windows. Находки ScanHub перепроверяет по цифровой подписи и VirusTotal, чтобы не пугать ложными тревогами.	File and full-PC scans, quarantine, browser extensions and built-in Windows protection. ScanHub double-checks findings by digital signature and VirusTotal so false alarms don't scare you.
+Проверок ещё не было.	No scans yet.
+Сверяет расширения Chrome, Edge и других браузеров на Chromium с базой из ~7000 расширений, которые Google и Microsoft удалили из магазинов за вредоносность, шпионаж, рекламу и угон поиска (MalExt Sentry, обновляется ежедневно). Такие расширения остаются в браузере и после удаления из магазина. Эта же сверка встроена в «Защита от вирусов → Браузеры» и в глубокую проверку.	Checks Chrome, Edge and other Chromium browser extensions against ~7,000 extensions Google and Microsoft removed from their stores for malware, spying, ads and search hijacking (MalExt Sentry, updated daily). Such extensions stay in the browser even after removal from the store. The same check is built into “Virus protection → Browsers” and the deep scan.
+Сейчас идёт проверка	A scan is running
+Сейчас на C: мало места — лучше сначала освободить его (шаг «Место на диске» — раздел «Очистка и место»).	Drive C: is low on space — better free some first (the “Disk space” step — section “Cleanup & space”).
+Сейчас ничего срочного	Nothing urgent right now
+Системные временные файлы, старые драйверы и ярлыки «для всех» не очищены. Их можно очистить в разделе «Очистка и место».	System temp files, old drivers and “all users” shortcuts weren't cleaned. You can clean them in “Cleanup & space”.
+Скачанную программу, «Загрузки», флешку	A downloaded program, “Downloads”, a USB stick
+Скорость вентиляторов и температуру процессора можно добавить: «Скорость и игры → Нагрузка сейчас» → «Включить датчики» (один раз попросит права администратора).	Fan speed and CPU temperature can be added: “Speed & games → Load now” → “Turn on sensors” (asks for admin rights once).
+Скорость и игры	Speed & games
+Слежка Windows	Windows tracking
+Смотрю, как работает защита Windows и что нашли прошлые проверки.	Looking at Windows protection and what past scans found.
+Сначала установи хотя бы один сканер — в разделе «Сканеры» или «Защита от вирусов».	First install at least one scanner — in “Scanners” or “Virus protection”.
+Стабильность Windows	Windows stability
+Удаление	Uninstall
+Удаление программ вместе с остатками, обновления, что запускается вместе с Windows, лишние встроенные приложения и пункты меню правой кнопки.	Uninstalling programs with leftovers, updates, what starts with Windows, unneeded built-in apps and right-click menu items.
+Файл перестанет запускаться; вернуть можно в «Защита от вирусов → Карантин».	The file will stop running; you can restore it in “Virus protection → Quarantine”.
+Что Windows отправляет о тебе, точки восстановления и полный список того, что менял ScanHub, — с кнопкой «вернуть как было».	What Windows sends about you, restore points and the full list of what ScanHub changed — with an “undo” button.
+Что можно удалить без вреда и что занимает место. У каждого пункта написано, что это и что будет после очистки; удалённое из «Места» уходит в Корзину.	What can be safely deleted and what takes up space. Each item says what it is and what happens after cleaning; what you delete from “Space” goes to the Recycle Bin.
+блок-лист уязвимых драйверов Microsoft выключен — включи в «Защита от вирусов → Защита Windows»	Microsoft vulnerable driver blocklist is off — turn it on in “Virus protection → Windows protection”
+всё сразу, около 40 минут	everything at once, about 40 min
+запусти игру — цифры появятся в углу экрана. Настройки — «Скорость и игры → Игровой режим и FPS»	start a game — the numbers appear in a corner of the screen. Settings — “Speed & games → Game mode and FPS”
+защита Windows, драйверы звука, тачпада и видеокарты — без них что-то перестанет работать. Они есть в «Программы → Автозагрузка».	Windows protection, sound, touchpad and graphics drivers — without them something stops working. They're in “Programs → Startup”.
+места почти нет — Windows уже может тормозить	almost full — Windows may already slow down
+можно свернуть окно	you can minimise the window
+нагружен сильно	heavily loaded
+ниже.	below.
+обычная нагрузка	normal load
+она	-
+они	-
+откроется «Безопасность Windows»	opens Windows Security
+подробности — в «Скорость и игры → Интернет»	details — in “Speed & games → Internet”
+почти не нагружен	barely loaded
+пункт	item
+пункта	items
+список ниже	list below
+стоит поправить	worth fixing
+температура процессора и вентиляторы — в «Скорость и игры → Нагрузка сейчас»	CPU temperature and fans — in “Speed & games → Load now”
+файлов? Они перестанут запускаться; вернуть можно в «Защита от вирусов → Карантин».	files? They will stop running; you can restore them in “Virus protection → Quarantine”.

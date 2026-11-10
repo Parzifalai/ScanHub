@@ -1371,3 +1371,4 @@ button.round{width:58px;height:58px;padding:0;border-radius:50%;display:grid;pla
   header .tb.ic-only{width:36px} .tb-sep{display:none}
   .hero-text h2{font-size:28px}
 }
+dialog label.switch{display:flex;align-items:flex-start;gap:10px} dialog label.switch input{width:auto;margin-top:3px;flex:none}

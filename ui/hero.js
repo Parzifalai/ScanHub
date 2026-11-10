@@ -6,16 +6,18 @@
 const HERO = {kind: null, scanning: false, flashT: 0};
 const RING_C = 2 * Math.PI * 132;
 
+// подписи щита собираются из чисел и слов — словарь en.json переводит кусками, поэтому английский пишется здесь же
+const L = (ru, en) => LANG === "en" ? en : ru;
 function heroScan(){
   const prog = steps => { const n = steps?.length || 0, d = (steps || []).filter(s => s.status === "done" || s.status === "skipped").length;
                           return n ? Math.min(.99, (d + .35) / n) : null };
   const uj = typeof ULTRA !== "undefined" ? ULTRA.job : null, dj = typeof DEEP !== "undefined" ? DEEP.data : null;
-  if (uj?.status === "running") return {name: "Ультра проверка", f: prog(uj.steps), go: "scan:ultra"};
-  if (dj?.status === "running") return {name: "Глубокая проверка", f: prog(dj.steps), go: "scan:deep"};
+  if (uj?.status === "running") return {name: L("Ультра проверка", "Ultra scan"), f: prog(uj.steps), go: "scan:ultra"};
+  if (dj?.status === "running") return {name: L("Глубокая проверка", "Deep scan"), f: prog(dj.steps), go: "scan:deep"};
   const b = simpleBatch && batches[simpleBatch];
   if (b) {
     const rows = b.jobs.map(id => openJobs.find(j => j.id === id)).filter(Boolean), run = rows.filter(r => r.status === "running").length;
-    if (run) return {name: b.quick ? "Быстрая проверка" : "Проверка файла", f: b.quick ? null : (rows.length - run + .3) / rows.length, go: "scan:check"};
+    if (run) return {name: b.quick ? L("Быстрая проверка", "Quick scan") : L("Проверка файла", "File check"), f: b.quick ? null : (rows.length - run + .3) / rows.length, go: "scan:check"};
   }
   return null;
 }
@@ -24,27 +26,34 @@ function heroState(){
   const sys = tool("defender")?.system, scan = heroScan();
   const bad = TODO.filter(x => x.lvl === "bad"), warn = TODO.filter(x => x.lvl === "warn" && !x.app);
   const last = HISTORY.find(h => h.batch || h.tool === "defender" || h.tool === "ultra" || h.tool === "deep");
-  const lastTxt = last ? ` Последняя проверка — ${ago(last.started)}.` : " Проверок ещё не было.";
+  const lastTxt = last ? L(` Последняя проверка — ${ago(last.started)}.`, ` Last scan: ${ago(last.started)}.`) : L(" Проверок ещё не было.", " No scans yet.");
   const lastClean = last && ["clean", "unknown"].includes(last.verdict?.[0]);
-  const ultra = {t: "Ультра проверка", s: "всё сразу, около 40 минут", attr: `data-go-page="scan:ultra"`, ic: "ultra"};
-  if (scan) return {kind: "scan", scan, title: "Идёт проверка",
-    sub: `${scan.name}${scan.f != null ? ` — ${Math.round(scan.f * 100)}%` : ""}. Окно можно свернуть: ScanHub напишет, когда закончит.`,
-    btn: {t: "Открыть ход проверки", s: scan.f != null ? `готово ${Math.round(scan.f * 100)}%` : "можно свернуть окно", attr: `data-go-page="${scan.go}"`, ic: "scan"}};
-  if (sys?.realtime === false) return {kind: "bad", title: "Защита выключена",
-    sub: "Защита в реальном времени Microsoft Defender отключена — компьютер не защищён от новых вирусов.",
-    btn: {t: "Включить защиту", s: "откроется «Безопасность Windows»", attr: `data-launch="threatsettings"`, ic: "scan"}};
+  const ultra = {t: L("Ультра проверка", "Ultra scan"), s: L("всё сразу, около 40 минут", "everything at once, about 40 min"), attr: `data-go-page="scan:ultra"`, ic: "ultra"};
+  if (scan) {
+    const pct = scan.f != null ? Math.round(scan.f * 100) : null;
+    return {kind: "scan", scan, title: L("Идёт проверка", "Scanning"),
+      sub: `${scan.name}${pct != null ? ` — ${pct}%` : ""}. ` + L("Окно можно свернуть: ScanHub напишет, когда закончит.", "You can minimise the window — ScanHub will tell you when it's done."),
+      btn: {t: L("Открыть ход проверки", "Show progress"), s: pct != null ? L(`готово ${pct}%`, `${pct}% done`) : L("можно свернуть окно", "you can minimise the window"), attr: `data-go-page="${scan.go}"`, ic: "scan"}};
+  }
+  if (sys?.realtime === false) return {kind: "bad", title: L("Защита выключена", "Protection is off"),
+    sub: L("Защита в реальном времени Microsoft Defender отключена — компьютер не защищён от новых вирусов.", "Microsoft Defender real-time protection is off — the PC isn't protected from new viruses."),
+    btn: {t: L("Включить защиту", "Turn protection on"), s: L("откроется «Безопасность Windows»", "opens Windows Security"), attr: `data-launch="threatsettings"`, ic: "scan"}};
   if (bad.length) {
     const threat = bad.find(x => /вирус|угроз|троян|вредонос|майнер|следил/i.test(x.t + " " + (x.s || "")));
-    return {kind: "bad", title: threat ? "Найдена угроза" : "Нужно вмешаться", sub: (threat || bad[0]).t + (bad.length > 1 ? ` И ещё ${bad.length - 1} — ниже.` : ""),
-      btn: {t: "Показать, что нашлось", s: "список ниже", attr: `data-hero-todo`, ic: "scan"}};
+    return {kind: "bad", title: threat ? L("Найдена угроза", "Threat found") : L("Нужно вмешаться", "Needs your attention"),
+      sub: (threat || bad[0]).t + (bad.length > 1 ? L(` И ещё ${bad.length - 1} — ниже.`, ` And ${bad.length - 1} more below.`) : ""),
+      btn: {t: L("Показать, что нашлось", "Show what was found"), s: L("список ниже", "list below"), attr: `data-hero-todo`, ic: "scan"}};
   }
-  if (sys && (Date.now() - new Date(sys.updated)) / 864e5 > 3) return {kind: "warn", title: "Базы антивируса устарели",
-    sub: `Microsoft Defender обновлял базы ${ago(sys.updated)}. Новые вирусы он может не узнать.`,
-    btn: {t: "Обновить базы", s: "Microsoft Defender, около минуты", attr: `data-run="defender" data-mode="sigupdate"`, ic: "quick"}};
-  if (warn.length) return {kind: "warn", title: lastClean ? "Вирусов не найдено" : "Защита включена",
-    sub: `Но ${warn.length} ${plural(warn.length, "вещь", "вещи", "вещей")} стоит поправить — ${warn.length === 1 ? "она" : "они"} ниже.${lastTxt}`, btn: ultra};
-  if (!sys) return {kind: "idle", title: "Проверяю защиту…", sub: "Смотрю, как работает защита Windows и что нашли прошлые проверки.", btn: ultra};
-  return {kind: "ok", title: "Всё в порядке", sub: `Защита Windows работает, базы свежие, замечаний нет.${lastTxt}`, btn: ultra};
+  if (sys && (Date.now() - new Date(sys.updated)) / 864e5 > 3) return {kind: "warn", title: L("Базы антивируса устарели", "Antivirus definitions are old"),
+    sub: L(`Microsoft Defender обновлял базы ${ago(sys.updated)}. Новые вирусы он может не узнать.`, `Microsoft Defender last updated ${ago(sys.updated)}. It may miss new viruses.`),
+    btn: {t: L("Обновить базы", "Update definitions"), s: L("Microsoft Defender, около минуты", "Microsoft Defender, about a minute"), attr: `data-run="defender" data-mode="sigupdate"`, ic: "quick"}};
+  if (warn.length) {
+    const n = warn.length;
+    return {kind: "warn", title: lastClean ? L("Вирусов не найдено", "No viruses found") : L("Защита включена", "Protection is on"),
+      sub: L(`Но ${n} ${plural(n, "вещь", "вещи", "вещей")} стоит поправить — ${n === 1 ? "она" : "они"} ниже.`, `But ${n} ${n === 1 ? "thing is" : "things are"} worth fixing — see below.`) + lastTxt, btn: ultra};
+  }
+  if (!sys) return {kind: "idle", title: L("Проверяю защиту…", "Checking protection…"), sub: L("Смотрю, как работает защита Windows и что нашли прошлые проверки.", "Looking at Windows protection and what past scans found."), btn: ultra};
+  return {kind: "ok", title: L("Всё в порядке", "All good"), sub: L("Защита Windows работает, базы свежие, замечаний нет.", "Windows protection is on, definitions are fresh, nothing to fix.") + lastTxt, btn: ultra};
 }
 function plural(n, one, few, many){ const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many }
 
@@ -194,15 +203,15 @@ function homeStats(){
       <span class="n">${esc(g.name || "")}</span>${hSpark(S.gpu, "#7BA3FF")}</div>`);
   }
   tiles.push(`<div class="hs"><span class="k">${icon("chip")}Процессор</span><b class="v">${Math.round(cpu ?? 0)}<small>%${M.sensors?.cpu_temp ? ` · ${Math.round(M.sensors.cpu_temp)}°C` : ""}</small></b>
-    <span class="n">${cpu < 15 ? "почти не нагружен" : cpu < 60 ? "обычная нагрузка" : "нагружен сильно"}</span>${hSpark(S.cpu, "#7BA3FF")}</div>`);
+    <span class="n">${cpu < 15 ? L("почти не нагружен", "barely loaded") : cpu < 60 ? L("обычная нагрузка", "normal load") : L("нагружен сильно", "heavily loaded")}</span>${hSpark(S.cpu, "#7BA3FF")}</div>`);
   tiles.push(`<div class="hs"><span class="k">${icon("ram")}Оперативная память</span><b class="v">${Math.round(ramU / ramT * 100)}<small>%</small></b>
-    <span class="n">${(ramU / GB).toFixed(1).replace(".", ",")} из ${(ramT / GB).toFixed(0)} ГБ занято</span>${hSpark(S.ram, "#34C98A")}</div>`);
+    <span class="n">${L(`${(ramU / GB).toFixed(1).replace(".", ",")} из ${(ramT / GB).toFixed(0)} ГБ занято`, `${(ramU / GB).toFixed(1)} of ${(ramT / GB).toFixed(0)} GB in use`)}</span>${hSpark(S.ram, "#34C98A")}</div>`);
   if (sys) {
     const free = sys.total - sys.used, pct = sys.percent, low = pct >= 87;
     tiles.push(`<div class="hs ${pct >= 93 ? "bad" : low ? "warn" : ""}"><span class="k">${icon("disk")}Свободно на диске ${esc(sys.mount.replace(/\\$/, ""))}</span>
       <b class="v">${fmtB(free).replace(/\s?(ГБ|МБ|ТБ)$/, "")}<small>${(fmtB(free).match(/(ГБ|МБ|ТБ)$/) || [""])[0]} из ${fmtB(sys.total)}</small></b>
-      <span class="n">${pct >= 90 ? "места почти нет — Windows уже может тормозить" : low ? `${Math.round(100 - pct)}% свободно — при 10% Windows начнёт тормозить` : `занято ${Math.round(pct)}%`}</span>
+      <span class="n">${pct >= 90 ? L("места почти нет — Windows уже может тормозить", "almost full — Windows may already slow down") : low ? L(`${Math.round(100 - pct)}% свободно — при 10% Windows начнёт тормозить`, `${Math.round(100 - pct)}% free — Windows slows down below 10%`) : L(`занято ${Math.round(pct)}%`, `${Math.round(pct)}% used`)}</span>
       <span class="hbar"><i style="width:${pct}%"></i></span></div>`);
   }
-  el.innerHTML = tiles.slice(0, 4).join("") + `<span class="hs-go">Нагрузка подробно ${icon("arrow")}</span>`;
+  el.innerHTML = tiles.slice(0, 4).join("") + `<span class="hs-go">${L("Нагрузка подробно", "Load in detail")} ${icon("arrow")}</span>`;
 }
