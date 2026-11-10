@@ -1,0 +1,166 @@
+% · скачиваю	% · downloading
+(ключи и пароли скрыты всегда)	(keys and passwords are always hidden)
+(раздел собирался	-
+(файла уже нет на диске)	(the file is no longer on disk)
+1. Насколько вероятно, что объект вредоносный: «безопасно / скорее безопасно / подозрительно / опасно» — и почему.	-
+1. Общая оценка: безопасность, стабильность, производительность, место, приватность — по шкале «хорошо / есть замечания / плохо», с причинами.	-
+100% · готово	100% · done
+2. Какие сигналы весомые, а какие — типичные ложные срабатывания (эвристики ML/Generic у 1–3 движков, отсутствие в базах для редких файлов, подпись издателя).	-
+2. Самые важные проблемы — по порядку, с объяснением простыми словами.	-
+3. Сходится ли источник (откуда скачан) с подписью и названием программы.	-
+3. Что сделать — конкретные шаги (в ScanHub или в Windows), начиная с самого важного.	-
+4. Что выглядит подозрительно (программы, автозагрузка, драйверы, расширения, соединения) и что, наоборот, нормально и трогать не надо.	-
+4. Что мне сделать: запускать, удалить, проверить ещё чем-то (чем именно и как).	-
+Dr.Web CureIt! не скачан — пропущен	Dr.Web CureIt! isn't downloaded — skipped
+Dr.Web отдаёт его только со своей страницы. Скачай, и ScanHub найдёт файл сам.	Dr.Web only offers it on its own page. Download it and ScanHub will find the file.
+Emsisoft: обновляю базы	Emsisoft: updating definitions
+Kaspersky, Microsoft, AdwCleaner, Emsisoft и ESET — в папку ScanHub, с проверкой подписи и контрольной суммы	Kaspersky, Microsoft, AdwCleaner, Emsisoft and ESET — into the ScanHub folder, with signature and checksum checks
+Malwarebytes не установлен — пропущен	Malwarebytes isn't installed — skipped
+ScanHub нажал:	ScanHub clicked:
+ScanHub не ставит программы сам. Если нужен — скачай с официального сайта.	ScanHub doesn't install programs itself. If you want it, download it from the official site.
+ScanHub — набор разовых сканеров для Windows; ниже — сырые данные его проверок.	-
+ScanHub — сводка	-
+break        # шаги — строго по порядку: следующий ищем после того, как нажат этот	-
+Браузеры и расширения	-
+В конце ScanHub посоветует, что сделать вручную: проверить компьютер Dr.Web CureIt!, KVRT, ESET Online Scanner, Malwarebytes и Microsoft Safety Scanner (или включи шаг «Дополнительные антивирусы» — ScanHub запустит их сам), удалить лишние встроенные приложения и пересмотреть автозагрузку.	At the end ScanHub will suggest what to do by hand: scan the PC with Dr.Web CureIt!, KVRT, ESET Online Scanner, Malwarebytes and Microsoft Safety Scanner (or turn on the “Extra antiviruses” step — ScanHub will run them itself), remove unneeded built-in apps and review startup.
+Вердикт:	-
+Вставь её в чат с ИИ: Ctrl+V	Paste it into an AI chat: Ctrl+V
+Всё о компьютере одним текстом — для оценки в Claude или ChatGPT	Everything about the PC in one text — to get an assessment from Claude or ChatGPT
+Всё о проверке: что за файл (подпись, хэши, откуда скачан), итог ScanHub, каждый сканер с подробностями и журналом, проверенные файлы. Вставь текст в чат с ИИ — в конце уже есть просьба дать второе мнение.	Everything about the scan: what the file is (signature, hashes, where it came from), ScanHub's verdict, every scanner with details and log, scanned files. Paste the text into an AI chat — a request for a second opinion is already at the end.
+Всё, что ScanHub знает о компьютере: защита, находки, сбои, железо, диски, программы, автозагрузка, драйверы, приватность, браузеры, сеть, история проверок. Вставь текст в чат с ИИ (Claude, ChatGPT, Gemini) — в конце уже есть просьба оценить систему.	Everything ScanHub knows about the PC: protection, findings, crashes, hardware, disks, programs, startup, drivers, privacy, browsers, network, scan history. Paste the text into an AI chat (Claude, ChatGPT, Gemini) — a request to assess the system is already at the end.
+Всё, что знает ScanHub: защита, находки, сбои, железо, диски, программы, автозагрузка, драйверы, приватность, браузеры, сеть. Скопируй и вставь в Claude, ChatGPT или Gemini — получишь оценку системы.	Everything ScanHub knows: protection, findings, crashes, hardware, disks, programs, startup, drivers, privacy, browsers, network. Copy and paste it into Claude, ChatGPT or Gemini to get an assessment of the system.
+Вылечить	Cure
+Где скачать	Where to download
+Датчики: температура и вентиляторы	-
+Дополнительные антивирусы	Extra antiviruses
+Дополнительные антивирусы идут последними: полная проверка всех дисков может занять несколько часов — окно можно свернуть, а любой антивирус пропустить кнопкой. В конце ScanHub посоветует, что сделать вручную: удалить лишние встроенные приложения и пересмотреть автозагрузку.	Extra antiviruses run last: a full scan of all drives can take several hours — you can minimise the window and skip any antivirus with a button. At the end ScanHub will suggest what to do by hand: remove unneeded built-in apps and review startup.
+Дополнительные сканеры скачаны	Extra scanners downloaded
+Доступные обновления программ	-
+Драйверы и устройства с ошибками	-
+Журнал сканера (последние	-
+Заметки	-
+Защита Windows и приватность	-
+История здоровья (батарея, диски, стабильность по дням)	-
+Итог — в его окне, когда он закончит.	The result is in its window when it finishes.
+Карантин ScanHub	-
+Комплектующие: проверка	-
+Компоненты для программ (VC++, .NET, DirectX, WebView2)	-
+Место на дисках	-
+Нагрузка сейчас: процессы	-
+Не вошло в сводку: замер скорости интернета (≈60 МБ трафика) и «почему шумит» (замер 25 с) — их запускают отдельно.	-
+Не получилось собрать сводку:	Couldn't build the summary:
+Не получилось сохранить	Couldn't save
+Не скачались:	Didn't download:
+Нет проверки	No scan yet
+Отвечай по-русски, без воды.	-
+Отвечай по-русски, коротко и по делу.	-
+Открыть для лечения	Open to cure
+Открыть сканеры	Open scanners
+Отчёт HiJackThis	-
+Отчёты остались в ScanHub. Для новой проверки они скачаются заново.	Reports stay in ScanHub. They'll be downloaded again for the next scan.
+Питание и батарея	-
+Подробности сервиса:	-
+Полная сводка компьютера для ИИ	Full PC summary for AI
+Полная сводка компьютера от ScanHub — для оценки системы	-
+Почему так	-
+Права администратора не выданы — антивирусы без окна пропущены	Admin rights weren't granted — windowless antiviruses skipped
+Проверь интернет — без него этот антивирус пропущен.	Check your internet — without it this antivirus was skipped.
+Пропускаю…	Skipping…
+Пропустить этот антивирус	Skip this antivirus
+Развернуть	Maximise
+Сбои, вылеты, синие экраны, индекс стабильности (30 дней)	-
+Свернуть в окно	Restore down
+Сводка ПК для ИИ	PC summary for AI
+Сводка проверки ScanHub — для второго мнения	-
+Сводка проверки для ИИ	Scan summary for AI
+Сводка сохранена в «Загрузки»	Summary saved to Downloads
+Сеть: порты, DNS, hosts, Wi-Fi	-
+Система и комплектующие	-
+Сканеры ScanHub: что установлено	-
+Сканеры удалены после проверки	Scanners removed after the scan
+Скачанные сканеры и их следы (C:\AdwCleaner, журнал Microsoft). Одно окно UAC	Downloaded scanners and their leftovers (C:\AdwCleaner, Microsoft log). One UAC prompt
+Скачать все	Download all
+Скопировать	Copy
+Скопировать сводку для ИИ	Copy summary for AI
+Скрыть личное — имя учётной записи и компьютера, почту	Hide personal data — account and computer name, email
+Сначала проверь файл или папку	Scan a file or folder first
+Собираю данные со всего компьютера… около минуты	Collecting data from the whole PC… about a minute
+Собираю сводку…	Building the summary…
+Собрать сводку	Build summary
+Сохранить файлом	Save as file
+Сформировано ScanHub	-
+Текст ошибки:	Error text:
+Телефон (последняя проверка)	-
+Угрозы: откуда скачаны файлы в «Загрузках»	-
+Угрозы: сетевые соединения (Maltrail)	-
+Угрозы: уязвимые драйверы (LOLDrivers)	-
+Удалить сканеры после проверки	Remove scanners after the scan
+Удалить скачанные	Remove downloaded
+Удалять нечего	Nothing to remove
+Ультра проверка — последний итог	-
+Установленные программы	-
+Устройства: клавиатура, мышь, звук, камера, Bluetooth	-
+Что ScanHub нашёл (главная и последние проверки)	-
+Это полная сводка моего компьютера, собранная программой ScanHub. Оцени систему как опытный специалист:	-
+Это сводка проверки файла/папки программой ScanHub на моём компьютере. Дай независимое второе мнение:	-
+в конце, по очереди и в фоне: полная проверка всех дисков другими антивирусами — только поиск, лечение потом по кнопке. Скачиваются сами с официальных сайтов; ESET и Malwarebytes откроются своими окнами, ScanHub сам нажмёт «Начать»	at the end, one by one in the background: a full scan of all drives with other antiviruses — detection only, cure later with a button. They download themselves from official sites; ESET and Malwarebytes open in their own windows and ScanHub clicks “Start” itself
+все диски, без окна · ~150 МБ	all drives, no window · ~150 MB
+готовы:	ready:
+движки	-
+если уже скачан (Dr.Web отдаёт его только со своей страницы); если ключи не сработают — откроется его окно	if already downloaded (Dr.Web only offers it on its own page); if the switches don't work, its window opens
+закрой эти сканеры и повтори	close these scanners and try again
+запрашиваю права администратора (одно окно UAC на все антивирусы)…	requesting admin rights (one UAC prompt for all antiviruses)…
+заражений не найдено	no infections found
+и выбери «Полное сканирование»	and choose “Full scan”
+и нажимаю «Начать»	and clicking “Start”
+кнопку «Начать» найти не удалось — нажми её в окне сам	couldn't find the “Start” button — click it in the window yourself
+код выхода	-
+код завершения	exit code
+нажал	-
+найдено угроз:	threats found:
+найдены угрозы:	threats found:
+не готов — пропущен	isn't ready — skipped
+не запускался	-
+не открылось (код	-
+не открылся	didn't open
+не получилось нажать кнопки	-
+не получилось проверить	couldn't scan
+не прочитать:	-
+не скачался	didn't download
+неизвестная ошибка	unknown error
+неизвестный сканер	-
+нет такого инструмента	-
+ничего не выбрано	nothing selected
+ничего не сообщил (код	reported nothing (code
+остановлен	stopped
+открываю	opening
+открываю через Edge	-
+отчёт не найден	report not found
+отчёта нет — итог в окне CureIt	no report — the result is in the CureIt window
+память, руткиты и все диски, два движка, без окна · ~750 МБ, нужен 7-Zip	memory, rootkits and all drives, two engines, no window · ~750 MB, needs 7-Zip
+подробности — в отчёте	details are in the report
+полная проверка, без окна · ~230 МБ	full scan, no window · ~230 MB
+права выданы ✓ — запускаю первый антивирус	rights granted ✓ — starting the first antivirus
+предустановленного производителем:	preinstalled by the manufacturer:
+проверено антивирусов:	antiviruses run:
+проверяет в своём окне	is scanning in its own window
+пропущен	skipped
+раньше этот путь не проверялся	-
+режим:	-
+рекламного мусора нет	no adware
+рекламное ПО и угонщики браузера, без окна · ~9 МБ	adware and browser hijackers, no window · ~9 MB
+рекламное и нежелательное ПО:	adware and unwanted software:
+сводка ещё не собрана — нажми «Скопировать сводку» ещё раз	the summary isn't built yet — click “Copy summary” again
+своё окно ScanHub	-
+своё окно: ScanHub нажмёт «Начать» и выберет полную проверку; найденное ESET сам убирает в свой карантин	its own window: ScanHub clicks “Start” and picks a full scan; ESET quarantines what it finds by itself
+скачанные сканеры и их следы (папка C:\AdwCleaner, журнал Microsoft) — Kaspersky и Microsoft всё равно устаревают за 3 и 10 дней; отчёты останутся в ScanHub	downloaded scanners and their leftovers (C:\AdwCleaner folder, Microsoft log) — Kaspersky and Microsoft go stale in 3 and 10 days anyway; reports stay in ScanHub
+скачанные сканеры и их следы убраны	downloaded scanners and their leftovers removed
+скачать вручную:	download manually:
+состояние:	-
+строк):	-
+только если уже установлен: своё окно, ScanHub нажмёт «Сканировать»	only if already installed: its own window, ScanHub clicks “Scan”
+тыс. знаков	thousand characters
+угроз не найдено	no threats found
+удаляю	removing
+хэши	-
+этой проверки уже нет в памяти ScanHub — проверь файл ещё раз	this scan is no longer in ScanHub's memory — scan the file again

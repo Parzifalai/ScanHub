@@ -210,7 +210,7 @@ function homeStats(){
   if (sys) {
     const free = sys.total - sys.used, pct = sys.percent, low = pct >= 87;
     tiles.push(`<div class="hs ${pct >= 93 ? "bad" : low ? "warn" : ""}"><span class="k">${icon("disk")}Свободно на диске ${esc(sys.mount.replace(/\\$/, ""))}</span>
-      <b class="v">${fmtB(free).replace(/\s?(ГБ|МБ|ТБ)$/, "")}<small>${(fmtB(free).match(/(ГБ|МБ|ТБ)$/) || [""])[0]} из ${fmtB(sys.total)}</small></b>
+      <b class="v">${fmtB(free).replace(/\s?(ГБ|МБ|ТБ)$/, "")}<small>${(u => L(u, {"ГБ": "GB", "МБ": "MB", "ТБ": "TB"}[u] || u))((fmtB(free).match(/(ГБ|МБ|ТБ)$/) || [""])[0])} ${L("из", "of")} ${fmtB(sys.total)}</small></b>
       <span class="n">${pct >= 90 ? L("места почти нет — Windows уже может тормозить", "almost full — Windows may already slow down") : low ? L(`${Math.round(100 - pct)}% свободно — при 10% Windows начнёт тормозить`, `${Math.round(100 - pct)}% free — Windows slows down below 10%`) : L(`занято ${Math.round(pct)}%`, `${Math.round(pct)}% used`)}</span>
       <span class="hbar"><i style="width:${pct}%"></i></span></div>`);
   }
