@@ -18,7 +18,7 @@ import yarascan
 # on — включено по умолчанию; admin — попросит подтверждение администратора; mins — примерная длительность
 PLAN = [
     {"id": "prep", "title": "Подготовка", "mins": 2,
-     "hint": "свежие базы Defender, ClamAV и правил YARA и недостающие сканеры — без них новые вирусы не найти"},
+     "hint": "свежие базы Defender, ClamAV и правил YARA, недостающие сканеры и выбранные дополнительные антивирусы — без них новые вирусы не найти"},
     {"id": "quick", "title": "Быстрая проверка", "mins": 4,
      "hint": "Microsoft Defender: память, автозагрузка и системные папки"},
     {"id": "deep", "title": "Глубокая проверка", "mins": 25, "admin": True,
@@ -60,7 +60,7 @@ PLAN = [
      "hint": "вылеты программ, синие экраны, аппаратные ошибки, устройства и драйверы с ошибками, нехватка компонентов, перегрев"},
     {"id": "extra", "title": "Дополнительные антивирусы", "mins": 3, "admin": True,
      "hint": "в конце, по очереди и в фоне: полная проверка всех дисков другими антивирусами — только поиск, лечение потом по кнопке. "
-             "Скачиваются сами с официальных сайтов; ESET и Malwarebytes откроются своими окнами, ScanHub сам нажмёт «Начать»",
+             "Скачиваются сами с официальных сайтов ещё в «Подготовке»; ESET и Malwarebytes откроются своими окнами, ScanHub сам нажмёт «Начать»",
      "opts": [
          {"id": "kvrt", "t": "Kaspersky Virus Removal Tool", "on": True, "admin": True, "mins": 60, "d": "все диски, без окна · ~150 МБ"},
          {"id": "msert", "t": "Microsoft Safety Scanner", "on": True, "admin": True, "mins": 60, "d": "полная проверка, без окна · ~230 МБ"},
@@ -294,9 +294,34 @@ class Ultra:
                 self.add(s, "warn", "Правила YARA не обновились", (j.get("verdict") or ["", ""])[1], {"run": ["yara", "update"], "label": "Повторить"})
         elif y and y["ready"]:
             done.append("YARA (свежие)")
+        # дополнительные антивирусы — скачиваем сразу, а не через пару часов в конце: если интернет пропадёт, видно в начале
+        if "extra" in self.sel["steps"] and not self.stopped():
+            got = self._fetch_extra(s)
+            if got:
+                done.append("скачаны: " + ", ".join(got))
         if done:
             self.add(s, "ok", "Обновлено: " + ", ".join(done))
         s["label"] = "базы свежие" if not any(i["lvl"] == "warn" for i in s["items"]) else "не всё обновилось"
+
+    def _fetch_extra(self, s):
+        """Скачать выбранные дополнительные антивирусы, которых нет или которые устарели (Kaspersky и Microsoft держат базы
+        внутри файла — свежий файл = свежие базы). CureIt (только со страницы Dr.Web) и Malwarebytes (программа) — не качаем."""
+        import extra_av as xa
+        got = []
+        tv = {t["id"]: t for t in self.ctx["tools"]()}
+        for tid in [t for t in xa.SILENT + xa.GUI if self.on("extra", t)]:
+            t = tv.get(tid)
+            if not t or self.stopped() or t["source"]["type"] in ("manual", "system"):
+                continue
+            if t["ready"] and not t.get("stale") and not t.get("update_available"):
+                continue
+            s["progress"] = f"скачиваю {t['name']} (для шага «Дополнительные антивирусы»)"
+            if self.ctx["install"](tid):
+                got.append(t["name"])
+            elif not any(i["t"] == f"{t['name']} не скачался" for i in s["items"]):
+                self.add(s, "warn", f"{t['name']} не скачался", "Проверь интернет — без него этот антивирус пропущен.",
+                         {"install": tid, "label": "Повторить"})
+        return got
 
     def s_quick(self, s):
         s["progress"] = "Defender проверяет память, автозагрузку и системные папки"
@@ -764,17 +789,7 @@ class Ultra:
         if not picked:
             s["label"] = "ничего не выбрано"
             return
-        tv = {t["id"]: t for t in self.ctx["tools"]()}
-        # скачать недостающие и устаревшие (Kaspersky и Microsoft держат базы внутри файла — свежий файл = свежие базы)
-        for tid in picked:
-            t = tv.get(tid)
-            if not t or self.stopped() or t["source"]["type"] in ("manual", "system"):
-                continue
-            if not t["ready"] or t.get("stale") or t.get("update_available"):
-                s["progress"] = f"скачиваю {t['name']}"
-                if not self.ctx["install"](tid):
-                    self.add(s, "warn", f"{t['name']} не скачался", "Проверь интернет — без него этот антивирус пропущен.",
-                             {"install": tid, "label": "Повторить"})
+        self._fetch_extra(s)                            # обычно уже скачаны в «Подготовке» — тут только то, что не успело
         tv = {t["id"]: t for t in self.ctx["tools"]()}
         exe = {tid: tv[tid]["exe_path"] for tid in picked if tv.get(tid, {}).get("ready") and tv[tid].get("exe_path")}
         for tid in picked:

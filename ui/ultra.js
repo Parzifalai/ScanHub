@@ -66,6 +66,34 @@ function pUltra(dev){
   return ultraSetup();
 }
 
+// готовность дополнительного антивируса ещё до старта: готов / скачается сам / нужно скачать или поставить самому
+function extraState(id){
+  const t = tool(id);
+  if (!t) return null;
+  if (t.ready && !t.stale && !t.update_available) return "ready";
+  if (t.source.type === "manual") return t.ready ? "old" : "manual";
+  if (t.source.type === "system") return t.ready ? "ready" : "absent";
+  return t.ready ? "update" : "auto";
+}
+function extraChip(id){
+  const st = extraState(id);
+  const prep = ultraSel().steps.includes("prep");
+  const C = {ready: ["ok", "готов"], auto: ["info", prep ? "скачается в «Подготовке»" : "скачается сам"],
+             update: ["info", prep ? "обновится в «Подготовке»" : "обновится сам"],
+             manual: ["warn", "не скачан — скачай сам"], old: ["warn", "есть, но устарел"], absent: ["muted", "не установлен — пропустится"]}[st];
+  return C ? ` <span class="uav uav-${C[0]}">${C[1]}</span>` : "";
+}
+function extraFix(id){
+  const t = tool(id), st = extraState(id);
+  if (!t || !["manual", "old", "absent"].includes(st)) return "";
+  const hint = st === "absent" ? "Malwarebytes ScanHub сам не ставит — это программа. Нужен — поставь с официального сайта, и проверка его подхватит."
+    : st === "old" ? "У CureIt! базы внутри файла, а этот устарел. Скачай свежий со страницы Dr.Web в «Загрузки» — ScanHub найдёт его сам."
+    : "Dr.Web отдаёт CureIt! только со своей страницы. Скачай файл в «Загрузки» — ScanHub найдёт его сам.";
+  return `<div class="uav-fix"><span class="sub">${hint}</span>
+    <button class="small" data-link="${esc(t.source.page)}">${st === "absent" ? "Сайт Malwarebytes" : "Скачать с сайта Dr.Web"}</button>
+    ${st !== "absent" ? `<button class="small" data-install="${t.id}">Я скачал — найти</button>` : ""}</div>`;
+}
+
 function ultraSetup(){
   const S = ultraSel(), on = id => S.steps.includes(id);
   const mins = ultraMins(S), uac = ultraUac(S);
@@ -74,7 +102,7 @@ function ultraSetup(){
         <span><b>${i + 1}. ${esc(p.title)}</b>${p.admin ? " " + adminChip : ""}<span class="sub">${esc(p.hint)}</span></span>
         <span class="n sub">≈ ${p.mins} мин</span></label>
       ${(p.opts || []).length && on(p.id) ? `<div class="uopts">${p.opts.map(o => `<label class="crow tight"><input type="checkbox" data-ultra-opt="${p.id}|${o.id}" ${S.opts[p.id]?.includes(o.id) ? "checked" : ""}>
-          <span><b>${esc(o.t)}</b>${o.admin ? " " + adminChip : ""}<span class="sub">${esc(o.d)}</span></span><span class="n sub">${o.mins ? "+" + o.mins + " мин" : ""}</span></label>`).join("")}</div>` : ""}
+          <span><b>${esc(o.t)}</b>${o.admin ? " " + adminChip : ""}${p.id === "extra" ? extraChip(o.id) : ""}<span class="sub">${esc(o.d)}</span></span><span class="n sub">${o.mins ? "+" + o.mins + " мин" : ""}</span></label>${p.id === "extra" && S.opts.extra?.includes(o.id) ? extraFix(o.id) : ""}`).join("")}</div>` : ""}
     </div>`).join("");
   return pnl(`${head("Ультра проверка устройства", "Все проверки ScanHub подряд — от вирусов до сбоев и мусора. В конце — общий итог и что стоит сделать.")}
     ${explain("Отметь, что проверять, и нажми «Начать». Шаги идут по очереди, окно можно свернуть — проверка продолжится, а в конце придёт уведомление. " +

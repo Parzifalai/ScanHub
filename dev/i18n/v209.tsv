@@ -1,0 +1,16 @@
+(для шага «Дополнительные антивирусы»)	(for the “Additional antiviruses” step)
+Dr.Web отдаёт CureIt! только со своей страницы. Скачай файл в «Загрузки» — ScanHub найдёт его сам.	Dr.Web only gives out CureIt! from its own page. Download the file to “Downloads” — ScanHub will find it by itself.
+Malwarebytes ScanHub сам не ставит — это программа. Нужен — поставь с официального сайта, и проверка его подхватит.	ScanHub doesn't install Malwarebytes itself — it's a program. If you want it, install it from the official site and the scan will pick it up.
+Сайт Malwarebytes	Malwarebytes site
+У CureIt! базы внутри файла, а этот устарел. Скачай свежий со страницы Dr.Web в «Загрузки» — ScanHub найдёт его сам.	CureIt! keeps its databases inside the file, and this one is outdated. Download a fresh one from the Dr.Web page to “Downloads” — ScanHub will find it by itself.
+в конце, по очереди и в фоне: полная проверка всех дисков другими антивирусами — только поиск, лечение потом по кнопке. Скачиваются сами с официальных сайтов ещё в «Подготовке»; ESET и Malwarebytes откроются своими окнами, ScanHub сам нажмёт «Начать»	at the end, one by one in the background: a full scan of all drives by other antiviruses — search only, cleaning later by button. They download from official sites by themselves already during “Preparation”; ESET and Malwarebytes open their own windows and ScanHub presses “Start” itself
+готов	ready
+есть, но устарел	present but outdated
+не скачан — скачай сам	not downloaded — download it yourself
+не установлен — пропустится	not installed — will be skipped
+обновится в «Подготовке»	updates during “Preparation”
+обновится сам	updates by itself
+свежие базы Defender, ClamAV и правил YARA, недостающие сканеры и выбранные дополнительные антивирусы — без них новые вирусы не найти	fresh Defender, ClamAV and YARA rule databases, missing scanners and the selected additional antiviruses — without them new viruses can't be found
+скачается в «Подготовке»	downloads during “Preparation”
+скачается сам	downloads by itself
+скачаны:	downloaded:
