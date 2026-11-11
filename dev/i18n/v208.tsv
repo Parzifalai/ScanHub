@@ -1,0 +1,11 @@
+В самом начале Windows один раз попросит права администратора — подтверди окно UAC, и больше проверка спрашивать не будет.	At the very start Windows will ask for administrator rights once — confirm the UAC window and the scan won't ask again.
+Права администратора — одним окном UAC на всю проверку	Administrator rights — one UAC window for the whole scan
+Ультра проверка просит права администратора один раз — на всю проверку.	The ultra scan asks for administrator rights once — for the whole scan.
+окно UAC отменено — шаги, которым нужны права администратора, спросят их сами	UAC window cancelled — steps that need administrator rights will ask for them themselves
+операция не из списка ультра проверки	the operation is not on the ultra scan list
+операция с правами администратора не успела завершиться	the administrator operation did not finish in time
+подтверди одно окно UAC (в нём «Python» — это ScanHub) — больше ультра проверка спрашивать не будет	confirm one UAC window (“Python” in it is ScanHub) — the ultra scan won't ask again
+помощник с правами администратора завершился	the administrator helper has exited
+помощник с правами администратора не запустился:	the administrator helper did not start:
+права администратора — одно окно UAC в начале	administrator rights — one UAC window at the start
+права выданы на всю проверку	rights granted for the whole scan

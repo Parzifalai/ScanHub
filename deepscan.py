@@ -109,6 +109,283 @@ def parse_minersearch(text):
     return {"threats": threats, "warn": warn, "minor": minor}
 
 
+# ---------------------------------------------------------------- помощник с правами администратора (ультра проверка)
+# Одно окно UAC в начале ультра проверки запускает процесс администратора, который живёт до её конца и выполняет
+# только операции из списка ниже — те, что делает сама ультра проверка. Задания он берёт из папки data\broker_<id>,
+# и каждое подписано ключом (HMAC), который знают только ScanHub и помощник: ключ передан помощнику в командной
+# строке, а её у процесса администратора обычная программа прочитать не может. Если ScanHub перестал отмечаться
+# (закрыт или упал) или проверка закончилась — помощник завершается сам.
+BROKER = {}
+APPS = os.path.join(ROOT, "apps")
+WINDIR = os.environ.get("SystemRoot", r"C:\Windows")
+
+
+def _inside(p, base):
+    try:
+        return os.path.normcase(os.path.abspath(p)).startswith(os.path.normcase(os.path.abspath(base)) + os.sep)
+    except (TypeError, ValueError):
+        return False
+
+
+def _ps_allowed(script):
+    import tweaks
+    if script in (DEFENDER_PREFS, tweaks.disk_admin_ops()[0]["cmd"][3]):
+        return True
+    pre, post = tweaks.restore_ops("ZZMARKZZ")["cmd"][3].split("ZZMARKZZ")       # точка восстановления: меняется только описание
+    return bool(__import__("re").fullmatch(__import__("re").escape(pre) + r"[\w .,:()\-«»]{1,60}" + __import__("re").escape(post), script))
+
+
+def _admin_junk_paths():
+    import pcclean
+    return {os.path.normcase(p) for c in pcclean.categories() if c.get("admin") for p in c["paths"] if p}
+
+
+def broker_allowed(op):
+    """Только то, что делает сама ультра проверка. Всё остальное помощник не выполнит — ScanHub спросит UAC как обычно."""
+    import re
+    t = op.get("type")
+    if t == "run":
+        cmd = op.get("cmd")
+        if not isinstance(cmd, list) or not cmd or not all(isinstance(x, str) for x in cmd):
+            return False
+        exe, name = cmd[0], os.path.basename(cmd[0]).lower()
+        if name in ("pnputil", "pnputil.exe"):
+            return len(cmd) == 3 and cmd[1] == "/delete-driver" and bool(re.fullmatch(r"oem\d+\.inf", cmd[2], re.I))
+        if name in ("dism", "dism.exe"):
+            return cmd[1:] == ["/Online", "/Cleanup-Image", "/CheckHealth"]
+        if name in ("sfc", "sfc.exe"):
+            return cmd[1:] == ["/verifyonly"]
+        if name in ("powershell", "powershell.exe"):
+            return len(cmd) == 4 and cmd[1:3] == ["-NoProfile", "-Command"] and _ps_allowed(cmd[3])
+        if _inside(exe, APPS) and name.endswith(".exe"):                  # сканеры, которые скачал ScanHub
+            return True
+        if re.fullmatch(r"cureit.*\.exe", name) and _inside(exe, os.path.join(os.path.expanduser("~"), "Downloads")):
+            return True
+        if name == "winget.exe" or exe == "winget":
+            import updates
+            return os.path.normcase(exe) == os.path.normcase(updates.winget_exe()) and cmd[1:2] == ["upgrade"]
+        return False
+    if t == "clean":
+        junk = _admin_junk_paths()
+        return bool(op.get("paths")) and all(os.path.normcase(p) in junk for p in op["paths"])
+    if t == "remove":
+        p = op.get("path") or ""
+        return p.lower().endswith(".lnk") or _inside(p, ROOT) or \
+            os.path.normcase(p) == os.path.normcase(os.path.join(WINDIR, "debug", "msert.log"))
+    if t == "rmtree":
+        p = op.get("path") or ""
+        return _inside(p, APPS) or os.path.normcase(p) == os.path.normcase(r"C:\AdwCleaner") or \
+            bool(re.fullmatch(r"c:\\kvrt[^\\]*_data", os.path.normcase(p)))
+    if t == "mkdir":
+        return _inside(op.get("path") or "", ROOT)
+    if t == "copy_glob":
+        return _inside(op.get("dst_dir") or "", DATA)
+    return False
+
+
+def _mac(key, payload):
+    import hashlib
+    import hmac
+    return hmac.new(key, payload.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def broker_on():
+    b = BROKER
+    return bool(b.get("on")) and os.path.exists(os.path.join(b["dir"], "alive"))
+
+
+def broker_start(wait_uac=180):
+    """Одно окно UAC → помощник с правами администратора. True — запущен (или уже работает), False — UAC отменён."""
+    import base64
+    import secrets
+    import threading
+    import zlib
+    if broker_on():
+        return True
+    bid = uuid.uuid4().hex[:12]
+    bdir = os.path.join(DATA, f"broker_{bid}")
+    os.makedirs(bdir, exist_ok=True)
+    key = secrets.token_bytes(32)
+    alive, started = os.path.join(bdir, "alive"), os.path.join(bdir, "started")
+    open(alive, "w").close()
+    blob = base64.urlsafe_b64encode(zlib.compress(json.dumps({"dir": bdir, "key": key.hex()}).encode("utf-8"), 9)).decode()
+    py = sys.executable.replace("pythonw.exe", "python.exe")
+    psc = ("$a = $env:SH_ARG | ConvertFrom-Json; "
+           "Start-Process -FilePath $a.py -ArgumentList $a.args -Verb RunAs -WindowStyle Hidden -ErrorAction Stop")
+    arg = json.dumps({"py": py, "args": f'-I "{os.path.join(ROOT, "scanhub.py")}" --broker-b64 {blob}'})
+    p = subprocess.Popen(["powershell", "-NoProfile", "-Command", psc], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         env={**os.environ, "SH_ARG": arg}, creationflags=NO_WINDOW)
+    try:
+        code = p.wait(timeout=wait_uac)
+    except subprocess.TimeoutExpired:
+        p.kill()
+        code = 1
+    t0 = time.time()
+    while code == 0 and not os.path.exists(started) and time.time() - t0 < 30:
+        time.sleep(0.3)
+    if code != 0 or not os.path.exists(started):
+        _rm_tree(bdir)
+        return False
+    BROKER.clear()
+    BROKER.update(on=True, dir=bdir, key=key)
+
+    def beat():                                   # пока ScanHub жив и проверка идёт — помощник работает
+        while BROKER.get("dir") == bdir and BROKER.get("on"):
+            try:
+                os.utime(alive)
+            except OSError:
+                break
+            time.sleep(5)
+    threading.Thread(target=beat, daemon=True).start()
+    return True
+
+
+def broker_stop():
+    b = dict(BROKER)
+    BROKER.clear()
+    if b.get("dir"):
+        try:
+            os.remove(os.path.join(b["dir"], "alive"))     # помощник видит это и сразу завершается
+        except OSError:
+            pass
+        threading_cleanup = lambda: (time.sleep(5), _rm_tree(b["dir"]))
+        __import__("threading").Thread(target=threading_cleanup, daemon=True).start()
+
+
+def _rm_tree(d):
+    import shutil
+    shutil.rmtree(d, ignore_errors=True)
+
+
+def _via_broker(ops, timeout, on_started, on_progress, ctl):
+    """Отдать операции помощнику. None — помощника нет или он отказался (тогда обычный UAC)."""
+    if not broker_on() or not all(broker_allowed(o) for o in ops):
+        return None
+    b = BROKER
+    rid = uuid.uuid4().hex
+    out = os.path.join(DATA, f"elev_{rid}.out.json")
+    prog = os.path.join(DATA, f"elev_{rid}.progress")
+    payload = json.dumps({"id": rid, "ts": time.time(), "ops": ops, "out": out, "progress": prog, "ctl": ctl}, ensure_ascii=False)
+    req = os.path.join(b["dir"], f"req_{rid}.json")
+    with open(req + ".tmp", "w", encoding="utf-8") as f:
+        json.dump({"payload": payload, "mac": _mac(b["key"], payload)}, f)
+    os.replace(req + ".tmp", req)
+    t0, told, last = time.time(), False, None
+    try:
+        while not os.path.exists(out):
+            if not told and not os.path.exists(req):
+                told = True
+                if on_started:
+                    try:
+                        on_started()
+                    except Exception:
+                        pass
+            if on_progress and os.path.exists(prog):
+                try:
+                    cur = open(prog, encoding="utf-8").read().strip()
+                    if cur and cur != last:
+                        last = cur
+                        on_progress(cur)
+                except Exception:
+                    pass
+            if not told and (not broker_on() or time.time() - t0 > 20):
+                try:                                  # помощник не взял задание — делаем обычным путём
+                    os.remove(req)
+                    return None
+                except OSError:
+                    pass                              # успел взять
+            if told and not broker_on():
+                raise PermissionError("помощник с правами администратора завершился")
+            if time.time() - t0 > timeout:
+                if ctl:
+                    try:
+                        open(ctl, "w").write("stop")
+                    except OSError:
+                        pass
+                raise PermissionError("операция с правами администратора не успела завершиться")
+            time.sleep(0.4)
+        time.sleep(0.1)
+        if not told and on_started:                   # задание успело выполниться, пока мы ждали
+            try:
+                on_started()
+            except Exception:
+                pass
+        res = json.load(open(out, encoding="utf-8"))
+        if isinstance(res, dict) and res.get("refused"):
+            return None
+        return res
+    finally:
+        for f in (out, prog):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
+
+
+def broker_main(blob):
+    """Точка входа помощника (процесс администратора)."""
+    import base64
+    import hmac
+    import threading
+    import zlib
+    spec = json.loads(zlib.decompress(base64.urlsafe_b64decode(blob)).decode("utf-8"))
+    bdir, key = spec["dir"], bytes.fromhex(spec["key"])
+    if os.path.dirname(os.path.abspath(bdir)).lower() != DATA.lower() or not os.path.basename(bdir).startswith("broker_"):
+        return
+    alive = os.path.join(bdir, "alive")
+    try:
+        os.close(os.open(os.path.join(bdir, "started"), os.O_WRONLY | os.O_CREAT | os.O_EXCL))
+    except OSError:
+        return
+    t_start, seen = time.time(), set()
+
+    def handle(rid, d):
+        try:
+            if all(broker_allowed(o) for o in d["ops"]):
+                res = _exec_ops(d["ops"], d.get("progress"), d.get("ctl"))
+            else:
+                res = {"refused": "операция не из списка ультра проверки"}
+        except Exception as e:
+            res = {"refused": str(e)}
+        if _in_data(d.get("out")):
+            try:
+                fd = os.open(d["out"], os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0))
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    json.dump(res, f, ensure_ascii=False)
+            except OSError:
+                pass
+
+    while time.time() - t_start < 48 * 3600:
+        try:
+            if time.time() - os.path.getmtime(alive) > 30:
+                break
+        except OSError:
+            break                                     # ScanHub закончил проверку или закрылся
+        try:
+            names = [n for n in os.listdir(bdir) if n.startswith("req_") and n.endswith(".json")]
+        except OSError:
+            break
+        for n in names:
+            p = os.path.join(bdir, n)
+            try:
+                raw = json.load(open(p, encoding="utf-8"))
+                os.remove(p)
+            except (OSError, ValueError):
+                continue
+            payload = raw.get("payload") if isinstance(raw, dict) else None
+            if not isinstance(payload, str) or not hmac.compare_digest(_mac(key, payload), str(raw.get("mac", ""))):
+                continue                              # не от ScanHub — молча пропускаем
+            d = json.loads(payload)
+            if d.get("id") in seen or abs(time.time() - d.get("ts", 0)) > 120:
+                continue
+            seen.add(d["id"])
+            threading.Thread(target=handle, args=(d["id"], d), daemon=True).start()
+        time.sleep(0.3)
+    _rm_tree(bdir)
+    # ничего не оставляем работать с правами администратора: сканеры и утилиты, запущенные помощником, — вместе с ним
+    subprocess.run(["taskkill", "/PID", str(os.getpid()), "/T", "/F"], capture_output=True, creationflags=NO_WINDOW)
+
+
 def run_elevated(ops, timeout=1800, on_started=None, on_progress=None, ctl=None):
     """Выполнить операции от администратора одним запросом UAC. ops: [{"type":"run","cmd":[...]} | {"type":"copy",...}].
 
@@ -116,6 +393,10 @@ def run_elevated(ops, timeout=1800, on_started=None, on_progress=None, ctl=None)
     подменить любая программа пользователя в момент, когда человек подтверждает UAC. Командную строку после запуска
     поменять нельзя. Результат процесс администратора создаёт заново (файл не должен существовать заранее).
     on_started — вызывается, когда человек подтвердил UAC и процесс администратора начал работу."""
+    if BROKER.get("on"):
+        r = _via_broker(ops, timeout, on_started, on_progress, ctl)
+        if r is not None:
+            return r
     import base64
     import zlib
     jid = uuid.uuid4().hex
@@ -178,12 +459,24 @@ def elevated_main(blob):
             os.close(os.open(st, os.O_WRONLY | os.O_CREAT | os.O_EXCL))
         except OSError:
             pass
-    in_data = lambda p: bool(p) and os.path.dirname(os.path.abspath(p)).lower() == DATA.lower()
-    prog, ctl = spec.get("progress"), spec.get("ctl")
+    results = _exec_ops(spec["ops"], spec.get("progress"), spec.get("ctl"))
+    # файл создаётся только новым: если кто-то заранее подложил по этому пути ссылку на системный файл — не пишем
+    fd = os.open(spec["out"], os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0))
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(results, f, ensure_ascii=False)
+
+
+def _in_data(p):
+    return bool(p) and os.path.dirname(os.path.abspath(p)).lower() == DATA.lower()
+
+
+def _exec_ops(ops, prog=None, ctl=None):
+    """Выполнить операции (уже в процессе с правами администратора) и вернуть результаты по каждой."""
+    in_data = _in_data
     prog = prog if in_data(prog) else None
     ctl = ctl if in_data(ctl) else None
     results, stopped = [], False
-    for op in spec["ops"]:
+    for op in ops:
         if stopped:
             results.append({"ok": False, "stopped": True})
             continue
@@ -309,10 +602,7 @@ def elevated_main(blob):
                 results.append({"ok": False, "error": f"неизвестная операция {op['type']}"})
         except Exception as e:
             results.append({"ok": False, "error": str(e)})
-    # файл создаётся только новым: если кто-то заранее подложил по этому пути ссылку на системный файл — не пишем
-    fd = os.open(spec["out"], os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0))
-    with os.fdopen(fd, "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False)
+    return results
 
 
 def system_decode(b):

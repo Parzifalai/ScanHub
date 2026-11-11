@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "2.0.6"
+VERSION = "2.0.7"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -2559,6 +2559,13 @@ def start_ultra(sel):
     def work():
         u = ultra.Ultra(job, ctx, sel)
         try:
+            _ultra_work(u)
+        finally:
+            if u.broker:
+                deepscan.broker_stop()          # права администратора — только на время проверки (и обновления в её конце)
+
+    def _ultra_work(u):
+        try:
             code, v = u.run()
         except Exception as e:
             job["lines"].append(f"[ScanHub] ошибка: {e}")
@@ -2574,7 +2581,9 @@ def start_ultra(sel):
         _notify(v[1], "Итоги и что стоит сделать — в разделе «Ультра проверка».")
         if "winget_upgrade" in u.after and not job.get("stop"):
             try:                                             # скачать → проверить на вирусы → тихо поставить
-                start_updates(None)
+                uj = start_updates(None)
+                while u.broker and uj.get("status") == "running":   # помощник нужен до конца обновления «для всех»
+                    time.sleep(2)
             except Exception as e:
                 job["lines"].append(f"[ScanHub] обновление программ не началось: {e}")
     threading.Thread(target=work, daemon=True).start()
@@ -3611,6 +3620,9 @@ def _replies_loop():
 def main():
     if "--elevated-b64" in sys.argv:
         deepscan.elevated_main(sys.argv[sys.argv.index("--elevated-b64") + 1])
+        return
+    if "--broker-b64" in sys.argv:              # помощник с правами администратора на время ультра проверки
+        deepscan.broker_main(sys.argv[sys.argv.index("--broker-b64") + 1])
         return
     if "--check" in sys.argv:                  # «Проверить в ScanHub» из меню правой кнопки
         i = sys.argv.index("--check")

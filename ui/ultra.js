@@ -24,9 +24,9 @@ function ultraMins(S){
 }
 function ultraUac(S){
   const has = (step, ...ids) => S.steps.includes(step) && ids.some(i => S.opts[step]?.includes(i));
-  // всё после глубокой проверки, что требует администратора, идёт одним окном
-  return (S.steps.includes("deep") ? 1 : 0) + (has("clean", "junk", "junk_more", "drv") || has("health", "sfc", "disk") ? 1 : 0) +
-    (has("extra", "kvrt", "msert", "adwcleaner", "emsisoft", "cureit") ? 1 : 0);
+  // права администратора — одним окном UAC в самом начале на всю проверку (1 — нужны, 0 — нет)
+  return S.steps.includes("deep") || has("clean", "junk", "junk_more", "drv") || has("health", "sfc", "disk") || has("updates", "install") ||
+    has("extra", "kvrt", "msert", "adwcleaner", "emsisoft", "cureit") ? 1 : 0;
 }
 const minsText = m => m >= 60 ? `${Math.floor(m / 60)} ч ${m % 60 ? m % 60 + " мин" : ""}`.trim() : `${m} мин`;
 const timesText = n => `${n} ${n === 1 ? "раз" : "раза"}`;
@@ -84,7 +84,7 @@ function ultraSetup(){
     <div class="note info">${S.steps.includes("extra")
       ? "Дополнительные антивирусы идут последними: полная проверка всех дисков может занять несколько часов — окно можно свернуть, а любой антивирус пропустить кнопкой. В конце ScanHub посоветует, что сделать вручную: удалить лишние встроенные приложения и пересмотреть автозагрузку."
       : "В конце ScanHub посоветует, что сделать вручную: проверить компьютер Dr.Web CureIt!, KVRT, ESET Online Scanner, Malwarebytes и Microsoft Safety Scanner (или включи шаг «Дополнительные антивирусы» — ScanHub запустит их сам), удалить лишние встроенные приложения и пересмотреть автозагрузку."}</div>
-    <div class="stickybar"><span>Шагов: <b>${S.steps.length}</b> · около <b>${minsText(mins)}</b>${uac ? ` · Windows попросит права администратора ${timesText(uac)}` : ""}</span><div class="grow"></div>
+    <div class="stickybar"><span>Шагов: <b>${S.steps.length}</b> · около <b>${minsText(mins)}</b>${uac ? " · права администратора — одно окно UAC в начале" : ""}</span><div class="grow"></div>
       ${ULTRA.job ? `<button data-ultra-back>К прошлым итогам</button>` : ""}<button class="primary" data-ultra-start ${S.steps.length ? "" : "disabled"}>Начать ультра проверку</button></div>`);
 }
 
@@ -379,7 +379,7 @@ document.addEventListener("click", async e => {
     const S = ultraSel();
     if (!S.steps.length) return;
     const uac = ultraUac(S);
-    if (!await ask(`Ультра проверка займёт около ${minsText(ultraMins(S))}.` + (uac ? ` Windows ${timesText(uac)} попросит права администратора — подтверди окна UAC, иначе шаг будет ждать.` : "") +
+    if (!await ask(`Ультра проверка займёт около ${minsText(ultraMins(S))}.` + (uac ? " В самом начале Windows один раз попросит права администратора — подтверди окно UAC, и больше проверка спрашивать не будет." : "") +
                  " Окно можно свернуть. Начать?")) return;
     try {
       const r = await api("/api/ultra", {sel: {steps: S.steps, opts: S.opts}});

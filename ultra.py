@@ -122,8 +122,32 @@ class Ultra:
         self.sysfiles = None             # результат DISM + SFC, если выполнен в общем окне UAC очистки
         self.after = []                  # действия после итогов (окно winget)
         self.sub = None                  # id текущей вложенной проверки — чтобы остановить её
+        self.broker = False              # помощник с правами администратора запущен этой проверкой
 
     # ------------------------------------------------------------ общее
+    def needs_admin(self):
+        steps = set(self.sel["steps"])
+        if steps & {"deep", "extra"} or ("updates" in steps and self.on("updates", "install")):
+            return True
+        return any(o.get("admin") and self.on(sid, o["id"]) for sid in ("clean", "health") if sid in steps
+                   for o in STEP[sid].get("opts", []))
+
+    def _broker_up(self, s):
+        """Одно окно UAC в самом начале — дальше ультра проверка права администратора не спрашивает (помощник живёт до конца)."""
+        self.broker = False
+        if not self.needs_admin() or self.stopped():
+            return
+        s["progress"] = "подтверди одно окно UAC (в нём «Python» — это ScanHub) — больше ультра проверка спрашивать не будет"
+        self.emit("Права администратора — одним окном UAC на всю проверку")
+        self.ctx["notify"]("Нужно подтверждение", "Ультра проверка просит права администратора один раз — на всю проверку.")
+        try:
+            self.broker = deepscan.broker_start()
+        except Exception as e:
+            self.emit(f"  помощник с правами администратора не запустился: {e}")
+        self.emit("  права выданы на всю проверку ✓" if self.broker else
+                  "  окно UAC отменено — шаги, которым нужны права администратора, спросят их сами")
+        s["progress"] = None
+
     def stopped(self):
         return bool(self.job.get("stop"))
 
@@ -179,6 +203,8 @@ class Ultra:
                 s.update(status="skipped", verdict="skipped", label="остановлено")
                 continue
             s.update(status="running", started=datetime.now().isoformat(timespec="seconds"))
+            if s is self.steps[0]:
+                self._broker_up(s)
             self.emit(f"\n━━ {s['title']} ━━")
             try:
                 getattr(self, "s_" + s["id"])(s)
