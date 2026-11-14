@@ -100,7 +100,7 @@ def update(emit=lambda s: None, exe=None, version="", force=False):
     if purge_testdata():
         emit("[ScanHub] убрал образцы вирусов из правил Atomdrift (testdata) — они нужны только для его тестов")
     cur = local()
-    if not force and not due():
+    if not force and not due() and cur.get("source") in ("stable", "latest-v2"):
         return cur.get("commit")
     if exe:
         try:                                                  # модели ИИ и фильтры известных файлов — образцов в них нет
@@ -109,9 +109,13 @@ def update(emit=lambda s: None, exe=None, version="", force=False):
         except (OSError, subprocess.SubprocessError):
             pass
     man = tomllib.loads(_get(BASE + "versions.toml", 30).decode("utf-8"))
-    key = man["latest"]
+    key, src = pick_rules(man, exe)
     art = man["artifacts"][key]
-    if cur.get("commit") == art["commit"]:
+    if cur.get("commit") == art["commit"] and cur.get("source") == src:
+        _touch(STAMP)
+        return cur["commit"]
+    if cur.get("commit") == art["commit"]:                    # те же правила, но выбраны по-новому — только пометить
+        _rewrite_mark(cur, src)
         _touch(STAMP)
         return cur["commit"]
     emit(f"[ScanHub] скачиваю правила Atomdrift {key} от {art['date']} (~170 МБ, без образцов вирусов)…")
@@ -134,7 +138,7 @@ def update(emit=lambda s: None, exe=None, version="", force=False):
     if gone:
         emit(f"[ScanHub] антивирус удалил файлов правил: {len(gone)} — при следующих обновлениях они пропускаются")
     with open(os.path.join(tmp, MARK), "w", encoding="utf-8") as f:
-        f.write(f'commit = "{art["commit"]}"\ndate = "{art["date"]}"\nsource = "latest"\n'
+        f.write(f'commit = "{art["commit"]}"\ndate = "{art["date"]}"\nsource = "{src}"\n'
                 f'version = "{version or cur.get("version") or ""}"\n')
     shutil.rmtree(old, ignore_errors=True)
     if os.path.isdir(TRAITS):
@@ -151,6 +155,37 @@ def update(emit=lambda s: None, exe=None, version="", force=False):
     if exe:
         warm(exe)
     return art["commit"]
+
+
+def _rewrite_mark(cur, src):
+    try:
+        with open(os.path.join(TRAITS, MARK), "w", encoding="utf-8") as f:
+            f.write("\n".join(f'{k} = "{v}"' for k, v in
+                              (("commit", cur.get("commit", "")), ("date", cur.get("date", "")),
+                               ("source", src), ("version", cur.get("version", "")))) + "\n")
+    except OSError:
+        pass
+
+
+def _ver(v):
+    m = re.search(r"(\d+)\.(\d+)\.(\d+)", str(v or ""))
+    return tuple(int(x) for x in m.groups()) if m else None
+
+
+def pick_rules(man, exe):
+    """Какие правила ставить. Самые свежие («latest») пишутся под новую бету Atomdrift и ломают стабильный сканер
+    (его движок не знает новых функций YARA — «unknown identifier uint64»). Поэтому берём правила, которые автор
+    указал для версии сканера в [stable]; если для неё записи нет — для ближайшей более старой версии той же серии."""
+    stable = man.get("stable") or {}
+    found = re.search(r"v\d+\.\d+\.\d+", exe or "")
+    mine = _ver(found.group(0)) if found else None
+    if mine:
+        same = [(_ver(k), k) for k in stable if _ver(k) and _ver(k)[0] == mine[0] and _ver(k) <= mine]
+        if same:
+            k = stable[max(same)[1]]
+            if k in man.get("artifacts", {}):
+                return k, "stable"
+    return man["latest"], "latest-v2"
 
 
 def warm(exe):
