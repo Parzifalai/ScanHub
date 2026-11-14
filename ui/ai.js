@@ -126,7 +126,7 @@ function aiClose(){ aiPanel().hidden = true; document.body.classList.remove("ai-
 function aiProviderName(id){ return (AI.cfg?.providers || []).find(p => p.id === id)?.name.split(" —")[0] || id }
 function aiRender(){
   const p = aiPanel(), body = p.querySelector("#aiBody");
-  p.querySelector("#aiModel").textContent = AI.cfg?.enabled ? `${aiProviderName(AI.cfg.provider)} · ${AI.cfg.model === "auto" ? "по подписке" : AI.cfg.model}${AI.cfg.agent ? " · агент" : ""}` : "не настроен";
+  p.querySelector("#aiModel").textContent = AI.cfg?.enabled ? `${aiProviderName(AI.cfg.provider)} · ${AI.cfg.model === "auto" ? "по подписке" : AI.cfg.provider === "antigravity" ? aiAgyName(AI.cfg.model) + (aiAgySplit(AI.cfg.model).lvl ? " " + aiAgyLvl(aiAgySplit(AI.cfg.model).lvl) : "") : AI.cfg.model}${AI.cfg.agent ? " · агент" : ""}` : "не настроен";
   p.querySelector("#aiForm").hidden = AI.setup;
   const cx = p.querySelector("#aiCtx");
   cx.hidden = !AI.ctx || AI.setup;
@@ -149,9 +149,9 @@ function aiSetupHtml(){
     ${prov?.cli ? aiCliHtml(prov) : ""}
     ${prov ? `${prov.needs_key ? `<label class="ai-field">Ключ API ${esc(aiProviderName(prov.id))}
         <input type="password" id="aiKey" autocomplete="off" placeholder="${prov.has_key ? "ключ сохранён — вставь новый, чтобы заменить" : "вставь ключ сюда"}"></label>` : ""}
-      <label class="ai-field">Модель
+      ${prov.id === "antigravity" && AI.modelsFor === prov.id && AI.models.length ? aiAgyHtml(AI.modelPick || c.model) : `<label class="ai-field">Модель
         <div class="row"><select id="aiModelSel">${AI.modelsFor === prov.id && AI.models.length ? AI.models.map(m => `<option value="${esc(m)}" ${m === (AI.modelPick || c.model) ? "selected" : ""}>${esc(m === "auto" ? "лучшая модель подписки (рекомендую)" : m)}</option>`).join("") : `<option value="">${prov.needs_key && !prov.has_key ? "сначала вставь ключ" : "нажми «Найти модели»"}</option>`}</select>
-        <button class="small" id="aiFindModels" type="button" ${AI.busySetup ? "disabled" : ""}>Найти модели</button></div></label>
+        <button class="small" id="aiFindModels" type="button" ${AI.busySetup ? "disabled" : ""}>Найти модели</button></div></label>`}
       <div class="row-tools"><button class="primary" id="aiSave" type="button" ${AI.busySetup ? "disabled" : ""}>Сохранить и проверить</button>
         ${c.enabled ? `<button id="aiOff" type="button">Выключить помощника</button>` : ""}${c.enabled ? `<button id="aiBack" type="button">К разговору</button>` : ""}</div>` : ""}
     ${AI.note ? `<div class="note ${AI.noteKind || "info"}">${esc(AI.note)}</div>` : ""}
@@ -160,7 +160,43 @@ function aiSetupHtml(){
     ${prov?.cloud ? `<div class="sub">Перед отправкой ScanHub убирает имя пользователя, имя компьютера, личные пути, почту и ключи.${prov.needs_key ? " Ключ хранится на этом компьютере зашифрованным." : ""}</div>` : ""}
   </div>`;
 }
-// ---------- программы по подписке: Claude Code и Codex
+// ---------- Antigravity: модель и уровень размышлений — два списка (в программе это одно имя: gemini-4-hydrogen-high)
+const AGY_LEVELS = [["low", "Быстро (Low)"], ["medium", "Средне (Medium)"], ["high", "Глубоко (High)"], ["xhigh", "Очень глубоко (XHigh)"], ["max", "Максимум (Max)"]];
+function aiAgySplit(id){
+  const m = String(id || "").match(/^(.*)-(low|medium|high|xhigh|max)$/);
+  return m ? {base: m[1], lvl: m[2]} : {base: String(id || ""), lvl: ""};
+}
+const aiAgyLvl = l => (AGY_LEVELS.find(x => x[0] === l)?.[1].match(/\((.+)\)/) || [])[1] || l;
+function aiAgyName(id){
+  const label = AI.labels?.[id];
+  if (label) return label.replace(/\s*\((low|medium|high|xhigh|max)\)\s*$/i, "");
+  return aiAgySplit(id).base.replace(/^gemini-/, "Gemini ").replace(/^claude-/, "Claude ").replace(/-/g, " ");
+}
+function aiAgyBases(){
+  const out = new Map();
+  for (const id of AI.models) { const {base, lvl} = aiAgySplit(id); if (!out.has(base)) out.set(base, {name: aiAgyName(id), lv: {}}); out.get(base).lv[lvl] = id }
+  return out;
+}
+function aiAgyHtml(pick){
+  const bases = aiAgyBases(), cur = aiAgySplit(pick), b = bases.get(cur.base) || bases.values().next().value;
+  const lvls = AGY_LEVELS.filter(([l]) => b.lv[l]);
+  const lvl = b.lv[cur.lvl] ? cur.lvl : b.lv.high ? "high" : lvls[0]?.[0] || "";
+  return `<label class="ai-field">Модель
+      <div class="row"><select id="aiAgyBase">${[...bases].map(([k, v]) => `<option value="${esc(k)}" ${v === b ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select>
+      <button class="small" id="aiFindModels" type="button" ${AI.busySetup ? "disabled" : ""}>Найти модели</button></div></label>
+    ${lvls.length ? `<label class="ai-field">Уровень размышлений
+      <select id="aiAgyLevel">${lvls.map(([l, name]) => `<option value="${l}" ${l === lvl ? "selected" : ""}>${esc(name)}</option>`).join("")}</select>
+      <span class="sub">Чем глубже, тем точнее ответ, но дольше и больше тратит лимит подписки. Модели Claude и GPT в Antigravity тратят общий с ними лимит, Gemini — свой.</span></label>` : ""}
+    <input type="hidden" id="aiModelSel" value="${esc(b.lv[lvl] || Object.values(b.lv)[0] || "")}">`;
+}
+function aiAgyPick(){
+  const b = aiAgyBases().get($("#aiAgyBase")?.value);
+  if (!b) return;
+  const lvl = $("#aiAgyLevel")?.value;
+  AI.modelPick = b.lv[lvl] || b.lv.high || Object.values(b.lv)[0];
+  aiRender();
+}
+// ---------- программы по подписке: Claude Code, Codex и Antigravity
 function aiCliHtml(prov){
   const st = AI.cli[prov.id];
   return `<div class="ai-cli">${!st ? `<div class="sub">Проверяю программу…</div>`
@@ -204,7 +240,7 @@ async function aiFindModels(keyIn){
   try {
     if (key) { AI.cfg = await api("/api/ai/config", {[prov + "_key"]: key}); AI.keyDraft = "" }
     const r = await api("/api/ai/models", {provider: prov});
-    AI.models = r.models || []; AI.modelsFor = prov; AI.modelPick = AI.cfg?.provider === prov && AI.models.includes(AI.cfg.model) ? AI.cfg.model : r.default;
+    AI.models = r.models || []; AI.modelsFor = prov; if (r.labels) AI.labels = r.labels; AI.modelPick = AI.cfg?.provider === prov && AI.models.includes(AI.cfg.model) ? AI.cfg.model : r.default;
     AI.note = r.error ? r.error : AI.models.length ? `Найдено моделей: ${AI.models.length}. Выбрана рекомендуемая — можно поменять.` : "Моделей не найдено.";
     AI.noteKind = r.error || !AI.models.length ? "warn" : "info";
   } catch (e) { AI.note = e.message; AI.noteKind = "warn" }
@@ -222,7 +258,7 @@ async function aiSave(){
       AI.cfg = t.cfg; AI.modelPick = t.switched; AI.setup = false;
       toast("ИИ-помощник подключён", `${t.was} сейчас перегружена — выбрана ${t.switched}`, "info", 8000);
     }
-    else if (t.ok) { AI.note = ""; AI.setup = false; toast("ИИ-помощник подключён", `${aiProviderName(prov)} · ${model}`) }
+    else if (t.ok) { AI.note = ""; AI.setup = false; toast("ИИ-помощник подключён", `${aiProviderName(prov)} · ${prov === "antigravity" ? aiAgyName(model) + " " + aiAgyLvl(aiAgySplit(model).lvl) : model}`) }
     else { AI.note = "Не получилось: " + t.error; AI.noteKind = "warn" }
   } catch (e) { AI.note = e.message; AI.noteKind = "warn" }
   AI.busySetup = false; aiRender();
@@ -575,6 +611,7 @@ document.addEventListener("change", e => {
     if (pv?.cli) { aiCliCheck(pv.id); return }
     if (!pv?.needs_key || pv?.has_key) aiFindModels() }
   if (e.target.id === "aiModelSel") AI.modelPick = e.target.value;
+  if (e.target.id === "aiAgyBase" || e.target.id === "aiAgyLevel") aiAgyPick();
   if (e.target.id === "aiVerdict") api("/api/ai/config", {verdict: e.target.checked}).then(c => { AI.cfg = c;
     toast(c.verdict ? "Финальный вывод включён" : "Финальный вывод выключен", "") }).catch(err => toast("Не сохранилось", err.message, "warn"));
   if (e.target.id === "aiWeb") api("/api/ai/config", {web: e.target.checked}).then(c => { AI.cfg = c;

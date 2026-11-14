@@ -3082,7 +3082,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     models = assistant.list_models(config(), prov)
                 except assistant.AIError as e:
                     return self.send(200, {"models": [], "error": str(e)})
-                return self.send(200, {"models": models, "default": assistant.default_model(prov, models)})
+                extra = {}
+                if prov == "antigravity":            # названия моделей для двух списков «модель» и «уровень»
+                    import agents
+                    extra["labels"] = {m: agents.AGY_MODELS.get(m, m) for m in models}
+                return self.send(200, {"models": models, "default": assistant.default_model(prov, models), **extra})
             if p == "/api/ai/test":
                 try:
                     old = config().get("ai_model")

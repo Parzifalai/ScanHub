@@ -1,4 +1,5 @@
-"""ИИ-агенты по подписке: Claude Code (подписка Claude Pro/Max) и Codex (подписка ChatGPT Plus/Pro).
+"""ИИ-агенты по подписке: Claude Code (подписка Claude Pro/Max), Codex (подписка ChatGPT Plus/Pro)
+и Antigravity от Google (модели Gemini Argon/Hydrogen/Flash и другие по подписке Google).
 
 ScanHub не входит в аккаунт сам: он запускает официальную программу, в которую человек вошёл своим аккаунтом,
 и запросы идут в лимиты его подписки. Каждый ответ — отдельный запуск без сохранения сессии. Встроенные инструменты
@@ -70,6 +71,13 @@ def find_codex():
     return next((c for c in cands if _is_file(c)), None)
 
 
+def find_agy():
+    """agy.exe — программа Antigravity CLI (ставится в %USERPROFILE%\\.gemini\\bin) или из PATH."""
+    cands = [os.path.join(os.path.expanduser("~"), ".gemini", "bin", "agy.exe")]
+    cands += [os.path.join(d.strip('"'), "agy.exe") for d in os.environ.get("PATH", "").split(os.pathsep) if d.strip()]
+    return next((c for c in cands if _is_file(c)), None)
+
+
 CLI = {
     "claude_code": {"find": find_claude, "name": "Claude Code", "get": "https://claude.ai/download",
                     "missing": "Нужна бесплатная программа Claude Code: поставь её (claude.ai/download или «npm i -g @anthropic-ai/claude-code»), "
@@ -77,13 +85,19 @@ CLI = {
     "codex": {"find": find_codex, "name": "Codex", "get": "https://developers.openai.com/codex/cli",
               "missing": "Нужна бесплатная программа Codex от OpenAI: поставь её («npm i -g @openai/codex» или с developers.openai.com/codex), "
                          "затем нажми «Проверить»."},
+    "antigravity": {"find": find_agy, "name": "Antigravity", "get": "https://antigravity.google/download",
+                    "missing": "Нужна бесплатная программа Antigravity от Google с командой agy: поставь её с antigravity.google, "
+                               "затем нажми «Проверить»."},
 }
+AGY_LEVELS = ("low", "medium", "high", "xhigh", "max")
+AGY_MODELS = {}                     # id → название из «agy models» (последняя удачная проверка)
 CODEX_AUTH = ["-c", 'forced_login_method="chatgpt"']
 
 
 def _env(extra=None):
     """Окружение без ключей API: иначе программа тихо перейдёт на оплату по API вместо подписки."""
-    drop = {"ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL", "ANTHROPIC_BASE_URL"}
+    drop = {"ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "OPENAI_API_KEY", "CODEX_API_KEY", "OPENAI_BASE_URL", "ANTHROPIC_BASE_URL",
+            "GEMINI_API_KEY", "GOOGLE_API_KEY"}
     env = {k: v for k, v in os.environ.items() if k.upper() not in drop}
     env.update(extra or {})
     return env
@@ -105,6 +119,8 @@ def status(provider):
     if not exe:
         return {"installed": False, "connected": False, "method": None, "message": c["missing"], "get": c["get"]}
     try:
+        if provider == "antigravity":
+            return _agy_status(exe)
         if provider == "claude_code":
             code, out, _ = _run([exe, "auth", "status", "--json"])
             st = json.loads(out[out.index("{"):out.rindex("}") + 1])
@@ -129,6 +145,35 @@ def status(provider):
                 "message": f"Не удалось проверить вход в {c['name']} — обнови программу и нажми «Проверить»."}
 
 
+def _agy_status(exe):
+    """Вход в Antigravity проверяем списком моделей: его выдаёт только вошедший аккаунт — заодно запоминаем модели подписки."""
+    code, out, err = _run([exe, "models"], timeout=40)
+    found = {}
+    for line in out.splitlines():
+        m = re.match(r"^([a-z0-9][\w.\-]*)\t(.+)$", line.strip("\r"))
+        if m:
+            found[m.group(1)] = m.group(2).strip()
+    if found:
+        AGY_MODELS.clear()
+        AGY_MODELS.update(found)
+        return {"installed": True, "connected": True, "method": "subscription",
+                "message": f"Аккаунт Google в Antigravity подключён — запросы идут в лимиты твоей подписки. Моделей доступно: {len(found)}."}
+    text = out + err
+    if re.search(r"(?i)auth|log ?in|sign ?in|credential|unauthenticated", text):
+        return {"installed": True, "connected": False, "method": None, "message": "Войди в Antigravity аккаунтом Google — кнопка «Войти»."}
+    return {"installed": True, "connected": False, "method": None,
+            "message": "Antigravity не отдал список моделей — проверь интернет и вход (кнопка «Войти»), потом нажми «Проверить»."}
+
+
+def models(provider):
+    """Модели подписки Antigravity: [id, …] (названия — в AGY_MODELS)."""
+    if not AGY_MODELS:
+        st = status(provider)
+        if not st["connected"]:
+            raise AgentError(st["message"])
+    return list(AGY_MODELS)
+
+
 _LOGIN = {}
 
 
@@ -140,7 +185,8 @@ def login(provider):
         raise AgentError(c["missing"])
     if _LOGIN.get(provider) and _LOGIN[provider].poll() is None:
         return {"started": True}
-    args = [exe, "auth", "login", "--claudeai"] if provider == "claude_code" else [exe, "login", *CODEX_AUTH]
+    # у Antigravity нет отдельной команды входа: при первом запуске он сам открывает вход Google в браузере
+    args = [exe, "auth", "login", "--claudeai"] if provider == "claude_code" else [exe] if provider == "antigravity" else [exe, "login", *CODEX_AUTH]
     # своё окно консоли: там видна ссылка, если браузер не открылся сам
     _LOGIN[provider] = subprocess.Popen(args, cwd=tempfile.gettempdir(), env=_env(), creationflags=subprocess.CREATE_NEW_CONSOLE)
     threading.Timer(300, lambda p=_LOGIN[provider]: p.poll() is None and p.kill()).start()
@@ -174,7 +220,11 @@ def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, t
     scratch = tempfile.mkdtemp(prefix="scanhub-agent-")       # пустая рабочая папка: агенту нечего там читать
     mcp = _mcp(url, job, key)
     try:
-        if provider == "claude_code":
+        if provider == "antigravity":
+            args = _agy_prepare(exe, scratch, system=system, model=model, mcp=mcp, web=web, timeout=timeout)
+            stdin = json.dumps({"event": "user", "message": {"role": "user", "content": [{"type": "text", "text": prompt}]}},
+                               ensure_ascii=False) + "\n"
+        elif provider == "claude_code":
             args = [exe, "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
                     "--system-prompt", system, "--tools", "WebSearch,WebFetch" if web else "", "--mcp-config", json.dumps({"mcpServers": {"scanhub": mcp}}),
                     "--strict-mcp-config", "--allowedTools", "mcp__scanhub,WebSearch,WebFetch" if web else "mcp__scanhub",
@@ -213,6 +263,8 @@ def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, t
             time.sleep(0.3)
         time.sleep(0.2)
         text = (out[0] if out else b"").decode("utf-8", "replace")
+        if provider == "antigravity":
+            return _agy_result(text)
         if provider == "claude_code":
             return _claude_result(text)
         try:
@@ -224,6 +276,96 @@ def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, t
         return ans
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
+
+
+AGY_RULES = """
+
+---
+Как работать в ScanHub (Antigravity):
+- Ответь человеку сразу текстом в этом же ответе. Не составляй планов реализации, не создавай файлов, артефактов и задач.
+- Данные компьютера бери только инструментами сервера scanhub (call_mcp_tool). Командной строки, чтения файлов диска,
+  браузера и правки файлов у тебя нет — ScanHub их запрещает; не пытайся, а спроси данные инструментом ScanHub.
+"""
+
+
+def _agy_prepare(exe, scratch, *, system, model, mcp, web, timeout):
+    """Временная папка ответа = проект Antigravity с одним плагином «scanhub»: правила помощника, сервер инструментов
+    ScanHub и сторож (agy_gate.py), который до каждого шага разрешает только инструменты ScanHub и интернет.
+    Общие настройки Antigravity пользователя не меняются."""
+    plug = os.path.join(scratch, ".agents", "plugins", "scanhub")
+    os.makedirs(os.path.join(plug, "rules"))
+    w = lambda name, data: open(os.path.join(plug, name), "w", encoding="utf-8").write(
+        data if isinstance(data, str) else json.dumps(data, ensure_ascii=False))
+    w("plugin.json", {"name": "scanhub"})
+    w("mcp_config.json", {"mcpServers": {"scanhub": mcp}})
+    py = sys.executable.replace("pythonw.exe", "python.exe")     # сторож отвечает через stdout — нужен обычный python
+    gate = f'"{py if os.path.exists(py) else sys.executable}" "{os.path.join(ROOT, "agy_gate.py")}"'
+    w("hooks.json", {"scanhub-gate": {"PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": gate, "timeout": 20}]}]}})
+    w("gate.json", {"web": bool(web)})
+    w(os.path.join("rules", "AGENTS.md"), system + AGY_RULES)
+    settings = os.path.join(scratch, "settings.json")
+    open(settings, "w", encoding="utf-8").write(json.dumps({"permissions": {"allow": ["mcp(scanhub_scanhub/*)"]}}))
+    args = [exe, "--input-format", "stream-json", "--output-format", "stream-json", "--mode", "plan",
+            "--settings", settings, "--disable-slash-commands", "--print-timeout", f"{int(timeout)}s"]
+    if model and model != "auto":
+        args += ["--model", model]
+    return args + ["-p="]
+
+
+def _agy_forget(conv):
+    """Antigravity хранит каждый разговор у себя — данные ПК там не оставляем (файлы освобождаются не сразу)."""
+    if not re.fullmatch(r"[0-9a-f\-]{36}", conv or ""):
+        return
+    base = os.path.join(os.path.expanduser("~"), ".gemini", "antigravity-cli")
+
+    def go():
+        for _ in range(10):
+            left = 0
+            for p in [os.path.join(base, "brain", conv)] + [os.path.join(base, d, conv + s) for d, s in
+                                                             (("conversations", ".db"), ("conversations", ".db-wal"),
+                                                              ("conversations", ".db-shm"), ("presence", ".lock"))]:
+                if os.path.isdir(p):
+                    shutil.rmtree(p, ignore_errors=True)
+                elif os.path.exists(p):
+                    try:
+                        os.remove(p)
+                    except OSError:
+                        pass
+                left += os.path.exists(p)
+            if not left:
+                return
+            time.sleep(3)
+    threading.Thread(target=go, daemon=True).start()
+
+
+def _agy_result(output):
+    res = None
+    for line in output.splitlines():
+        if line.strip().startswith("{"):
+            try:
+                e = json.loads(line)
+            except ValueError:
+                continue
+            if e.get("event") == "result":
+                res = e.get("result") or {}
+    if res is None:
+        raise AgentError("Antigravity не вернул ответ — проверь вход в настройках помощника и повтори вопрос.")
+    _agy_forget(str(res.get("conversation_id") or ""))
+    text = str(res.get("response") or "").strip()
+    err = str(res.get("error") or "")
+    if res.get("status") != "SUCCESS":
+        if re.search(r"(?i)auth|log ?in|sign ?in|credential|401|403", err):
+            raise AgentError("Antigravity не вошёл в аккаунт — войди в настройках помощника.")
+        if re.search(r"(?i)quota|limit|exhaust|429|rate", err):
+            raise AgentError("Лимит подписки Antigravity на эту модель сейчас исчерпан — попробуй позже или выбери другую модель (например, Flash).")
+        if re.search(r"(?i)model", err):
+            raise AgentError("Antigravity не принял выбранную модель — нажми «Найти модели» в настройках помощника и выбери снова.")
+        if re.search(r"(?i)time ?limit|timed? ?out|deadline", err):
+            raise AgentError("Antigravity не успел ответить — спроси точнее или выбери модель побыстрее.")
+        raise AgentError("Antigravity не закончил ответ" + (f": {err[:200]}" if err else " — повтори вопрос."))
+    if not text:
+        raise AgentError("Antigravity вернул пустой ответ — повтори вопрос.")
+    return text
 
 
 def _claude_result(output):

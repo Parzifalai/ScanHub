@@ -65,6 +65,15 @@ PROVIDERS = {
                 "вошёл аккаунтом ChatGPT, — ответы идут в лимиты подписки. Работает как агент, как и Claude Code: данные берёт "
                 "инструментами ScanHub, может искать в интернете (выключается ниже); командной строки у него нет.",
     },
+    "antigravity": {
+        "name": "Gemini по подписке (Antigravity)", "base": None, "key": None, "cloud": True, "kind": "cli",
+        "get": "https://antigravity.google/download", "get_label": "Скачать Antigravity",
+        "hint": "Для тех, кто пользуется Antigravity от Google (бесплатно или по подписке Google AI Pro/Ultra). ScanHub запускает "
+                "официальную программу Antigravity, в которую ты вошёл аккаунтом Google, — ответы идут в лимиты твоей подписки. "
+                "Можно выбрать модель (Gemini Hydrogen, Argon, Flash, а также Claude и GPT-OSS, если они есть в подписке) и уровень "
+                "размышлений. Работает как агент: данные берёт инструментами ScanHub, может искать в интернете (выключается ниже). "
+                "Командную строку, файлы и браузер Antigravity ScanHub запрещает — перед каждым его шагом стоит проверка.",
+    },
     "anthropic": {
         "name": "Claude по ключу API", "base": None, "key": "anthropic_key", "cloud": True, "kind": "anthropic",
         "get": "https://console.anthropic.com/settings/keys", "get_label": "Получить ключ в Claude Console",
@@ -84,7 +93,7 @@ PROVIDERS = {
     },
 }
 # порядок в настройках: бесплатный → по подписке → по ключу API → локально
-PROVIDERS = {k: PROVIDERS[k] for k in ("gemini", "claude_code", "codex", "anthropic", "openai", "openrouter", "deepseek", "ollama")}
+PROVIDERS = {k: PROVIDERS[k] for k in ("gemini", "claude_code", "codex", "antigravity", "anthropic", "openai", "openrouter", "deepseek", "ollama")}
 CLI_MODELS = {"claude_code": ["auto", "opus", "sonnet", "haiku"], "codex": ["auto"]}
 # модели, на которых по умолчанию включён запасной вариант при отказе классификатора (fallbacks: "default")
 ANTHROPIC_FALLBACK_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1")
@@ -309,6 +318,12 @@ def _key(cfg, provider):
 
 def list_models(cfg, provider):
     p = PROVIDERS[provider]
+    if provider == "antigravity":           # список моделей подписки отдаёт сама программа
+        import agents
+        try:
+            return agents.models(provider)
+        except agents.AgentError as e:
+            raise AIError(str(e))
     if p.get("kind") == "cli":
         return CLI_MODELS[provider]
     if provider == "anthropic":
@@ -360,6 +375,10 @@ def default_model(provider, models):
         return sorted(flash or models, key=key)[-1]
     if provider == "deepseek":
         return next((m for m in models if "flash" in m or m == "deepseek-chat"), models[0])
+    if provider == "antigravity":
+        # Hydrogen High: в сравнении 14.11.2026 справился со всеми задачами и тратит только квоту Gemini
+        return next((m for m in ("gemini-4-hydrogen-high", "gemini-4-hydrogen-medium") if m in models),
+                    next((m for m in models if "hydrogen" in m), models[0]))
     if PROVIDERS.get(provider, {}).get("kind") == "cli":
         return "auto"                      # программа сама берёт лучшую модель подписки
     if provider == "anthropic":
@@ -1894,6 +1913,9 @@ def test(cfg):
         st = agents.status(cfg["ai_provider"])
         if not st["connected"]:
             raise AIError(st["message"])
+        model = cfg.get("ai_model") or ""
+        if cfg["ai_provider"] == "antigravity" and model not in agents.AGY_MODELS:
+            raise AIError(f"модели {model or '—'} нет в твоей подписке Antigravity — нажми «Найти модели» и выбери из списка")
         return st["message"], None
     cfg, tried = dict(cfg), {cfg.get("ai_model")}
     first_err = None
