@@ -4,11 +4,12 @@
 // Личное (имя учётной записи и ПК, почта) по умолчанию скрыто — галочка показывает; ключи и пароли скрыты всегда.
 
 let LAST_CHECK_SUM = null;          // что передать серверу о последней проверке файла (заполняет renderSimpleResult)
-const SUM_TITLE = {check: "Сводка проверки для ИИ", pc: "Полная сводка компьютера для ИИ", ultra: "Сводка ультра проверки для ИИ"};
+const SUM_TITLE = {check: "Сводка проверки для ИИ", pc: "Полная сводка компьютера для ИИ", ultra: "Сводка ультра проверки для ИИ", deep: "Сводка глубокой проверки для ИИ"};
 const SUM_LEAD = {
   pc: "Всё, что ScanHub знает о компьютере: защита, находки, сбои, железо, диски, программы, автозагрузка, драйверы, приватность, браузеры, сеть, история проверок.",
   check: "Всё о проверке: что за файл (подпись, хэши, откуда скачан), итог ScanHub, каждый сканер с подробностями и журналом, проверенные файлы.",
-  ultra: "Весь итог ультра проверки: каждый шаг и каждая находка, советы ScanHub и сведения о компьютере."};
+  ultra: "Весь итог ультра проверки: каждый шаг и каждая находка, советы ScanHub и сведения о компьютере.",
+  deep: "Весь итог глубокой проверки: каждый сканер, что он нашёл и какие файлы, что не сработало."};
 
 async function sumOpen(kind, args){
   const wrap = document.createElement("div");
@@ -24,7 +25,7 @@ async function sumOpen(kind, args){
   const close = () => wrap.remove();
   wrap.addEventListener("click", e => { if (e.target === wrap || e.target.closest("[data-sum-close]")) close() });
   wrap.addEventListener("keydown", e => { if (e.key === "Escape") close() });
-  const name = {pc: "pc_summary", check: "check_summary", ultra: "ultra_summary"}[kind];
+  const name = {pc: "pc_summary", check: "check_summary", ultra: "ultra_summary", deep: "deep_summary"}[kind];
   const tick = setInterval(() => { const p = TASK[name]?.progress; if (p && $("#sumProg")) $("#sumProg").textContent = progOf(p).t + (progOf(p).f != null ? ` · ${Math.round(progOf(p).f * 100)}%` : "") }, 700);
   let t;
   try { t = await runTask(name, args, true) } finally { clearInterval(tick) }

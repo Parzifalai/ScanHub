@@ -165,7 +165,9 @@ function aiCliHtml(prov){
 function aiWebHtml(){
   return `<div class="ai-files"><b>Интернет</b>
     <label class="switch"><input type="checkbox" id="aiWeb" ${AI.cfg?.web !== false ? "checked" : ""}> Разрешить искать в интернете
-      <span class="sub">Помощник сможет узнать, что это за программа или ошибка, знают ли о проблеме другие, и найти официальный сайт, чтобы дать безопасную ссылку на скачивание. В запросы не попадают твои пути и имя. Для «Сделай сам» поиск всегда выключен.</span></label></div>`;
+      <span class="sub">Помощник сможет узнать, что это за программа или ошибка, знают ли о проблеме другие, и найти официальный сайт, чтобы дать безопасную ссылку на скачивание. В запросы не попадают твои пути и имя. Для «Сделай сам» поиск всегда выключен.</span></label>
+    <label class="switch"><input type="checkbox" id="aiVerdict" ${AI.cfg?.verdict !== false ? "checked" : ""}> Финальный вывод после проверок
+      <span class="sub">После проверки файла, глубокой и ультра проверки помощник сам прочитает итог, поищет файлы в интернете и коротко скажет: можно открывать или нет. Под выводом — чат, чтобы обсудить, что делать.</span></label></div>`;
 }
 async function aiCliCheck(id, action){
   try { AI.cli[id] = await api("/api/ai/cli", {provider: id, ...(action ? {action} : {})}) } catch (e) { AI.cli[id] = {installed: false, connected: false, message: e.message} }
@@ -555,6 +557,8 @@ document.addEventListener("change", e => {
     if (pv?.cli) { aiCliCheck(pv.id); return }
     if (!pv?.needs_key || pv?.has_key) aiFindModels() }
   if (e.target.id === "aiModelSel") AI.modelPick = e.target.value;
+  if (e.target.id === "aiVerdict") api("/api/ai/config", {verdict: e.target.checked}).then(c => { AI.cfg = c;
+    toast(c.verdict ? "Финальный вывод включён" : "Финальный вывод выключен", "") }).catch(err => toast("Не сохранилось", err.message, "warn"));
   if (e.target.id === "aiWeb") api("/api/ai/config", {web: e.target.checked}).then(c => { AI.cfg = c;
     toast(c.web ? "Поиск в интернете включён" : "Поиск в интернете выключен", "") }).catch(err => toast("Не сохранилось", err.message, "warn"));
   if (e.target.name === "aiFiles") api("/api/ai/config", {files: e.target.value}).then(c => { AI.cfg = c; aiRender();

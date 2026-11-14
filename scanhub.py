@@ -1667,6 +1667,44 @@ def _extra_remove():
     return {"removed": [p for p in paths if p not in left], "left": left, "freed": size}
 
 
+def _verdict_payload(body):
+    """«Финальный вывод»: сводка проверки (то же, что «Сводка для ИИ», с обезличиванием) и что искать в интернете."""
+    import hashlib
+    import summary
+    scope = body.get("scope")
+    queries = []
+    if scope == "deep":
+        dj = jobs.get(str(body.get("deep") or "")) or next((j for j in reversed(list(jobs.values())) if j["tool"] == "deep"), None)
+        text = summary.deep_summary(dj, VERSION)["text"]
+        for s in (dj or {}).get("steps") or []:
+            if s.get("verdict") in ("threat", "suspicious"):
+                queries += [os.path.basename(f["path"]) for f in s.get("files") or [] if f.get("path")]
+    elif scope == "ultra":
+        text = summary.ultra_summary(VERSION)["text"]
+    else:
+        ids = [str(j) for j in body.get("jobs") or []]
+        target = str(body.get("target") or "")
+        text = summary.check_summary(jobs, ids, body.get("verdict"), target, body.get("excluded"), VERSION)["text"]
+        if target:
+            queries.append(os.path.basename(target.rstrip("\\")))
+            if os.path.isfile(target) and os.path.getsize(target) <= 512 * 2 ** 20:
+                h = hashlib.sha256()
+                with open(target, "rb") as f:
+                    for b in iter(lambda: f.read(1 << 20), b""):
+                        h.update(b)
+                queries.append(h.hexdigest())
+        for j in ids:                                  # файлы, по которым был хоть один сигнал
+            for d in (jobs.get(j) or {}).get("details") or []:
+                if isinstance(d, dict) and d.get("verdict") in ("threat", "suspicious") and d.get("name"):
+                    queries.append(os.path.basename(d["name"]))
+    seen, q = set(), []
+    for x in queries:
+        if x and x.lower() not in seen:
+            seen.add(x.lower())
+            q.append(x)
+    return {"context": text, "queries": q[:4], "scope": scope if scope in ("deep", "ultra") else "check"}
+
+
 def _summary_save(kind, private):
     import summary
     path = summary.save_copy(kind, private)
@@ -1690,7 +1728,9 @@ def _task_fn(name, args):
                                                                     str(args.get("target") or ""), args.get("excluded"), VERSION),
         "pc_summary": lambda: __import__("summary").pc_summary(prog, VERSION),
         "ultra_summary": lambda: __import__("summary").ultra_summary(VERSION),
-        "summary_save": lambda: _summary_save(args.get("kind") if args.get("kind") in ("check", "pc", "ultra") else "check", args.get("private", True) is not False),
+        "deep_summary": lambda: __import__("summary").deep_summary(
+            jobs.get(str(args.get("deep") or "")) or next((j for j in reversed(list(jobs.values())) if j["tool"] == "deep"), None), VERSION),
+        "summary_save": lambda: _summary_save(args.get("kind") if args.get("kind") in ("check", "pc", "ultra", "deep") else "check", args.get("private", True) is not False),
         "junk_scan": lambda: pcclean.junk_scan(),
         "junk_clean": lambda: pcclean.junk_clean(list(args.get("ids", [])), run_el, prog,
                                                  {c["id"]: c.get("size", 0) for c in (_last("junk_scan") or {}).get("categories", [])}),
@@ -3023,6 +3063,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         c["ai_files"] = body["files"]
                     if "web" in body:
                         c["ai_web"] = bool(body["web"])
+                    if "verdict" in body:
+                        c["ai_verdict"] = bool(body["verdict"])
                     for k in AI_KEYS:
                         if k in body:
                             v = str(body[k]).strip()
@@ -3052,10 +3094,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 except assistant.AIError as e:
                     return self.send(200, {"ok": False, "error": str(e)})
             if p == "/api/ai/ask":
-                kind = body.get("kind") if body.get("kind") in ("explain", "solve", "act", "review") else "chat"
+                kind = body.get("kind") if body.get("kind") in ("explain", "solve", "act", "review", "verdict") else "chat"
                 cfg_ = config()
                 if not cfg_.get("ai_provider"):
                     return self.send(400, {"error": "помощник не настроен"})
+                if kind == "verdict":
+                    try:
+                        body = {**body, **_verdict_payload(body)}
+                    except Exception as e:
+                        return self.send(400, {"error": str(e)})
                 return self.send(200, {"id": assistant.start(kind, body, cfg_)["id"]})
             if p in ("/api/agent/tools", "/api/agent/call"):
                 # инструменты ИИ-агента (mcp_server.py): только пока идёт его ответ и только с его одноразовым ключом
@@ -3126,7 +3173,7 @@ STATIC = {"/logo.svg": "image/svg+xml", "/logo-small.svg": "image/svg+xml", "/ic
           "/pages.js": "text/javascript; charset=utf-8", "/ultra.js": "text/javascript; charset=utf-8", "/fix.js": "text/javascript; charset=utf-8",
           "/ai.js": "text/javascript; charset=utf-8", "/bug.js": "text/javascript; charset=utf-8",
           "/history.js": "text/javascript; charset=utf-8", "/i18n.js": "text/javascript; charset=utf-8",
-          "/devices.js": "text/javascript; charset=utf-8", "/phone.js": "text/javascript; charset=utf-8", "/setup.js": "text/javascript; charset=utf-8", "/game.js": "text/javascript; charset=utf-8", "/hero.js": "text/javascript; charset=utf-8", "/summary.js": "text/javascript; charset=utf-8",
+          "/devices.js": "text/javascript; charset=utf-8", "/phone.js": "text/javascript; charset=utf-8", "/setup.js": "text/javascript; charset=utf-8", "/game.js": "text/javascript; charset=utf-8", "/hero.js": "text/javascript; charset=utf-8", "/summary.js": "text/javascript; charset=utf-8", "/verdict.js": "text/javascript; charset=utf-8",
           "/en.json": "application/json; charset=utf-8"}
 
 
