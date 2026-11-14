@@ -347,7 +347,8 @@ function qButtons(files){
 }
 // ============================================================ ПРОВЕРКА: общий итог «можно запускать или нет»
 // Сканеры часто спорят: один насторожился, остальные нет. Решение складываем из весов:
-// сильные сигналы (Defender/ClamAV нашли, 3+ антивируса на VirusTotal не по эвристике, подпись повреждена) — «не запускай»;
+// сильные сигналы (Defender/ClamAV нашли, 3+ антивируса на VirusTotal не по эвристике, подпись повреждена у незнакомого VirusTotal файла) — «не запускай»;
+// файл, который VirusTotal годами знает чистым, одиночные тревоги и изменённая подпись до «не запускай» не поднимают;
 // средние (несколько срабатываний, ИИ-сканеры уверенно) — «лучше не запускать», если файл не подписан известным издателем;
 // слабые (одна эвристика/ИИ на VirusTotal, «подозрительно» у Filescan/Atomdrift) — почти всегда ложные тревоги.
 const ML_NAME = /(^|[^a-z])(ml|ai|gen|heur\w*|generic|suspicious|susp|score|confidence|behav\w*|reputation|unsafe|riskware|pua|pup|not-a-virus|artemis|cloud|static|deep\w*|malware-gen|kcloud|lowfi|malicious\.(high|moderate|low))([^a-z]|$)|!ml|\.ml\b|machinelearning|wacatac\.\w!ml/i;
@@ -371,10 +372,25 @@ function adviceOf(rows, b){
   const def = by("defender"), clam = by("clamav"), vt = by("virustotal"), fs = by("filescan"), atom = by("atomscan"), yara = by("yara"), md = by("metadefender"), ha = by("hybrid"), circl = by("circl");
   if (def?.verdict?.[0] === "threat") strong.push("Microsoft Defender нашёл угрозу");
   if (clam?.verdict?.[0] === "threat") strong.push("ClamAV нашёл угрозу, и перепроверка её подтвердила");
-  for (const s of sigs.filter(s => s.status === "HashMismatch")) strong.push(`${s.name}: цифровая подпись повреждена — файл изменили после того, как его подписал издатель`);
   // давно известный честный файл: есть в NSRL, в белом списке Hybrid Analysis или годами на VirusTotal с хорошей репутацией
   const known = (circl?.details || []).filter(d => d.known && !d.malicious);
   const vtOf = f => (vt?.details || []).find(d => lc(d.file) === lc(f));
+  // VirusTotal знает файл больше 2 лет и ни один из 60+ антивирусов его не трогает — это не свежий вредонос;
+  // одиночные тревоги других сервисов по такому файлу не поднимаем до «опасно»
+  const vtOld = f => { const v = vtOf(f);
+    return v && !v.missing && !(v.positives || 0) && !(v.suspicious || 0) && (v.total || 0) >= 60 && v.first && v.first < Date.now() / 1000 - 2 * 365 * 86400
+      ? `VirusTotal знает этот файл с ${new Date(v.first * 1000).getFullYear()} года, и ни один из ${v.total} антивирусов не считает его опасным` : null };
+  for (const s of sigs.filter(s => s.status === "HashMismatch")) {
+    const old = vtOld(s.file);
+    if (old) medium.push(`${s.name}: файл изменён после того, как его подписал издатель (похоже на пропатченную или нелицензионную копию). Само по себе это не доказывает вирус — ${old}, — но проверь, откуда этот файл`);
+    else strong.push(`${s.name}: цифровая подпись повреждена — файл изменили после того, как его подписал издатель`);
+  }
+  const modified = sigs.some(s => s.status === "HashMismatch");
+  // заведомо честный файл: действующая подпись известного издателя или оригинал из базы NSRL
+  const legit = f => signer(f) ? `файл подписан «${signer(f)}»` : known.some(d => lc(d.file) === lc(f)) ? "это известный оригинальный файл (база NIST NSRL)" : null;
+  // Filescan назвал опасными несколько заведомо честных файлов — в этой проверке он шумит, все его тревоги считаем слабыми
+  const fsFalse = (fs?.details || []).filter(d => d.verdict === "threat" && legit(d.file));
+  const fsNoisy = fsFalse.length >= 2;
   const trusted = f => {
     if (known.some(d => lc(d.file) === lc(f))) return "это известный оригинальный файл (база NIST NSRL)";
     if ((ha?.details || []).some(d => lc(d.file) === lc(f) && d.raw === "whitelisted")) return "Hybrid Analysis держит его в белом списке";
@@ -387,7 +403,7 @@ function adviceOf(rows, b){
   const flags = {}, pend = [];
   const soft = (f, txt, lvl, why = "") => {
     flags[lc(f)] = (flags[lc(f)] || 0) + 1;
-    const t = trusted(f);
+    const t = trusted(f) || (lvl === medium && vtOld(f));
     if (t) weak.push(`${txt} — но ${t}`); else if (lvl) lvl.push(txt); else pend.push({f, txt, why});
   };
   for (const [r, site] of [[vt, "VirusTotal"], [md, "MetaDefender"]]) for (const d of r?.details || []) {
@@ -396,7 +412,8 @@ function adviceOf(rows, b){
     const mal = d.positives || 0, heur = hits.every(e => ML_NAME.test(e.r)), sg = signer(d.file);
     const who = hits.slice(0, 3).map(e => e.e).join(", ") + (hits.length > 3 ? "…" : "");
     const txt = `${d.name}: на ${site} тревогу подняли ${hits.length} из ${d.total} антивирусов (${who})`;
-    if (mal >= 6 || (mal >= 3 && !heur && !sg && !trusted(d.file))) strong.push(txt);
+    if ((mal >= 6 || (mal >= 3 && !heur && !sg && !trusted(d.file))) && !(site !== "VirusTotal" && vtOld(d.file))) strong.push(txt);
+    else if (mal >= 3 && site !== "VirusTotal" && vtOld(d.file)) medium.push(`${txt} — но ${vtOld(d.file)}`);
     else if (sg && mal <= 4) weak.push(`${txt} — файл подписан «${sg}», похоже на ложную тревогу`);
     else if (heur && hits.length <= 2) weak.push(`${txt} — сработала только эвристика или ИИ, обычно это ложная тревога`);
     else if (hits.length <= 2 && (d.total || 0) >= 20) soft(d.file, txt, null, " — единичные срабатывания из десятков обычно ложные");
@@ -406,7 +423,9 @@ function adviceOf(rows, b){
   for (const r of [vt, fs, md, ha]) if (r && !(r.details || []).length && ["threat", "suspicious"].includes(r.verdict?.[0]))
     (r.verdict[0] === "threat" ? medium : weak).push(`${r.tool_name}: ${lc(r.verdict[1])} — подробности недоступны, проверь файл ещё раз`);
   for (const d of fs?.details || []) {
-    if (d.verdict === "threat") signer(d.file) ? weak.push(`${d.name}: Filescan считает опасным — но файл подписан «${signer(d.file)}»`) : soft(d.file, `${d.name}: Filescan считает опасным`, medium);
+    if (d.verdict === "threat") legit(d.file) ? weak.push(`${d.name}: Filescan считает опасным — но ${legit(d.file)}, похоже на ложную тревогу`)
+      : fsNoisy ? weak.push(`${d.name}: Filescan считает опасным — но в этой проверке он так же ошибся на заведомо честных файлах (${fsFalse.slice(0, 3).map(x => x.name).join(", ")})`)
+      : soft(d.file, `${d.name}: Filescan считает опасным`, medium);
     else if (d.verdict === "suspicious") weak.push(`${d.name}: Filescan насторожился — у него много ложных тревог на библиотеках и установщиках`);
   }
   for (const d of ha?.details || []) {
@@ -438,11 +457,23 @@ function adviceOf(rows, b){
   if (!folder && known.length) notes.push(`Файл есть в базе известных файлов CIRCL/NIST NSRL: это оригинальный файл из дистрибутива ${known[0].product || "программы"}, его не подменяли.`);
   if (vt && (vt.details || []).some(d => d.missing)) notes.push("VirusTotal этот файл ещё не видел — это бывает с редкими и свежими файлами.");
   if (engines.length < 2) notes.push("Проверка неполная: сработало мало основных антивирусов — исправь ошибки ниже и проверь ещё раз.");
+  if (fsNoisy) notes.push(`Filescan в этой проверке назвал опасными заведомо честные файлы (${fsFalse.slice(0, 3).map(x => x.name).join(", ")}), поэтому его тревоги учтены как слабые.`);
+  // быстрая проверка папки берёт только часть файлов, а упавший сканер не проверил ничего — человеку нужно прямо сказать, что проверка неполная
+  let part = null;
+  for (const r of done) { const m = String(r.text || "").match(/быстрая проверка папки: (\d+) файлов из (\d+)/); if (m && (!part || +m[1] > part[0])) part = [+m[1], +m[2]] }
+  const failed = done.filter(r => r.verdict?.[0] === "error").map(r => r.tool_name).filter(Boolean);
+  if (folder && part && (part[0] < part[1] / 2 || failed.length))
+    notes.push(`Проверено ${part[0]} из ${part[1]} файлов${failed.length ? `, а ${failed.join(", ")} не смог проверить` : ""} — запусти полную проверку папки.`);
+  else if (folder && failed.length) notes.push(`${failed.join(", ")} не смог проверить папку — результат неполный, запусти полную проверку папки.`);
   const W = folder ? {ok: "Можно пользоваться", warn: "Лучше не запускать программы из этой папки", bad: "В папке опасные файлы — не запускай их"}
                    : {ok: "Можно запускать", warn: "Лучше не запускать", bad: "Не запускай этот файл"};
   if (!okRows.length) return {cls: "i-warn", icon: "!", title: "Не удалось проверить", text: "Ни один сканер не смог выполнить проверку — смотри причины ниже.", why: [], notes: []};
   if (strong.length) return {cls: "i-bad", icon: "✕", title: W.bad, text: "Убери найденное в карантин или удали. Если это нужная программа — скачай её заново с официального сайта.", why: strong.concat(medium), notes};
-  if (medium.length) return {cls: "i-warn", icon: "!", title: W.warn, text: "Сигналы есть, но не однозначные. Запускай, только если точно знаешь, откуда файл, и скачал его с официального сайта.", why: medium.concat(weak), notes};
+  if (medium.length) return {cls: "i-warn", icon: "!", title: W.warn,
+    text: "Подтверждённой угрозы нет, но есть причины насторожиться — они ниже. Что делать: " +
+      (folder ? "запусти полную проверку папки, вспомни, откуда она скачана, и" : "проверь, откуда файл, лучше скачай его с официального сайта и") +
+      " запускай, только если доверяешь источнику." + (modified ? " Изменённые программы не используй там, где нужен вход в аккаунт или онлайн-игра." : ""),
+    why: medium.concat(weak), notes};
   if (weak.length) return {cls: "i-ok", icon: "✓", title: W.ok, text: "Настоящих угроз не найдено. Отдельные тревоги похожи на ложные:", why: weak, notes};
   return {cls: "i-ok", icon: "✓", title: W.ok, text: `Ни один из ${okRows.length} сканеров не нашёл ничего опасного.`, why: [], notes};
 }
