@@ -1463,6 +1463,8 @@ class DeepScan:
         self.emit("  ИИ-анализ программ запущенных процессов, автозагрузки и временных папок (5–8 минут)…")
         code, lines = self.run_tool([exe, "--no-update", "-f", "json", "sys"], cwd=ts["path"], timeout=900, show=False)
         atomtraits.purge_testdata()
+        if code != 0 and atomtraits.crashed(lines):
+            return self.fail(s, "не сработал", "Atomdrift Scan не смог загрузить свои правила и ничего не проверил — это сбой сканера, а не находка")
         if code not in (0, 1, 2):
             tail = " · ".join(l.strip() for l in lines[-3:] if l.strip() and not l.startswith("{"))[:200]
             return self.fail(s, f"ошибка (код {code})", f"Atomdrift Scan завершился с ошибкой (код {code}){': ' + tail if tail else ''}")

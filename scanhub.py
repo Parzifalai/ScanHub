@@ -957,6 +957,9 @@ def start_job(tid, mode_id, target, batch=None):
             if tid == "atomscan":
                 atomtraits.purge_testdata()
             v = verdict(m, mode, code, job["lines"])
+            if tid == "atomscan" and code != 0 and atomtraits.crashed(job["lines"][start:]):
+                job["lines"].append(atomtraits.CRASH_NOTE)
+                v = ["error", "Сканер не сработал"]
             if tid == "trufflehog":
                 v = secrets_report(job["lines"], start)
             if tid == "clamav" and code == 1 and deepscan:

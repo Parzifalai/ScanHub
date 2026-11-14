@@ -256,7 +256,11 @@ def check_summary(jobs, job_ids, verdict=None, target="", excluded=None, version
     if target and os.path.exists(target):
         info = assistant.t_file_info(target, online=False, cfg=FULL_CFG)
         if isinstance(info.get("прошлые_проверки_ScanHub"), list):         # эта проверка описана ниже — в «прошлых» только старые
-            info["прошлые_проверки_ScanHub"] = [x for x in info["прошлые_проверки_ScanHub"] if x.get("id") not in job_ids] or "раньше этот путь не проверялся"
+            old = [x for x in info["прошлые_проверки_ScanHub"] if x.get("id") not in job_ids]
+            info["прошлые_проверки_ScanHub"] = {
+                "важно": "это более ранние запуски (сканеры и базы могли с тех пор обновиться); вывод делай по свежей проверке ниже, "
+                         "а старые итоги — только если они расходятся со свежими и это стоит объяснить",
+                "запуски": old} if old else "раньше этот путь не проверялся"
         if os.path.isfile(target) and os.path.getsize(target) <= 2 * 2 ** 30:
             try:
                 info["хэши"] = _hashes(target)

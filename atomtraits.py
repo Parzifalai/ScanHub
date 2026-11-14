@@ -9,6 +9,7 @@ Atomdrift сам обновляет правила раз в сутки: ска�
 import hashlib
 import io
 import os
+import re
 import shutil
 import subprocess
 import tarfile
@@ -22,6 +23,20 @@ SKIP = {"testdata"}
 # отдельные файлы правил, в которых антивирусы видят вредонос (в правиле — пример вредоносной команды). Их не распаковываем:
 # иначе Defender удаляет файл и показывает тревогу при каждом обновлении. Список пополняется сам (см. _learn).
 KNOWN_FLAGGED = {"objectives/command-and-control/dropper/delivery/url-shortcut/windows.yaml"}
+FINDING = re.compile(r"^\s*(HOSTILE|SUSPECT)\[\d+%\]")
+
+
+def crashed(lines):
+    """Atomdrift упал сам (битое правило, нет модели) и ничего не проверил. Код выхода у него тот же — 1, что и при находке,
+    поэтому отличаем по тексту: есть «Error:»/«Caused by:» и нет ни одной строки с результатом по файлу."""
+    lines = [str(l) for l in lines]
+    err = any(l.strip().startswith("Error:") or l.strip() == "Caused by:" for l in lines)
+    return err and not any(FINDING.match(l) or l.startswith("{") for l in lines)
+
+
+CRASH_NOTE = ("[ScanHub] Atomdrift не смог загрузить свои правила и ничего не проверил — это сбой самого сканера, а не находка. "
+              "Обычно помогает обновить Atomdrift в его карточке.")
+
 ROOT = os.path.join(os.environ.get("APPDATA") or os.path.expanduser(r"~\AppData\Roaming"), "atomdrift", "cleave")
 TRAITS = os.path.join(ROOT, "traits")
 MARK = ".cleave-rules.toml"

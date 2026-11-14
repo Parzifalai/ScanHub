@@ -906,10 +906,15 @@ def _history():
 
 def _checks_of(path, limit=12):
     """Что прошлые проверки ScanHub сказали об этом файле или папке."""
-    n = os.path.normcase(path)
-    rows = [x for x in _history() if os.path.normcase(str(x.get("target") or "")) == n]
-    return [{"сканер": x.get("tool_name"), "когда": x.get("started"), "итог": (x.get("verdict") or [None, None])[1], "id": x.get("id")}
-            for x in rows[:limit]]
+    norm = lambda p: os.path.normcase(str(p or "")).rstrip("\\/")     # «папка\» и «папка» — один и тот же путь
+    n = norm(path)
+    rows = [x for x in _history() if norm(x.get("target")) == n]
+
+    def res(x):
+        kind, label = (x.get("verdict") or [None, None])[:2]
+        # «Код выхода 1» и подобное — сбой сканера, а не находка: так и пишем, чтобы это не читалось как тревога
+        return f"сканер не сработал ({label})" if kind == "error" else label
+    return [{"сканер": x.get("tool_name"), "когда": x.get("started"), "итог": res(x), "id": x.get("id")} for x in rows[:limit]]
 
 
 def t_file_info(path, online=False, cfg=None):

@@ -366,7 +366,7 @@ function adviceOf(rows, b){
   const sigs = by("signature")?.details || [];
   const folder = b.kind === "folder" || sigs.length > 1 || /\\$/.test(b.target || "");
   const signer = f => { const s = sigs.find(x => lc(x.file) === lc(f)) || (!folder && sigs.length === 1 ? sigs[0] : null); return s?.status === "Valid" ? s.signer : null };
-  const name = f => String(f || "").split("\\").pop();
+  const name = f => String(f || "").replace(/[\\/]+$/, "").split(/[\\/]/).pop();   // «D:\Игры\» → «Игры», а не пустая строка
   const strong = [], medium = [], weak = [];
   const def = by("defender"), clam = by("clamav"), vt = by("virustotal"), fs = by("filescan"), atom = by("atomscan"), yara = by("yara"), md = by("metadefender"), ha = by("hybrid"), circl = by("circl");
   if (def?.verdict?.[0] === "threat") strong.push("Microsoft Defender нашёл угрозу");
@@ -418,7 +418,7 @@ function adviceOf(rows, b){
   if (atom && ["threat", "suspicious"].includes(atom.verdict?.[0])) {
     const f = atomFindings(atom.text);
     for (const x of f.length ? f : [{kind: atom.verdict[0] === "threat" ? "HOSTILE" : "SUSPECT", path: b.target, pct: null}]) {
-      const sg = signer(x.path), txt = `${name(x.path)}: ИИ-сканер Atomdrift ${x.kind === "HOSTILE" ? "считает вредоносным" : "насторожился"}${x.pct ? ` (уверенность ${x.pct}%)` : ""}`;
+      const sg = signer(x.path), txt = `${name(x.path) || (folder ? "Папка" : "Файл")}: ИИ-сканер Atomdrift ${x.kind === "HOSTILE" ? "считает вредоносным" : "насторожился"}${x.pct ? ` (уверенность ${x.pct}%)` : ""}`;
       (x.kind === "HOSTILE" && !sg ? medium : weak).push(sg ? `${txt} — файл подписан «${sg}»` : txt);
     }
   }
