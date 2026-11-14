@@ -100,6 +100,7 @@ async function vdRun(key){
     vdPaint(key);
   }
   vdPaint(key);
+  if (d.scope === "check" && typeof renderSimpleResult === "function" && key === "check:" + simpleBatch) renderSimpleResult();   // верхний итог зависит от ответа помощника
   if (d.status === "done") {
     const p = vdParse(d.answer), L = VD_LOOK[p.v];
     if (L && document.hidden) toast("Финальный вывод: " + L.word[d.scope], stripTags(p.lead).slice(0, 140), L.cls === "bad" ? "err" : L.cls === "warn" ? "warn" : "ok", 9000);

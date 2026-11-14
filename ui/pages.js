@@ -562,16 +562,30 @@ function renderSimpleResult(){
   const found = running ? [] : rows.flatMap(r => r.found || []);
   LAST_CHECK_SUM = running ? null : {jobs: b.jobs, target: b.target || "", excluded: (b.excluded || []).map(x => ({name: x.name, reason: x.reason})),
     verdict: {title: String(title).replace(/<[^>]+>/g, ""), text: String(text).replace(/<[^>]+>/g, ""), why: adv?.why || [], notes: adv?.notes || []}};
+  // Итог один — от ИИ-помощника. Пока он не ответил, предварительный итог сканеров не показываем;
+  // если помощник выключен или не смог — остаётся обычный итог.
+  const vdKey = "check:" + simpleBatch, vdSt = VD[vdKey]?.status;
+  if (!running && !b.quick && LAST_CHECK_SUM && !AI.cfg) aiLoadCfg().then(() => renderSimpleResult());
+  const aiGate = !running && !b.quick && !!LAST_CHECK_SUM && (!AI.cfg || (AI.cfg.enabled && AI.cfg.verdict !== false)) && vdSt !== "error";
+  const aiDone = aiGate && vdSt === "done";
+  const aiWait = aiGate && !aiDone;
+  const preHtml = `<div>${text}</div>
+    ${adv?.why?.length ? `<ul class="why">${adv.why.map(w => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}
+    ${adv?.notes?.length ? `<div class="sub">${adv.notes.map(esc).join(" ")}</div>` : ""}`;
+  const aiV = aiDone ? vdParse(VD[vdKey].answer).v : null;
+  const headTitle = aiWait ? "Проверка завершена" : title;
+  const headIcon = aiWait ? '<div class="spin"></div>' : aiDone ? ({"можно": "✓", "осторожно": "!", "нельзя": "✕"}[aiV] || "?") : icon;
+  const headCls = aiWait ? "i-run" : aiDone ? ({"можно": "i-ok", "осторожно": "i-warn", "нельзя": "i-bad"}[aiV] || "i-warn") : cls;
   box.hidden = false;
   box.innerHTML = `<div class="result">
-    <div class="big"><div class="icon ${cls}">${icon}</div><div><h3>${title}</h3>${b.target ? `<div class="what">${esc(b.dropped ? b.label + " · проверена копия" : b.target)}</div>` : ""}</div>
+    <div class="big"><div class="icon ${headCls}">${headIcon}</div><div><h3>${aiDone ? "Итог проверки" : headTitle}</h3>${b.target ? `<div class="what">${esc(b.dropped ? b.label + " · проверена копия" : b.target)}</div>` : ""}</div>
       <div style="flex:1"></div>${running ? `<button class="small danger" data-stop-batch="${esc(simpleBatch)}">Остановить</button>` : `${aiBtn(title + (b.target ? " — " + b.target.split("\\").pop() : ""), [text, ...(adv?.why || []), ...(adv?.notes || []), ...rows.map(r => `${r.tool_name}: ${plain(r)}`)].join(" · "), {source: "Проверка файла"})}<button class="small" data-sum-check title="Полная сводка этой проверки — вставь в чат с ИИ (Claude, ChatGPT) и получи второе мнение">Скопировать сводку для ИИ</button><button class="small" id="sResClose">Скрыть</button>`}</div>
-    <div>${text}</div>
-    ${adv?.why?.length ? `<ul class="why">${adv.why.map(w => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}
-    ${adv?.notes?.length ? `<div class="sub">${adv.notes.map(esc).join(" ")}</div>` : ""}
+    ${aiWait ? `<div class="sub">Сканеры закончили. Помощник читает их итог — вывод «можно запускать или нет» появится ниже.</div>`
+      : aiDone ? "" : preHtml}
     ${b.dropped ? `<div class="sub">${esc(b.dropped)}</div>` : ""}
     ${running || b.quick || !LAST_CHECK_SUM ? "" : vdCard("check:" + simpleBatch, {scope: "check", ...LAST_CHECK_SUM,
       title: (b.dropped ? b.label : b.target || "").split("\\").filter(Boolean).pop() || "проверка файла"})}
+    ${aiDone ? `<details class="vd-more"><summary>Что нашли сканеры (предварительный итог)</summary><div class="vd-more-body">${preHtml}</div></details>` : ""}
     ${qButtons(found)}
     ${running ? "" : uploadOffer(rows)}
     <div class="sub" style="margin-bottom:-4px">Что сказал каждый сканер — нажми на строку, чтобы увидеть подробности:</div>
