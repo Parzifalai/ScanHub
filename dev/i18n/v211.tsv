@@ -1,0 +1,37 @@
+Antigravity вернул пустой ответ — повтори вопрос.	Antigravity returned an empty answer — ask again.
+Antigravity не вернул ответ — проверь вход в настройках помощника и повтори вопрос.	Antigravity returned no answer — check the sign-in in the assistant settings and ask again.
+Antigravity не вошёл в аккаунт — войди в настройках помощника.	Antigravity is not signed in — sign in from the assistant settings.
+Antigravity не закончил ответ	Antigravity did not finish the answer
+Antigravity не отдал список моделей — проверь интернет и вход (кнопка «Войти»), потом нажми «Проверить».	Antigravity did not return its model list — check the internet and the sign-in (the “Sign in” button), then press “Check”.
+Antigravity не принял выбранную модель — нажми «Найти модели» в настройках помощника и выбери снова.	Antigravity did not accept the selected model — press “Find models” in the assistant settings and choose again.
+Antigravity не успел ответить — спроси точнее или выбери модель побыстрее.	Antigravity ran out of time — ask more specifically or pick a faster model.
+Atomdrift Scan не смог загрузить свои правила и ничего не проверил — это сбой сканера, а не находка	Atomdrift Scan could not load its rules and checked nothing — this is a scanner failure, not a finding
+Gemini по подписке (Antigravity)	Gemini with your subscription (Antigravity)
+[ScanHub] Atomdrift не смог загрузить свои правила и ничего не проверил — это сбой самого сканера, а не находка. Обычно помогает обновить Atomdrift в его карточке.	[ScanHub] Atomdrift could not load its rules and checked nothing — this is a failure of the scanner itself, not a finding. Updating Atomdrift from its card usually helps.
+Аккаунт Google в Antigravity подключён — запросы идут в лимиты твоей подписки. Моделей доступно:	Your Google account in Antigravity is connected — requests use your subscription limits. Models available:
+В ScanHub помощнику доступны только инструменты ScanHub	-
+Войди в Antigravity аккаунтом Google — кнопка «Войти».	Sign in to Antigravity with your Google account — the “Sign in” button.
+Данные компьютера бери только инструментами сервера scanhub (call_mcp_tool). Командной строки, чтения файлов диска	-
+Для тех, кто пользуется Antigravity от Google (бесплатно или по подписке Google AI Pro/Ultra). ScanHub запускает официальную программу Antigravity, в которую ты вошёл аккаунтом Google, — ответы идут в лимиты твоей подписки. Можно выбрать модель (Gemini Hydrogen, Argon, Flash, а также Claude и GPT-OSS, если они есть в подписке) и уровень размышлений. Работает как агент: данные берёт инструментами ScanHub, может искать в интернете (выключается ниже). Командную строку, файлы и браузер Antigravity ScanHub запрещает — перед каждым его шагом стоит проверка.	For people who use Google Antigravity (free or with a Google AI Pro/Ultra subscription). ScanHub runs the official Antigravity program you signed in to with your Google account — answers use your subscription limits. You can pick the model (Gemini Hydrogen, Argon, Flash, plus Claude and GPT-OSS if your subscription has them) and the thinking level. Works as an agent: it gets data through ScanHub tools and can search the web (can be turned off below). ScanHub blocks Antigravity's command line, files and browser — every step it takes is checked first.
+Как работать в ScanHub (Antigravity):	-
+Лимит подписки Antigravity на эту модель сейчас исчерпан — попробуй позже или выбери другую модель (например, Flash).	Your Antigravity subscription limit for this model is used up for now — try later or pick another model (for example, Flash).
+Нужна бесплатная программа Antigravity от Google с командой agy: поставь её с antigravity.google, затем нажми «Проверить».	You need the free Google Antigravity program with the agy command: install it from antigravity.google, then press “Check”.
+Ответь по-другому, без этого шага.	-
+Ответь человеку сразу текстом в этом же ответе. Не составляй планов реализации, не создавай файлов, артефактов и задач.	-
+Папка	Folder
+Сканер не сработал	Scanner failed
+Скачать Antigravity	Download Antigravity
+Уровень размышлений	Thinking level
+Чем глубже, тем точнее ответ, но дольше и больше тратит лимит подписки. Модели Claude и GPT в Antigravity тратят общий с ними лимит, Gemini — свой.	Deeper means a more accurate answer, but slower and it uses more of your subscription limit. Claude and GPT models in Antigravity share one limit; Gemini has its own.
+браузера и правки файлов у тебя нет — ScanHub их запрещает; не пытайся, а спроси данные инструментом ScanHub.	-
+запуски	runs
+и поиск в интернете	-
+модели	model
+не сработал	failed
+нет в твоей подписке Antigravity — нажми «Найти модели» и выбери из списка	is not in your Antigravity subscription — press “Find models” and choose from the list
+это более ранние запуски (сканеры и базы могли с тех пор обновиться); вывод делай по свежей проверке ниже, а старые итоги — только если они расходятся со свежими и это стоит объяснить	-
+Быстро (Low)	Fast (Low)
+Средне (Medium)	Balanced (Medium)
+Глубоко (High)	Deep (High)
+Очень глубоко (XHigh)	Very deep (XHigh)
+Максимум (Max)	Maximum (Max)
