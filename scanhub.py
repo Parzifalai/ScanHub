@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "2.0.9"
+VERSION = "2.0.10"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -1202,7 +1202,7 @@ def self_update(force=False):
             st = state()
             st["self_update"] = c
             save_json(STATE_FILE, st)
-    ver = lambda v: [int(x) for x in re.findall(r"\d+", v or "0")[:3]]
+    ver = lambda v: [int(x) for x in re.findall(r"\d+", v or "0")[:4]]      # до 4 чисел: 2.0.9.5 новее 2.0.9
     return {"enabled": True, "current": VERSION, "repo": repo, **c,
             "newer": bool(c.get("latest")) and ver(c.get("latest")) > ver(VERSION)}
 
