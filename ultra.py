@@ -123,6 +123,7 @@ class Ultra:
         self.after = []                  # действия после итогов (окно winget)
         self.sub = None                  # id текущей вложенной проверки — чтобы остановить её
         self.broker = False              # помощник с правами администратора запущен этой проверкой
+        self.fetched = set()             # дополнительные антивирусы, скачанные в этой проверке
 
     # ------------------------------------------------------------ общее
     def needs_admin(self):
@@ -313,10 +314,11 @@ class Ultra:
             t = tv.get(tid)
             if not t or self.stopped() or t["source"]["type"] in ("manual", "system"):
                 continue
-            if t["ready"] and not t.get("stale") and not t.get("update_available"):
-                continue
+            if t["ready"] and (tid in self.fetched or not t.get("stale") and not t.get("update_available")):
+                continue                               # уже свежий или скачан в этой же проверке
             s["progress"] = f"скачиваю {t['name']} (для шага «Дополнительные антивирусы»)"
             if self.ctx["install"](tid):
+                self.fetched.add(tid)
                 got.append(t["name"])
             elif not any(i["t"] == f"{t['name']} не скачался" for i in s["items"]):
                 self.add(s, "warn", f"{t['name']} не скачался", "Проверь интернет — без него этот антивирус пропущен.",
@@ -806,6 +808,14 @@ class Ultra:
                 self.add(s, "warn", f"{t['name']} не готов — пропущен", "", {"page": "tools", "label": "Подробнее"})
         rep = os.path.join(deepscan.DATA, "reports", self.job["id"] + "-extra")
         silent = [t for t in xa.SILENT if t in exe]
+        if self.broker and deepscan.broker_on():
+            # права уже выданы на всю проверку: антивирус, которого помощник не узнал, пропускаем — а не просим UAC ещё раз
+            for tid in list(silent):
+                if not all(deepscan.broker_allowed(o) for o in xa.ops_for(tid, exe[tid], rep)):
+                    silent.remove(tid)
+                    self.add(s, "warn", f"{xa.NAMES[tid]} пропущен — файл сканера не прошёл проверку",
+                             f"{exe[tid]}: ScanHub не узнал этот файл (нет подписи издателя или он лежит не там), поэтому не стал "
+                             "запускать его с правами администратора. Скачай сканер заново с официального сайта.", {"page": "tools", "label": "Сканеры"})
         ops, main = [{"type": "mkdir", "path": rep}], {}
         for tid in silent:
             part = xa.ops_for(tid, exe[tid], rep)

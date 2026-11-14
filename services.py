@@ -24,6 +24,15 @@ class ServiceError(Exception):
     pass
 
 
+def nap(seconds, stopped):
+    """Пауза (лимит ключа, ожидание анализа), которую прерывает кнопка «Остановить»."""
+    end = time.time() + max(0, seconds)
+    while time.time() < end:
+        if stopped and stopped():
+            raise ServiceError("остановлено")
+        time.sleep(min(0.5, end - time.time()) if end > time.time() else 0)
+
+
 def sha256(path):
     h = hashlib.sha256()
     with open(path, "rb") as f:
@@ -107,7 +116,7 @@ class VirusTotal:
                 wait = 60 - (now - self._calls[0]) + 0.5 if len(self._calls) >= 4 else 0
             if wait > 0:
                 self.emit(f"  лимит бесплатного ключа (4 запроса/мин) — жду {int(wait)} с…")
-                time.sleep(wait)
+                nap(wait, self.stopped)
             if self.stopped():
                 raise ServiceError("остановлено")
             with self._lock:
@@ -118,7 +127,7 @@ class VirusTotal:
             code, body = request(self.API + path, h, data, method)
             if code == 429:
                 self.emit("  VirusTotal: превышен лимит, жду минуту…")
-                time.sleep(61)
+                nap(61, self.stopped)
                 continue
             if code == 401:
                 raise ServiceError("неверный API-ключ VirusTotal (Настройки)")
@@ -174,7 +183,7 @@ class VirusTotal:
             if attrs.get("status") == "completed":
                 return attrs, body.get("meta", {})
             self.emit(f"  анализ: {attrs.get('status', '…')}")
-            time.sleep(15)
+            nap(15, self.stopped)
         raise ServiceError("анализ идёт слишком долго — проверь позже по ссылке")
 
     def upload(self, path):
@@ -269,7 +278,7 @@ class Filescan:
                                      "link": f"https://www.filescan.io/uploads/{flow}"})
                 return worst(verdicts)
             self.emit(f"  анализ: {body.get('state') or 'в очереди'}")
-            time.sleep(max(5, (body.get("pollPause") or 5000) / 1000))
+            nap(max(5, (body.get("pollPause") or 5000) / 1000), self.stopped)
         raise ServiceError("анализ идёт слишком долго — проверь позже по ссылке")
 
     def upload(self, path):

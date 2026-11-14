@@ -127,6 +127,29 @@ def _inside(p, base):
         return False
 
 
+_SIG_CACHE = {}
+
+
+def _signed_by(path, who):
+    """Цифровая подпись файла цела и выдана издателю who (проверяет Windows)."""
+    try:
+        key = (os.path.normcase(os.path.abspath(path)), os.path.getmtime(path), os.path.getsize(path))
+    except OSError:
+        return False
+    if key not in _SIG_CACHE:
+        ps = ("$s = Get-AuthenticodeSignature -LiteralPath $env:SCANHUB_ARG; "
+              "[string]$s.Status + '|' + [string]$s.SignerCertificate.Subject")
+        try:
+            out = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True, timeout=60,
+                                 env={**os.environ, "SCANHUB_ARG": path}, creationflags=NO_WINDOW).stdout.strip()
+        except Exception:
+            out = ""
+        st, _, subj = out.partition("|")
+        _SIG_CACHE[key] = (st, subj)
+    st, subj = _SIG_CACHE[key]
+    return st == "Valid" and who.lower() in subj.lower()
+
+
 def _ps_allowed(script):
     import tweaks
     if script in (DEFENDER_PREFS, tweaks.disk_admin_ops()[0]["cmd"][3]):
@@ -159,8 +182,8 @@ def broker_allowed(op):
             return len(cmd) == 4 and cmd[1:3] == ["-NoProfile", "-Command"] and _ps_allowed(cmd[3])
         if _inside(exe, APPS) and name.endswith(".exe"):                  # сканеры, которые скачал ScanHub
             return True
-        if re.fullmatch(r"cureit.*\.exe", name) and _inside(exe, os.path.join(os.path.expanduser("~"), "Downloads")):
-            return True
+        if name.endswith(".exe") and "/RP:" in " ".join(cmd) and _signed_by(exe, "Doctor Web"):
+            return True                                # Dr.Web CureIt!: Dr.Web даёт файлу случайное имя — узнаём по подписи
         if name == "winget.exe" or exe == "winget":
             import updates
             return os.path.normcase(exe) == os.path.normcase(updates.winget_exe()) and cmd[1:2] == ["upgrade"]
