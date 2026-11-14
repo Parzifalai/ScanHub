@@ -101,29 +101,37 @@ function aiPanel(){
   if (p) return p;
   p = document.createElement("aside");
   p.id = "aiPanel"; p.className = "ai-panel"; p.hidden = true; p.setAttribute("aria-label", "ИИ-помощник");
-  p.innerHTML = `<div class="ai-head"><b>✦ ИИ-помощник</b><span class="sub" id="aiModel"></span><span class="grow"></span>
-      <button class="small" id="aiNew" title="Начать заново">Новый</button><button class="small" id="aiGear" title="Модель и ключи">⚙</button><button class="small" id="aiClose" title="Закрыть">✕</button></div>
+  p.innerHTML = `<div class="ai-head"><span class="ai-mark" aria-hidden="true">✦</span><div class="ai-title"><b>Помощник</b><span class="sub" id="aiModel"></span></div><span class="grow"></span>
+      <button class="ai-ib" id="aiNew" title="Новый разговор" aria-label="Новый разговор">＋</button><button class="ai-ib" id="aiGear" title="Модель и ключи" aria-label="Настройки помощника">⚙</button><button class="ai-ib" id="aiClose" title="Закрыть (Esc)" aria-label="Закрыть">✕</button></div>
+    <div class="ai-ctx" id="aiCtx" hidden></div>
     <div class="ai-body" id="aiBody"></div>
-    <form class="ai-input" id="aiForm"><button class="small" id="aiAttach" type="button" title="Выбрать файл или папку на компьютере — помощник посмотрит сведения о нём">Файл…</button><textarea id="aiText" rows="2" placeholder="Спроси про свой ПК: «почему ноутбук греется?», «почему вылетает игра?»…" spellcheck="true"></textarea>
-      <button class="primary" id="aiSend">Спросить</button></form>`;
+    <form class="ai-input" id="aiForm"><div class="ai-box"><textarea id="aiText" rows="1" placeholder="Спроси про свой ПК: «почему ноутбук греется?»" spellcheck="true"></textarea>
+      <div class="ai-box-row"><button class="ai-ib" id="aiAttach" type="button" title="Выбрать файл или папку на компьютере — помощник посмотрит сведения о нём" aria-label="Прикрепить файл или папку">⊕</button>
+      <span class="sub ai-hint">Enter — отправить, Shift+Enter — новая строка</span><button class="ai-send" id="aiSend" aria-label="Отправить" title="Отправить">↑</button></div></div></form>`;
   document.body.appendChild(p);
   return p;
 }
 async function aiOpen(setup){
   const p = aiPanel();
   p.hidden = false;
+  document.body.classList.add("ai-open");               // на широком экране панель стоит рядом и не закрывает страницу
+  document.documentElement.style.setProperty("--hdr-h", (document.querySelector("header")?.offsetHeight || 57) + "px");   // под шапкой с кнопками окна
   if (!AI.cfg) await aiLoadCfg();
   if (setup || !AI.cfg?.enabled) AI.setup = true;
   aiRender();
   if (!AI.setup) setTimeout(() => $("#aiText")?.focus(), 50);
 }
-function aiClose(){ aiPanel().hidden = true }
+function aiClose(){ aiPanel().hidden = true; document.body.classList.remove("ai-open") }
 
 function aiProviderName(id){ return (AI.cfg?.providers || []).find(p => p.id === id)?.name.split(" —")[0] || id }
 function aiRender(){
   const p = aiPanel(), body = p.querySelector("#aiBody");
   p.querySelector("#aiModel").textContent = AI.cfg?.enabled ? `${aiProviderName(AI.cfg.provider)} · ${AI.cfg.model === "auto" ? "по подписке" : AI.cfg.model}${AI.cfg.agent ? " · агент" : ""}` : "не настроен";
   p.querySelector("#aiForm").hidden = AI.setup;
+  const cx = p.querySelector("#aiCtx");
+  cx.hidden = !AI.ctx || AI.setup;
+  if (AI.ctx) cx.innerHTML = `<span class="sub">Разговор о проверке</span><b>${esc(AI.ctx.title)}</b><span class="grow"></span><button class="ai-ib" data-ai-ctx-off title="Выйти из разговора о проверке" aria-label="Выйти из разговора о проверке">✕</button>`;
+  p.querySelector("#aiText").placeholder = AI.ctx ? "Спроси про эту проверку…" : "Спроси про свой ПК: «почему ноутбук греется?»";
   body.innerHTML = AI.setup ? aiSetupHtml() : aiChatHtml();
   body.scrollTop = body.scrollHeight;
 }
@@ -230,13 +238,21 @@ function aiChatHtml(){
     ? `<div class="ai-msg ai-u">${esc(m.show || m.content)}</div>`
     : m.role === "error" ? `<div class="ai-msg ai-err">${esc(m.content)} <a data-ai-gear>Настройки помощника</a></div>`
     : `<div class="ai-msg ai-a">${aiMd(m.content)}${!m.act && aiPlan(m.content).length ? `<div class="ai-do"><button class="primary small" data-ai-do="${AI.msgs.indexOf(m)}" title="Помощник сам выполнит эти действия по очереди и проверит результат">✦ Сделай сам</button><span class="sub">${aiPlan(m.content).length > 1 ? `выполнит ${aiPlan(m.content).length} действия по очереди и проверит` : "выполнит и проверит"}; системные — с окном UAC</span></div>` : ""}${aiActions(m.content) || aiButtons(m.content) ? `<div class="row-tools ai-btns">${m.act ? "" : aiActions(m.content)}${aiButtons(m.content)}</div>` : ""}${m.finding ? `<div class="sub"><a data-ai-more="${esc(JSON.stringify(m.finding))}">Подробнее — что это и насколько серьёзно</a></div>` : ""}${m.cached ? `<div class="sub">ответ из памяти · <a data-ai-fresh="${esc(m.cached)}">спросить заново</a></div>` : ""}</div>`).join("");
-  const run = j && j.status === "running" ? `<div class="ai-msg ai-a ai-run"><div class="spin"></div><div>${(j.steps || []).length ? `<ul class="ai-steps">${j.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : `<span class="sub">думаю…</span>`}
-      <button class="small" id="aiStop" type="button">Остановить</button></div></div>` : "";
+  // пока помощник отвечает — видно, что именно он сейчас смотрит (интернет, журналы, страницы)
+  const run = j && j.status === "running" ? `<div class="ai-msg ai-a ai-run" aria-live="polite">${vdTrace(j.steps, true)}
+      <button class="small ghost" id="aiStop" type="button">Остановить</button></div>` : "";
   const empty = !AI.msgs.length && !run ? `<div class="ai-empty"><p>Спроси что угодно про этот компьютер — помощник сам посмотрит журналы Windows, сбои, драйверы,
-      питание, датчики, место, защиту, браузеры и то, что уже нашёл ScanHub, а при необходимости поищет в интернете${AI.cfg?.files === "off" ? "" : ", а ещё файлы и папки (кнопка «Файл…» или просто напиши путь)"}.
+      питание, датчики, место, защиту, браузеры и то, что уже нашёл ScanHub, а при необходимости поищет в интернете${AI.cfg?.files === "off" ? "" : ", а ещё файлы и папки (кнопка ⊕ или просто напиши путь)"}.
       Или нажми «✦ Как решить» у любой находки — помощник коротко скажет, что делать, и предложит кнопку, если ScanHub может сделать это сам.</p><div class="ai-sug">${AI_SUGGEST.map(s => `<button class="small" data-ai-ask="${esc(s)}" type="button">${esc(s)}</button>`).join("")}</div></div>` : "";
-  return empty + msgs + run;
+  // в разговоре о проверке — подсказки по её теме, пока человек ещё ничего не спросил
+  const ctxSug = AI.ctx && !run && !AI.msgs.some(m => m.role === "user") ? `<div class="ai-sug ai-sug-ctx">${(AI_CTX_SUGGEST[AI.ctx.scope] || AI_CTX_SUGGEST.check)
+      .map(s => `<button class="small" data-ai-ask="${esc(s)}" type="button">${esc(s)}</button>`).join("")}</div>` : "";
+  return empty + msgs + run + ctxSug;
 }
+const AI_CTX_SUGGEST = {
+  check: ["Что это за файл и откуда он?", "Можно ли его запускать?", "Что значит эта тревога?", "Как удалить его безопасно?"],
+  deep: ["С чего начать?", "Что из найденного важно?", "Что можно не трогать?", "Как убрать находку?"],
+  ultra: ["С чего начать?", "Что из этого важно?", "Что можно не трогать?", "Что ScanHub может сделать сам?"]};
 async function aiStart(body, userMsg, finding = null){
   if (!AI.cfg?.enabled) { AI.setup = true; return aiRender() }
   if (AI.job?.status === "running") return;
@@ -273,8 +289,9 @@ async function aiDoIt(idx){
 function aiAsk(text){
   text = String(text || "").trim();
   if (!text) return;
-  const hist = AI.msgs.filter(m => m.role === "user" || m.role === "assistant").map(m => ({role: m.role, content: m.content}));
-  aiStart({kind: "chat", messages: [...hist, {role: "user", content: text}]}, {role: "user", content: text});
+  // финальный вывод уже лежит на сервере вместе со сводкой проверки (ctx_job) — в историю его не дублируем
+  const hist = AI.msgs.filter(m => (m.role === "user" || m.role === "assistant") && !m.verdict).map(m => ({role: m.role, content: m.content}));
+  aiStart({kind: "chat", messages: [...hist, {role: "user", content: text}], ...(AI.ctx ? {ctx_job: AI.ctx.job} : {})}, {role: "user", content: text});
 }
 function aiExplain(f, fresh = false, kind = "solve"){
   aiOpen();
@@ -510,9 +527,10 @@ document.addEventListener("click", async e => {
   return aiReview(d.aiReview);
 }, true);
 document.addEventListener("click", async e => {
-  const a = e.target.closest("[data-ai],[data-ai-ask],[data-ai-gear],[data-ai-fresh],[data-ai-launch],[data-ai-act],[data-ai-more],[data-ai-do],[data-ai-cli-login],[data-ai-cli-check],#aiTop,#aiClose,#aiGear,#aiNew,#aiStop,#aiFindModels,#aiSave,#aiOff,#aiBack,#aiAttach");
+  const a = e.target.closest("[data-ai],[data-ai-ask],[data-ai-gear],[data-ai-fresh],[data-ai-launch],[data-ai-act],[data-ai-more],[data-ai-do],[data-ai-cli-login],[data-ai-cli-check],[data-ai-ctx-off],#aiTop,#aiClose,#aiGear,#aiNew,#aiStop,#aiFindModels,#aiSave,#aiOff,#aiBack,#aiAttach");
   if (!a) return;
   e.preventDefault(); e.stopPropagation();
+  if (a.hasAttribute("data-ai-ctx-off")) { if (AI.job?.status !== "running") { AI.ctx = null; AI.msgs = []; aiRender() } return }
   if (a.dataset.ai) { try { return aiExplain(JSON.parse(a.dataset.ai)) } catch { return } }
   if (a.dataset.aiAsk) { await aiOpen(); return aiAsk(a.dataset.aiAsk) }
   if (a.hasAttribute("data-ai-fresh")) { try { const f = JSON.parse(a.dataset.aiFresh); if (f) return aiExplain(f, true) } catch {} return }
@@ -520,7 +538,7 @@ document.addEventListener("click", async e => {
     if (AI.cfg?.providers?.find(p => p.id === AI.pick)?.cli) aiCliCheck(AI.pick); return }
   if (a.id === "aiTop") return aiPanel().hidden ? aiOpen() : aiClose();
   if (a.id === "aiClose") return aiClose();
-  if (a.id === "aiNew") { if (AI.job?.status !== "running") { AI.msgs = []; aiRender() } return }
+  if (a.id === "aiNew") { if (AI.job?.status !== "running") { AI.msgs = []; AI.ctx = null; aiRender() } return }
   if (a.id === "aiStop") { if (AI.job?.id) api("/api/ai/stop", {id: AI.job.id}).catch(() => {}); return }
   if (a.dataset.aiAct) { try { return aiDoAction(JSON.parse(a.dataset.aiAct)) } catch { return } }
   if (a.hasAttribute("data-ai-do")) return aiDoIt(+a.dataset.aiDo);
@@ -564,11 +582,14 @@ document.addEventListener("change", e => {
   if (e.target.name === "aiFiles") api("/api/ai/config", {files: e.target.value}).then(c => { AI.cfg = c; aiRender();
     toast("Доступ к файлам изменён", AI_FILES.find(x => x[0] === c.files)?.[1] || "") }).catch(err => toast("Не сохранилось", err.message, "warn"));
 });
-document.addEventListener("input", e => { if (e.target.id === "aiKey") AI.keyDraft = e.target.value });   // не потерять вставленный ключ при перерисовке
+document.addEventListener("input", e => {
+  if (e.target.id === "aiKey") AI.keyDraft = e.target.value;   // не потерять вставленный ключ при перерисовке
+  if (e.target.id === "aiText") { const t = e.target; t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 180) + "px" }   // поле растёт с текстом
+});
 document.addEventListener("submit", e => {
   if (e.target.id !== "aiForm") return;
   e.preventDefault();
-  const t = $("#aiText"); aiAsk(t.value); t.value = "";
+  const t = $("#aiText"); aiAsk(t.value); t.value = ""; t.style.height = "auto";
 });
 document.addEventListener("keydown", e => {
   if (e.target.id === "aiText" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#aiForm").requestSubmit() }

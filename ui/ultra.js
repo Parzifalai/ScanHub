@@ -293,6 +293,7 @@ function ultraDone(j, dev){
       <div class="grow"></div>${j.status === "done" && !allDone ? `<button class="primary" data-fix-open="1">Исправить по шагам</button>` : ""}<button data-sum-ultra title="Весь итог одним текстом — вставь в Claude, ChatGPT или Gemini и получи оценку: коротко и подробно">Сводка для ИИ</button><button data-ultra-pdf title="Итоги в PDF — отправить другу или на форум помощи. Имя пользователя и компьютера заменяются">Отчёт PDF</button><button data-ultra-new>Новая проверка</button></div>
     ${j.status === "done" && !allDone ? `<div class="note info">Всё найденное можно исправить по шагам: что ScanHub умеет — он сделает сам по кнопке, остальное подскажет, как сделать вручную. Исправленное отмечается здесь само.</div>` : ""}
     <div class="stats big-stats">${stat}</div>
+    ${j.status === "done" ? vdCard("ultra:" + j.id, {scope: "ultra", title: "ультра проверка", auto: vdFresh(j.finished)}) : ""}
     ${ultraCompare(j.compare)}
     <h2 class="sec" style="margin:4px 0 0">Что стоит сделать</h2>
     ${todo.length ? `<div class="checks">${todo.map(i => `<div class="check${done(i) ? " solved" : ""}">${uIcon(done(i) ? "ok" : i.lvl)}

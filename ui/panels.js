@@ -84,6 +84,7 @@ function pDeep(dev){
     <div class="head"><div class="result" style="padding:0;border:0;background:none"><div class="big">${big}<div><h3 style="margin:0">${title}</h3>
       <div class="sub">${running ? "можно свернуть окно — проверка продолжится" : "закончена " + esc((d.finished || "").replace("T", " "))}</div></div></div></div><div class="grow"></div>${right}</div>
     ${running ? progBar(done / steps.length) : problemsHtml(d.problems)}
+    ${d.status === "done" ? vdCard("deep:" + d.id, {scope: "deep", deep: d.id, title: "глубокая проверка", auto: vdFresh(d.finished)}) : ""}
     <ul class="steps">${steps.map(s => {
       const st = s.status === "done" ? (s.verdict || "clean") : s.status;
       const f = dev ? s.findings : s.findings.slice(0, 5);

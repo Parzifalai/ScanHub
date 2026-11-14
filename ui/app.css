@@ -1426,3 +1426,92 @@ button.hs-go:hover{color:var(--accent2);background:rgba(122,156,255,.05)}
 .uav-muted{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
 .uav-fix{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:-2px 0 8px 34px;padding:8px 12px;border-radius:10px;background:var(--warn-bg)}
 .uav-fix .sub{flex:1 1 260px}
+
+/* ===================== Помощник 2.0.9: панель рядом со страницей, разговор, «Финальный вывод» ===================== */
+:root{--aiw:420px}
+.ai-panel{width:min(var(--aiw),100vw);background:#0C1430;border-left:1px solid var(--line2);box-shadow:-24px 0 60px -30px rgba(0,0,0,.9)}
+@media (min-width:1180px){
+  /* на широком экране панель стоит рядом: страница сдвигается, шапка с кнопками окна остаётся видна */
+  .ai-panel{top:var(--hdr-h,57px);box-shadow:none;z-index:19}
+  body.ai-open main{padding-right:var(--aiw)}
+}
+.ai-head{gap:10px;padding:12px 12px 12px 16px;border-bottom:1px solid var(--line)}
+.ai-mark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:15px;color:#fff;flex:none;
+  background:radial-gradient(120% 120% at 20% 10%,var(--accent2),var(--accent) 60%,#1B3FA8)}
+.ai-title{display:grid;line-height:1.25;min-width:0}
+.ai-title b{font-size:15px;color:var(--text);font-family:inherit}
+.ai-title .sub{font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-ib{width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--muted);font-size:14px}
+.ai-ib:hover{background:var(--panel2);color:var(--text);border-color:var(--line)}
+.ai-ib:focus-visible,.ai-send:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+.ai-ctx{display:flex;align-items:center;gap:8px;padding:8px 12px 8px 16px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.ai-ctx b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ai-ctx .sub{font-size:12px;white-space:nowrap}
+.ai-body{padding:18px 16px;gap:14px}
+/* сообщения: свои — пузырём справа, ответы помощника — текстом с линией слева, без коробки */
+.ai-msg{border-radius:0;padding:0;line-height:1.55;font-size:14px}
+.ai-u{align-self:flex-end;max-width:85%;background:var(--accent);color:#fff;padding:9px 13px;border-radius:16px 16px 4px 16px}
+.ai-a{background:none;padding:2px 0 2px 14px;border-left:2px solid color-mix(in srgb,var(--accent2) 55%,transparent)}
+.ai-a strong{color:#fff}
+.ai-a a{color:var(--accent2)}
+.ai-err{background:var(--bad-bg);color:var(--bad);padding:9px 12px;border-radius:12px}
+.ai-run{display:grid;gap:8px;justify-items:start}
+.ai-btns{margin-top:8px}
+.ai-empty{padding:4px 0}
+.ai-empty p{line-height:1.55}
+.ai-sug{gap:6px}
+.ai-sug button{border-radius:999px;background:transparent;border-color:var(--line2);color:var(--text);font-size:12.5px;padding:5px 11px}
+.ai-sug button:hover{border-color:var(--accent2);background:var(--accent-soft)}
+.ai-sug-ctx{margin-top:-4px}
+/* поле ввода: одна рамка, внутри — текст и строка кнопок */
+.ai-input{padding:10px 12px 12px;border-top:1px solid var(--line);display:block}
+.ai-box{border:1px solid var(--line2);border-radius:14px;background:var(--panel2);padding:8px 8px 6px 12px;transition:border-color .15s}
+.ai-box:focus-within{border-color:var(--accent2);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.ai-input textarea{width:100%;border:0;background:transparent;padding:4px 0;min-height:24px;max-height:180px;outline:none;line-height:1.5}
+.ai-input textarea:focus{outline:none}
+.ai-box-row{display:flex;align-items:center;gap:6px;margin-top:4px}
+.ai-hint{flex:1;font-size:11.5px;color:var(--dim)}
+.ai-send{width:32px;height:32px;padding:0;border-radius:10px;border:0;background:var(--accent);color:#fff;font-size:16px;font-weight:700;display:grid;place-items:center}
+.ai-send:hover{background:var(--accent2)}
+#aiAttach{align-self:auto}
+/* что сейчас делает помощник */
+.vd-trace{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px;color:var(--muted)}
+.vd-trace li{display:flex;gap:8px;align-items:baseline;overflow-wrap:anywhere}
+.vd-si{width:16px;flex:none;text-align:center;color:var(--accent2)}
+.vd-trace li.cur{color:var(--text)}
+.vd-trace li.cur .vd-si{animation:vdPulse 1.2s ease-in-out infinite}
+@keyframes vdPulse{50%{opacity:.25}}
+
+/* «Финальный вывод»: одно крупное слово-вердикт — главный акцент итога */
+.vd{margin:14px 0 4px;padding:16px 18px;border-radius:16px;border:1px solid var(--line2);background:linear-gradient(180deg,rgba(91,140,255,.07),rgba(91,140,255,.02));
+  --vd:var(--accent2);--vd-bg:var(--accent-soft)}
+.vd-ok{--vd:var(--ok);--vd-bg:var(--ok-bg)} .vd-warn{--vd:var(--warn);--vd-bg:var(--warn-bg)} .vd-bad{--vd:var(--bad);--vd-bg:var(--bad-bg)}
+.vd-ok,.vd-warn,.vd-bad{border-color:color-mix(in srgb,var(--vd) 40%,var(--line))}
+.vd-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vd-head b{font-size:14px}
+.vd-head .sub{font-size:12.5px}
+.vd-head .grow{flex:1}
+.vd-mark{color:var(--accent2)}
+.vd-verdict{display:flex;align-items:center;gap:12px;margin:12px 0 6px;animation:vdIn .45s cubic-bezier(.2,.8,.2,1) both}
+.vd-ico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;font-weight:800;color:var(--vd);background:var(--vd-bg);flex:none}
+.vd-word{font-size:26px;font-weight:700;letter-spacing:-.3px;color:var(--vd);line-height:1.15}
+@keyframes vdIn{from{opacity:0;transform:translateY(6px)}}
+.vd-lead{margin:6px 0 0;max-width:72ch;line-height:1.55}
+.vd-lead p{margin:0}
+.vd-run .vd-trace{margin-top:12px}
+.vd-more{margin-top:10px}
+.vd-more summary{cursor:pointer;color:var(--accent2);font-size:13.5px;width:max-content}
+.vd-more-body{margin-top:8px;padding-left:14px;border-left:2px solid var(--line2);max-width:78ch;line-height:1.55;font-size:13.5px}
+.vd-more-body ul,.vd-more-body ol{margin:4px 0 8px;padding-left:18px}
+.vd-more-body a{color:var(--accent2);overflow-wrap:anywhere}
+.vd-ask{display:flex;gap:8px;margin-top:14px}
+.vd-ask input{flex:1;min-width:0;font:inherit;background:var(--panel2);color:var(--text);border:1px solid var(--line2);border-radius:10px;padding:8px 12px}
+.vd-ask input:focus{outline:none;border-color:var(--accent2);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.vd-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.vd-actions .ghost,.ai-run .ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.vd-actions .ghost:hover{color:var(--text);border-color:var(--line)}
+.vd-idle{padding:12px 16px}
+.vd-off .vd-lead{color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.vd-verdict,.vd-trace li.cur .vd-si{animation:none}}
+@media (max-width:640px){.vd-word{font-size:21px}.vd-ask{flex-direction:column}}
+.ai-input .ai-box textarea{border:0!important;background:transparent!important;border-radius:0;padding:4px 0;box-shadow:none;outline:none}

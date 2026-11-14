@@ -1,0 +1,93 @@
+1. Есть ли угрозы на самом деле — какие находки весомые, какие похожи на ложные тревоги и почему.	-
+2. Что сделать по каждой весомой находке — по шагам.	-
+3. Какие шаги проверки не сработали и насколько это важно.	-
+4. Что нашёл в интернете: что это за файл и что о нём пишут — 2–4 факта со ссылками.	-
+5. Что сделать: запускать, удалить, проверить ещё чем-то (чем именно и как) — по шагам.	-
+ScanHub не узнал этот файл (нет подписи издателя или он лежит не там), поэтому не стал запускать его с правами администратора. Скачай сканер заново с официального сайта.	ScanHub didn't recognise this file (no publisher signature or it's in the wrong place), so it didn't run it with administrator rights. Download the scanner again from the official site.
+ScanHub перезапустился посреди ответа	ScanHub restarted in the middle of the answer
+check: ["Что это за файл и откуда он?", "Можно ли его запускать?", "Что значит эта тревога?", "Как удалить его безопасно?"]	-
+deep: ["С чего начать?", "Что из найденного важно?", "Что можно не трогать?", "Как убрать находку?"]	-
+document.body.classList.add("ai-open");               // на широком экране панель стоит рядом и не закрывает страницу	-
+document.documentElement.style.setProperty("--hdr-h", (document.querySelector("header")?.offsetHeight || 57) + "px");   // под шапкой с кнопками окна	-
+if (e.target.id === "aiKey") AI.keyDraft = e.target.value;   // не потерять вставленный ключ при перерисовке	-
+p.querySelector("#aiText").placeholder = AI.ctx ? "Спроси про эту проверку…" : "Спроси про свой ПК: «почему ноутбук греется?»	-
+ultra: ["С чего начать?", "Что из этого важно?", "Что можно не трогать?", "Что ScanHub может сделать сам?"]	-
+Весь итог глубокой проверки: каждый сканер, что он нашёл и какие файлы, что не сработало.	The whole deep scan result: every scanner, what it found and which files, what didn't work.
+Вопрос помощнику про эту проверку	Question to the assistant about this scan
+Выйти из разговора о проверке	Leave the conversation about this scan
+Есть что проверить	Something to check
+Закрыть (Esc)	Close (Esc)
+Итог глубокой проверки ScanHub — для оценки	-
+Лучше не открывать	Better not to open
+Можно открывать	Safe to open
+Настройки помощника	Assistant settings
+Не открывай	Don't open it
+Не уверен	Not sure
+Новый разговор	New conversation
+Обсудить с помощником	Discuss with the assistant
+Опирайся на данные выше и на то, что нашёл в интернете (со ссылкой на источник).	-
+Опирайся только на данные выше.	-
+Подключи ИИ-помощника — он сам прочитает итог всех сканеров, поищет этот файл в интернете и коротко скажет, можно ли открывать. Это бесплатно, например с ключом Google Gemini.	Connect the AI assistant — it will read the result of all scanners, look the file up on the internet and tell you briefly whether it's safe to open. It's free, for example with a Google Gemini key.
+Подключить помощника	Connect the assistant
+Помощник не смог сделать вывод:	The assistant couldn't reach a verdict:
+Попробовать ещё раз	Try again
+Прикрепить файл или папку	Attach a file or folder
+Проверить заново	Check again
+Сводка глубокой проверки для ИИ	Deep scan summary for AI
+Сводка этой проверки для Claude, ChatGPT или Gemini — второе мнение	A summary of this scan for Claude, ChatGPT or Gemini — a second opinion
+Сначала поищи в интернете (если у тебя есть поиск): по имени главного файла и каждого файла с тревогой, по его SHA-256	-
+Спроси про свой ПК: «почему ноутбук греется?»	Ask about your PC: “why is my laptop getting hot?”
+Спросить	Ask
+Спросить другой ИИ	Ask another AI
+Спросить помощника	Ask the assistant
+Спросить про итог: «с чего начать?», «что можно не трогать?»	Ask about the result: “where do I start?”, “what can I leave alone?”
+Спросить про итог: «что из этого важно?», «как убрать находку?»	Ask about the result: “what of this matters?”, “how do I remove a finding?”
+Спросить про эту проверку: «что это за файл?», «как удалить безопасно?»	Ask about this scan: “what is this file?”, “how do I delete it safely?”
+Файлы:	-
+Финальный вывод	Final verdict
+Финальный вывод:	Final verdict:
+Что нашёл в интернете и почему так	What it found online and why
+Что проверялось:	-
+Что сделать и почему так	What to do and why
+Это итог «глубокой проверки» ScanHub — все сканеры по очереди: процессы, майнеры, сеть, автозагрузка, драйверы, сертификаты	-
+а ещё файлы и папки (кнопка ⊕ или просто напиши путь)	and also files and folders (the ⊕ button or just type a path)
+глубокой проверки ещё не было	no deep scan has been run yet
+можно	-
+настройки Defender, браузеры, источники скачанных программ, антивирусы и онлайн-сверка. Оцени результат.	-
+нельзя	-
+нет — так и скажи одной строкой и опирайся на сводку.	-
+осторожно	-
+по названию программы и издателю. Узнай: что это за программа или файл и для чего он; официальный ли это файл (сравни имя	-
+пользователей: нет ли сообщений о заражении или, наоборот, известных ложных срабатываний на этот файл. Если поиска у тебя	-
+помощник читает итог и ищет в интернете — обычно 20–60 секунд	the assistant is reading the result and searching the internet — usually 20–60 seconds
+проверка файла	file scan
+пропущен — файл сканера не прошёл проверку	skipped — the scanner file failed verification
+прочитал итог всех сканеров	read the result of all scanners
+прочитал итог всех сканеров · поискал в интернете	read the result of all scanners · searched the internet
+размер и издателя с сайтом автора); что о нём пишут — в базах (VirusTotal, Hybrid Analysis), на форумах антивирусов и у	-
+угроза	-
+читаю итог проверки…	reading the scan result…
+Что это за файл и откуда он?	What is this file and where is it from?
+Можно ли его запускать?	Is it safe to run?
+Что значит эта тревога?	What does this alert mean?
+Как удалить его безопасно?	How do I delete it safely?
+С чего начать?	Where do I start?
+Что из найденного важно?	Which findings matter?
+Что можно не трогать?	What can I leave alone?
+Как убрать находку?	How do I remove a finding?
+Что из этого важно?	What of this matters?
+Что ScanHub может сделать сам?	What can ScanHub do by itself?
+Спроси про эту проверку…	Ask about this scan…
+Разговор о проверке	Conversation about scan
+Enter — отправить, Shift+Enter — новая строка	Enter — send, Shift+Enter — new line
+Новый разговор	New conversation
+Отправить	Send
+Помощник	Assistant
+Финальный вывод после проверок	Final verdict after scans
+После проверки файла, глубокой и ультра проверки помощник сам прочитает итог, поищет файлы в интернете и коротко скажет: можно открывать или нет. Под выводом — чат, чтобы обсудить, что делать.	After a file scan, deep scan and ultra scan the assistant reads the result, looks the files up online and briefly tells you whether it's safe to open. Below the verdict is a chat to discuss what to do.
+Финальный вывод включён	Final verdict enabled
+Финальный вывод выключен	Final verdict disabled
+Всё в порядке	All good
+Найдена угроза	Threat found
+глубокая проверка	deep scan
+ультра проверка	ultra scan

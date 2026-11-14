@@ -570,6 +570,8 @@ function renderSimpleResult(){
     ${adv?.why?.length ? `<ul class="why">${adv.why.map(w => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}
     ${adv?.notes?.length ? `<div class="sub">${adv.notes.map(esc).join(" ")}</div>` : ""}
     ${b.dropped ? `<div class="sub">${esc(b.dropped)}</div>` : ""}
+    ${running || b.quick || !LAST_CHECK_SUM ? "" : vdCard("check:" + simpleBatch, {scope: "check", ...LAST_CHECK_SUM,
+      title: (b.dropped ? b.label : b.target || "").split("\\").filter(Boolean).pop() || "проверка файла"})}
     ${qButtons(found)}
     ${running ? "" : uploadOffer(rows)}
     <div class="sub" style="margin-bottom:-4px">Что сказал каждый сканер — нажми на строку, чтобы увидеть подробности:</div>
