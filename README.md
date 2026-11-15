@@ -5,7 +5,7 @@
 
 # ScanHub
 
-🇷🇺 [Русская версия](README.ru.md)
+[Русская версия](README.ru.md)
 
 Everything you need to check and maintain Windows, in one window: 30+ antivirus engines, scanners and checks, cleanup, programs, privacy and protection. **One-off** checks only: ScanHub keeps nothing running in the background and installs no permanent services.
 
