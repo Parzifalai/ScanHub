@@ -376,6 +376,7 @@
 "WMI-подписка: так закрепляются продвинутые вредоносы": "WMI subscription: this is how advanced malware persists",
 "WSL или Docker": "WSL or Docker",
 "Wallpaper Engine — живые обои": "Wallpaper Engine — live wallpapers",
+"WebView2 — встроенный браузер Edge, на нём работают окна многих программ (Teams, виджеты, ScanHub).": "WebView2 — the built-in Edge browser that many programs use for their windows (Teams, widgets, ScanHub).",
 "WebView2 — движок, на котором показывают своё окно многие программы (Office, Teams, клиенты игр, окно ScanHub). Без него они не откроются, поэтому Windows не даёт его удалить.": "WebView2 is the engine many programs use to show their window (Office, Teams, game clients, the ScanHub window). Without it they won't open, so Windows doesn't let you remove it.",
 "Wi-Fi: сигнал": "Wi-Fi: signal",
 "Windows Update всё ещё предлагает драйверов:": "Windows Update still offers drivers:",

@@ -73,3 +73,4 @@ ScanHub нужен Python 3.12 или новее для Windows, а запуще
 нажми «Подготовить ScanHub» на главной или поставь сканер в разделе «Сканеры»	-
 не прочитал отчёт MinerSearch:	-
 нет таких категорий мусора с файлами:	-
+WebView2 — встроенный браузер Edge, на нём работают окна многих программ (Teams, виджеты, ScanHub).	WebView2 — the built-in Edge browser that many programs use for their windows (Teams, widgets, ScanHub).

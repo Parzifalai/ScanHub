@@ -198,7 +198,7 @@ function homeStats(){
   const tiles = [];
   if (sv != null) {
     const [lvl] = stabVerdict(sv);
-    tiles.push(`<div class="hs ${lvl === "ok" ? "" : lvl}" ${GO}><span class="k">${icon("health")}Стабильность Windows</span><b class="v">${sv.toFixed(1).replace(".", ",")}<small>из 10</small></b>
+    tiles.push(`<div class="hs ${lvl === "ok" ? "" : lvl}" ${GO}><span class="k">${icon("health")}Стабильность Windows</span><b class="v">${L(sv.toFixed(1).replace(".", ","), sv.toFixed(1))}<small>из 10</small></b>
       <span class="n">${esc(stabVerdict(sv)[1])}</span>${hSpark(stab.slice(-28).map(x => x.v), "#5B8CFF", 10)}</div>`);
   } else if (g) {
     tiles.push(`<div class="hs" ${GO}><span class="k">${icon("game")}Видеокарта</span><b class="v">${Math.round(g.util ?? 0)}<small>%${g.temp != null ? ` · ${g.temp}°C` : ""}</small></b>

@@ -17,11 +17,15 @@ Everything you need to check and maintain Windows, in one window: 30+ antivirus 
 
 Unpack the archive into any folder and run **ScanHub.exe**. Nothing to install, Python is already inside.
 
-![Home](docs/screenshots/1-home.png)
+Every release also has **SHA256SUMS.txt** with the checksums of both archives, so you can check that the download wasn't altered.
 
-| Scanning a file: several antivirus engines and one overall verdict | Built-in Windows protections with an undo |
+![Home](docs/screenshots/en/1-home.png)
+
+| Virus protection: file, folder, quick, deep and ultra checks | Built-in Windows protections with an undo |
 |---|---|
-| ![File scan](docs/screenshots/2-scan.png) | ![Windows protection](docs/screenshots/3-security.png) |
+| ![Virus protection](docs/screenshots/en/2-scan.png) | ![Windows protection](docs/screenshots/en/3-security.png) |
+
+![AI assistant: ask in plain words or tell it to check something — Ctrl+K](docs/screenshots/en/5-assistant.png)
 
 ## What it does
 
@@ -107,7 +111,7 @@ Found a vulnerability? Write in Issues (without exploitation details) or contact
 
 ScanHub is not a replacement for a permanent antivirus. It helps you double-check your computer and figure out what is going on with it. Findings are a reason to look closer, not a verdict: heuristics produce false positives, and the scan result explains that. System changes are reversible, but you make them at your own risk.
 
-![All scanners in Developer mode](docs/screenshots/4-scanners.png)
+![All scanners in Developer mode](docs/screenshots/en/4-scanners.png)
 
 To add your own scanner, write one JSON file in the `registry` folder; the schema is in [registry/README.md](registry/README.md).
 
