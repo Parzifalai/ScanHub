@@ -104,16 +104,17 @@ function aiPanel(){
   if (p) return p;
   p = document.createElement("aside");
   p.id = "aiPanel"; p.className = "ai-panel"; p.hidden = true; p.setAttribute("aria-label", "ИИ-помощник");
-  p.innerHTML = `<div class="ai-head"><span class="ai-mark" aria-hidden="true">✦</span><div class="ai-title"><b>Помощник</b><span class="sub" id="aiModel"></span></div><span class="grow"></span>
+  p.innerHTML = `<div class="ai-head"><button class="ai-ib" id="aiSideTgl" type="button" title="Скрыть меню" aria-label="Скрыть меню"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg></button><span class="ai-mark" aria-hidden="true">✦</span><div class="ai-title"><b>Помощник</b><span class="sub" id="aiModel"></span></div><span class="grow"></span>
       <button class="ai-ib" id="aiNew" title="Новый разговор" aria-label="Новый разговор">＋</button><button class="ai-ib" id="aiGear" title="Модель и ключи" aria-label="Настройки помощника">⚙</button><button class="ai-ib${document.body.classList.contains("ai-full") ? " on" : ""}" id="aiFull" title="${document.body.classList.contains("ai-full") ? "Обычный размер" : "На весь экран"}" aria-label="На весь экран"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="fx-out" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button class="ai-ib" id="aiClose" title="Закрыть (Esc)" aria-label="Закрыть">✕</button></div>
     <div class="ai-ctx" id="aiCtx" hidden></div>
     <div class="ai-body" id="aiBody"></div>
-    <form class="ai-input" id="aiForm"><div class="ai-box"><div class="ai-thumbs" id="aiThumbs" hidden></div><textarea id="aiText" rows="1" placeholder="Спроси или попроси: «проверь на майнеры», «что можно очистить?»" spellcheck="true"></textarea>
+    <form class="ai-input" id="aiForm"><div class="ai-above"><button class="ai-mode" id="aiModeBtn" type="button" aria-haspopup="menu" title="Как отвечать: быстро или точно"></button></div><div class="ai-box"><div class="ai-thumbs" id="aiThumbs" hidden></div><textarea id="aiText" rows="1" placeholder="Спроси или попроси: «проверь на майнеры», «что можно очистить?»" spellcheck="true"></textarea>
       <div class="ai-box-row"><button class="ai-ib" id="aiAttach" type="button" title="Выбрать файл или папку на компьютере — помощник посмотрит сведения о нём" aria-label="Прикрепить файл или папку">⊕</button>
       <button class="ai-ib" id="aiPhoto" type="button" title="Приложить фото или скриншот (или просто вставь его в поле — Ctrl+V)" aria-label="Приложить фото"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-8.5 8"/></svg></button>
       <input type="file" id="aiPhotoIn" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
-      <div class="ai-speed" role="group" aria-label="Скорость ответа"><button type="button" data-ai-speed="fast" title="Быстро: короткое размышление, меньше шагов, интернет — только если попросишь">Быстро</button><button type="button" data-ai-speed="precise" title="Точно: модель думает дольше и сама проверяет больше данных">Точно</button></div>
-      <span class="grow"></span><button class="ai-send" id="aiSend" aria-label="Отправить" title="Отправить — Enter (новая строка — Shift+Enter)">↑</button></div></div></form>`;
+      <span class="grow"></span><button class="ai-model" id="aiModelBtn" type="button" aria-haspopup="menu" title="Модель помощника"></button>
+      <button class="ai-send" id="aiSend" aria-label="Отправить" title="Отправить — Enter (новая строка — Shift+Enter)">↑</button></div></div></form>
+    <div class="ai-sugbar" id="aiSugBar" hidden></div>`;
   document.body.appendChild(p);
   return p;
 }
@@ -138,9 +139,16 @@ function aiRender(){
   cx.hidden = !AI.ctx || AI.setup;
   if (AI.ctx) cx.innerHTML = `<span class="sub">Разговор о проверке</span><b>${esc(AI.ctx.title)}</b><span class="grow"></span><button class="ai-ib" data-ai-ctx-off title="Выйти из разговора о проверке" aria-label="Выйти из разговора о проверке">✕</button>`;
   p.querySelector("#aiText").placeholder = AI.ctx ? "Спроси про эту проверку…" : "Спроси или попроси: «проверь на майнеры», «что можно очистить?»";
-  const speed = AI.cfg?.speed || "fast";
-  p.querySelectorAll("[data-ai-speed]").forEach(b => { b.classList.toggle("on", b.dataset.aiSpeed === speed); b.setAttribute("aria-pressed", b.dataset.aiSpeed === speed) });
+  p.querySelector("#aiModeBtn").innerHTML = aiModeLabel();
+  p.querySelector("#aiModelBtn").innerHTML = `<span>${esc(aiModelShort())}</span><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
+  p.querySelector("#aiModelBtn").hidden = !AI.cfg?.enabled;
   p.querySelector("#aiPhoto").hidden = AI.cfg?.vision === false;
+  // 2.2: пустой разговор на всё окно — только заголовок, поле по центру и подсказки под ним (как в чат-программах)
+  const full = document.body.classList.contains("ai-full"), empty = !AI.setup && !AI.msgs.length && AI.job?.status !== "running";
+  p.classList.toggle("empty", full && empty);
+  const sb = p.querySelector("#aiSugBar");
+  sb.hidden = !(full && empty && !AI.ctx);
+  if (!sb.hidden && !sb.childElementCount) sb.innerHTML = AI_SUGGEST.map(s => `<button class="small" data-ai-ask="${esc(s)}" type="button">${esc(s)}</button>`).join("");
   if (AI.setup) { body.innerHTML = aiSetupHtml(); body._chat = null; body.scrollTop = body.scrollHeight; return }
   // 2.2: разговор не перерисовывается целиком на каждом опросе (раньше — мигание и прыжок вниз при прокрутке вверх):
   // сообщения меняются только когда появилось новое, строка «что сейчас смотрю» — только когда в ней что-то изменилось
@@ -192,7 +200,7 @@ const aiAgyLvl = l => (AGY_LEVELS.find(x => x[0] === l)?.[1].match(/\((.+)\)/) |
 function aiAgyName(id){
   const label = AI.labels?.[id];
   if (label) return label.replace(/\s*\((low|medium|high|xhigh|max)\)\s*$/i, "");
-  return aiAgySplit(id).base.replace(/^gemini-/, "Gemini ").replace(/^claude-/, "Claude ").replace(/-/g, " ");
+  return aiAgySplit(id).base.replace(/^gemini-/, "Gemini ").replace(/^claude-/, "Claude ").replace(/-/g, " ").replace(/\b[a-z]/g, c => c.toUpperCase());
 }
 function aiAgyBases(){
   const out = new Map();
@@ -299,7 +307,9 @@ function aiChatHtml(){
   // пока помощник отвечает — видно, что именно он сейчас смотрит (интернет, журналы, страницы)
   const run = j && j.status === "running" ? `<div class="ai-msg ai-a ai-run" aria-live="polite">${vdTrace(j.steps, true)}
       <button class="small ghost" id="aiStop" type="button">Остановить</button></div>` : "";
-  const empty = !AI.msgs.length && !run ? `<div class="ai-empty"><p>Спроси что угодно про этот компьютер — помощник сам посмотрит журналы Windows, сбои, драйверы,
+  const empty = !AI.msgs.length && !run && document.body.classList.contains("ai-full") && !AI.ctx
+    ? `<div class="ai-hero"><span class="orb" aria-hidden="true"></span><h2>Чем помочь?</h2></div>`
+    : !AI.msgs.length && !run ? `<div class="ai-empty"><p>Спроси что угодно про этот компьютер — помощник сам посмотрит журналы Windows, сбои, драйверы,
       питание, датчики, место, защиту, браузеры и то, что уже нашёл ScanHub, а при необходимости поищет в интернете${AI.cfg?.files === "off" ? "" : ", а ещё файлы и папки (кнопка ⊕ или просто напиши путь)"}.
       Или нажми «✦ Как решить» у любой находки — помощник коротко скажет, что делать, и предложит кнопку, если ScanHub может сделать это сам.</p><div class="ai-sug">${AI_SUGGEST.map(s => `<button class="small" data-ai-ask="${esc(s)}" type="button">${esc(s)}</button>`).join("")}</div></div>` : "";
   // в разговоре о проверке — подсказки по её теме, пока человек ещё ничего не спросил
@@ -353,6 +363,76 @@ function aiAsk(text, imgs = []){
   aiStart({kind: "chat", messages: [...hist, {role: "user", content: text}], ...(imgs.length ? {images: imgs} : {}), ...(AI.ctx ? {ctx_job: AI.ctx.job} : {})},
           {role: "user", content: text, ...(imgs.length ? {imgs} : {})});
 }
+
+// ---------- 2.2: режим («Быстрый / Точный») над полем и модель в поле — выпадающими списками
+const AI_MODES = [["fast", "Быстрый режим", "Короткое размышление и меньше шагов — ответ за секунды. Интернет — только если попросишь."],
+                  ["precise", "Точный режим", "Модель думает дольше и сама проверяет больше данных. Для сложных вопросов."]];
+const AI_BOLT = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>`;
+const AI_TARGET = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg>`;
+const AI_CHEV = `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
+function aiModeLabel(){
+  const m = AI_MODES.find(x => x[0] === (AI.cfg?.speed || "fast")) || AI_MODES[0];
+  return `${m[0] === "fast" ? AI_BOLT : AI_TARGET}<span>${esc(m[1])}</span>${AI_CHEV}`;
+}
+// коротко, как в чат-программах: «Gemini 4 Hydrogen · High», «gemini-3.5-flash»
+function aiModelShort(){
+  const c = AI.cfg || {};
+  if (!c.enabled) return "";
+  if (c.provider === "antigravity") { const {lvl} = aiAgySplit(c.model); return aiAgyName(c.model) + (lvl ? " · " + aiAgyLvl(lvl) : "") }
+  return c.model === "auto" ? `${aiProviderName(c.provider)} · по подписке` : c.model || aiProviderName(c.provider);
+}
+function aiPop(anchor, html, up = true){
+  aiPopClose();
+  const pop = document.createElement("div");
+  pop.className = "ai-pop"; pop.id = "aiPop"; pop.setAttribute("role", "menu");
+  pop.innerHTML = html;
+  document.body.appendChild(pop);
+  const r = anchor.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  pop.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left)) + "px";
+  pop.style.top = (up && r.top - h - 8 > 8 ? r.top - h - 8 : r.bottom + 8) + "px";
+  setTimeout(() => pop.querySelector(".on, button")?.focus(), 0);
+}
+function aiPopClose(){ document.getElementById("aiPop")?.remove() }
+async function aiModelMenu(btn){
+  const c = AI.cfg || {};
+  if (AI.modelsFor !== c.provider || !AI.models.length) {
+    aiPop(btn, `<div class="ai-pop-note">Ищу модели…</div>`);
+    try { const r = await api("/api/ai/models", {provider: c.provider}); AI.models = r.models || []; AI.modelsFor = c.provider; if (r.labels) AI.labels = r.labels }
+    catch (e) { return aiPop(btn, `<div class="ai-pop-note">${esc(e.message)}</div>`) }
+  }
+  const label = id => c.provider === "antigravity" ? aiAgyName(id) + (aiAgySplit(id).lvl ? " · " + aiAgyLvl(aiAgySplit(id).lvl) : "")
+    : id === "auto" ? "Лучшая модель подписки" : id;
+  // уровни одной модели — подряд, от быстрого к глубокому (Low → Max)
+  const order = [...new Set(AI.models.map(id => aiAgySplit(id).base))], li = id => AGY_LEVELS.findIndex(x => x[0] === aiAgySplit(id).lvl);
+  const list = c.provider === "antigravity" ? [...AI.models].sort((a, b) => order.indexOf(aiAgySplit(a).base) - order.indexOf(aiAgySplit(b).base) || li(a) - li(b)) : AI.models;
+  aiPop(btn, `<div class="ai-pop-h">${esc(aiProviderName(c.provider))}</div><div class="ai-pop-list">${list.map(id =>
+      `<button type="button" role="menuitemradio" aria-checked="${id === c.model}" class="${id === c.model ? "on" : ""}" data-ai-model-pick="${esc(id)}">${esc(label(id))}</button>`).join("")}</div>
+    <button type="button" class="ai-pop-foot" data-ai-gear>Другой сервис и ключи…</button>`);
+}
+document.addEventListener("click", async e => {
+  const t = e.target;
+  if (t.closest("#aiModeBtn")) {
+    e.preventDefault();
+    if (document.getElementById("aiPop")?.dataset.kind === "mode") return aiPopClose();
+    aiPop(t.closest("#aiModeBtn"), AI_MODES.map(([id, name, hint]) => `<button type="button" role="menuitemradio" aria-checked="${id === (AI.cfg?.speed || "fast")}" class="ai-pop-mode${id === (AI.cfg?.speed || "fast") ? " on" : ""}" data-ai-speed="${id}">
+      ${id === "fast" ? AI_BOLT : AI_TARGET}<span><b>${esc(name)}</b><small>${esc(hint)}</small></span></button>`).join(""));
+    document.getElementById("aiPop").dataset.kind = "mode";
+    return;
+  }
+  if (t.closest("#aiModelBtn")) { e.preventDefault(); return document.getElementById("aiPop")?.dataset.kind === "model" ? aiPopClose() : (await aiModelMenu(t.closest("#aiModelBtn")), document.getElementById("aiPop") && (document.getElementById("aiPop").dataset.kind = "model")) }
+  const mp = t.closest("[data-ai-model-pick]");
+  if (mp) {
+    e.preventDefault(); aiPopClose();
+    try { AI.cfg = await api("/api/ai/config", {model: mp.dataset.aiModelPick}); aiRender(); toast("Модель помощника", aiModelShort(), "ok", 3000) }
+    catch (err) { toast("Не сохранилось", err.message, "warn") }
+    return;
+  }
+  if (!t.closest("#aiPop")) aiPopClose();
+  else if (t.closest("[data-ai-speed],[data-ai-gear]")) setTimeout(aiPopClose, 0);
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && document.getElementById("aiPop")) { e.stopPropagation(); aiPopClose() } }, true);
+// «Другой сервис и ключи…» обрабатывает общий обработчик помощника (он останавливает событие) — список закрываем заранее
+document.addEventListener("click", e => { if (e.target.closest("#aiPop [data-ai-gear]")) setTimeout(aiPopClose, 0) }, true);
 
 // ---------- 2.2: фото и скриншоты — кнопкой или вставкой (Ctrl+V); большие уменьшаются до 1600 точек, чтобы ответ шёл быстрее
 AI.imgs = [];
@@ -641,7 +721,7 @@ document.addEventListener("click", async e => {
   if (a.hasAttribute("data-ai-fresh")) { try { const f = JSON.parse(a.dataset.aiFresh); if (f) return aiExplain(f, true) } catch {} return }
   if (a.hasAttribute("data-ai-gear") || a.id === "aiGear") { AI.setup = true; AI.pick = AI.cfg?.provider || ""; aiRender();
     if (AI.cfg?.providers?.find(p => p.id === AI.pick)?.cli) aiCliCheck(AI.pick); return }
-  if (a.id === "aiTop") return aiPanel().hidden ? aiOpen() : aiClose();
+  if (a.id === "aiTop") return typeof aiOpenFull === "function" ? aiOpenFull() : aiPanel().hidden ? aiOpen() : aiClose();   // 2.2: из меню — сразу на всё окно
   if (a.id === "aiClose") return aiClose();
   if (a.id === "aiNew") { if (AI.job?.status !== "running") { AI.msgs = []; AI.ctx = null; aiRender() } return }
   if (a.id === "aiStop") { if (AI.job?.id) api("/api/ai/stop", {id: AI.job.id}).catch(() => {}); return }

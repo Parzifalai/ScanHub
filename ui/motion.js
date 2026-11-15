@@ -118,10 +118,8 @@ document.addEventListener("keydown", e => {
   if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.code !== "KeyK") return;
   e.preventDefault();
   if (document.querySelector(".mdl-back, dialog[open]")) return;
-  const p = typeof aiPanel === "function" ? aiPanel() : null;
-  if (!p) return;
-  if (p.hidden) aiOpen();
-  else document.getElementById("aiText")?.focus();
+  if (typeof aiPanel !== "function") return;
+  aiOpenFull();
 });
 // ---------- помощник открылся/закрылся: страница перестраивается под новую ширину за один раз, а блоки плавно
 // доезжают со старых мест на новые (запомнили, где были → перестроили → каждый блок едет от старого места к новому).
@@ -143,10 +141,45 @@ function flipMain(change){
     e.animate([{transform: `translate(${dx}px,${dy}px)`}, {transform: "none"}], {duration: 460, easing: "cubic-bezier(.2,.8,.2,1)"});
   }
 }
+// 2.2: из меню и по Ctrl+K помощник открывается разделом на всё окно; «✦ Как решить» и другие кнопки на страницах —
+// панелью сбоку, чтобы находка оставалась перед глазами
+let AI_FULL_REQ = false;
 if (typeof aiOpen === "function") {
   const _aiOpen = aiOpen;
-  aiOpen = function(){ let r; const args = arguments; flipMain(() => { r = _aiOpen.apply(this, args) }); return r };
+  aiOpen = function(){
+    const full = AI_FULL_REQ; AI_FULL_REQ = false;
+    if (!full && aiPanel().hidden) document.body.classList.remove("ai-full");
+    let r; const args = arguments;
+    flipMain(() => { r = _aiOpen.apply(this, args) });
+    return r;
+  };
 }
+function aiOpenFull(){
+  const p = aiPanel();
+  if (!p.hidden && document.body.classList.contains("ai-full")) return document.getElementById("aiText")?.focus();
+  if (!p.hidden) return aiFull(true);                   // была панель сбоку — разворачиваем
+  AI_FULL_REQ = true;
+  document.body.classList.add("ai-full");
+  aiOpen();
+}
+// переход в любой раздел меню закрывает помощника на всё окно — как переход между разделами
+document.addEventListener("click", e => {
+  if (!document.body.classList.contains("ai-full") || !document.body.classList.contains("ai-open")) return;
+  if (e.target.closest("#side a.nav, #side .brand, [data-go], [data-go-page]") && !e.target.closest("#aiPanel")) aiClose();
+}, true);
+// скрыть левое меню целиком (только когда помощник на всё окно) — кнопка слева в шапке помощника, запоминается
+function sideHidden(on){
+  document.body.classList.toggle("side-hidden", on);
+  store.set("sideHidden", on ? "1" : "");
+  const b = document.getElementById("aiSideTgl");
+  if (b) b.title = b.ariaLabel = on ? "Показать меню" : "Скрыть меню";
+}
+if (store.get("sideHidden") === "1") document.body.classList.add("side-hidden");
+document.addEventListener("click", e => {
+  if (!e.target.closest("#aiSideTgl")) return;
+  e.preventDefault(); e.stopPropagation();
+  sideHidden(!document.body.classList.contains("side-hidden"));
+}, true);
 if (typeof aiClose === "function") {
   const _aiClose = aiClose;
   aiClose = function(){
@@ -160,11 +193,13 @@ if (typeof aiClose === "function") {
 // ---------- помощник на весь экран: только разговор, остальное окно прячется (кнопка ⤢ в шапке помощника, запоминается)
 function aiFull(on){
   document.body.classList.toggle("ai-full", on);
-  store.set("aiFull", on ? "1" : "");
   const b = document.getElementById("aiFull");
-  if (b) { b.title = b.ariaLabel = on ? "Обычный размер" : "На весь экран"; b.classList.toggle("on", on) }
+  if (b) { b.title = b.ariaLabel = on ? "Панелью сбоку" : "На всё окно"; b.classList.toggle("on", on) }
+  if (!aiPanel().hidden) aiRender();                    // пустой экран на всё окно и сбоку выглядит по-разному
 }
-if (store.get("aiFull") === "1") document.body.classList.add("ai-full");
+new MutationObserver(() => { const b = document.getElementById("aiFull"), on = document.body.classList.contains("ai-full");
+  if (b && b.classList.contains("on") !== on) { b.classList.toggle("on", on); b.title = b.ariaLabel = on ? "Панелью сбоку" : "На всё окно" } })
+  .observe(document.body, {attributes: true, attributeFilter: ["class"]});
 document.addEventListener("click", e => {
   if (!e.target.closest("#aiFull")) return;
   e.preventDefault(); e.stopPropagation();

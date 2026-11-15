@@ -1737,3 +1737,62 @@ body.ai-full .ai-body{padding-inline:24px}
 .side{z-index:25}
 header::before{left:calc(-1 * var(--sw) - 2px)}
 @media (max-width:900px){ header::before{left:0} .side{z-index:40} }
+
+/* ---------- 2.2 помощник — раздел на всё окно рядом с меню (меню можно убрать кнопкой слева в шапке помощника) */
+body.ai-full.ai-open .side{visibility:visible}
+body.ai-full.ai-open main{visibility:hidden}
+@media (min-width:901px){
+  body.ai-full .ai-panel{left:calc(var(--sw) + 12px);right:12px;top:calc(var(--hdr-h,57px) + 4px);bottom:12px;width:auto;z-index:30}
+  body.ai-full.side-hidden .ai-panel{left:12px}
+  body.ai-full.ai-open.side-hidden .side{display:none}
+  body.ai-full.ai-open.side-hidden .layout{grid-template-columns:0 minmax(0,1fr)}
+}
+#aiSideTgl{display:none}
+@media (min-width:901px){ body.ai-full #aiSideTgl{display:inline-grid} }
+/* текущий раздел не подсвечен, пока открыт помощник: подсвечена его строка */
+body.ai-full.ai-open .nav-ind{opacity:0}
+body.ai-full.ai-open .side .nav-main a.nav.on{color:var(--muted)}
+body.ai-full.ai-open .side .nav-main a.nav.on .ico{color:inherit}
+.side-ai.on{color:#fff;border-color:rgba(160,165,255,.55);background:linear-gradient(90deg,rgba(110,115,255,.32),rgba(110,115,255,.1))}
+
+/* пустой разговор: заголовок, поле и подсказки — по центру окна, ничего лишнего */
+.ai-panel.empty .ai-head{border-bottom-color:transparent}
+.ai-panel.empty .ai-head .ai-mark,.ai-panel.empty .ai-title{visibility:hidden}
+.ai-panel.empty .ai-body{flex:0 0 auto;margin-top:auto;overflow:visible;padding-bottom:10px}
+.ai-panel.empty .ai-input{border-top:0}
+.ai-panel.empty .ai-sugbar{margin-bottom:auto}
+.ai-hero{display:flex;align-items:center;justify-content:center;gap:14px;animation:msgIn .45s var(--ease) both}
+.ai-hero .orb{width:42px;height:42px}
+.ai-hero h2{margin:0;font:600 32px/1.1 var(--din);letter-spacing:.2px}
+.ai-sugbar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;width:100%;max-width:880px;margin:6px auto 0;padding:0 24px 24px}
+.ai-sugbar[hidden]{display:none}
+.ai-sugbar button{border-radius:999px;background:rgba(255,255,255,.03);border:1px solid var(--line2);color:var(--muted);font-size:12.5px;padding:5px 12px}
+.ai-sugbar button:hover{color:var(--text);border-color:rgba(160,165,255,.5);background:rgba(110,115,255,.1)}
+
+/* над полем — режим, в поле справа — модель */
+.ai-above{display:flex;margin:0 0 6px}
+body.ai-full .ai-above{max-width:880px;margin:0 auto 8px;width:100%}
+.ai-mode,.ai-model{display:inline-flex;align-items:center;gap:7px;border:0;background:none;color:var(--muted);font:500 13.5px var(--din);padding:5px 8px;border-radius:9px}
+.ai-mode:hover,.ai-model:hover,.ai-mode[aria-expanded="true"]{color:var(--text);background:rgba(122,156,255,.08)}
+.ai-mode svg:first-child{color:#B9B6FF}
+.ai-model{font-size:12.5px;max-width:240px}
+.ai-model span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-model[hidden]{display:none}
+.ai-mode:focus-visible,.ai-model:focus-visible{outline:2px solid #9E9BFF;outline-offset:1px}
+
+/* выпадающие списки */
+.ai-pop{position:fixed;z-index:300;min-width:240px;max-width:340px;max-height:380px;overflow:auto;padding:6px;border-radius:14px;
+  background:rgba(14,21,50,.94);backdrop-filter:var(--blur);border:1px solid rgba(160,185,255,.22);box-shadow:0 24px 50px -12px rgba(0,0,0,.8);
+  animation:mdlPop .22s var(--spring)}
+.ai-pop button{display:flex;align-items:flex-start;gap:10px;width:100%;text-align:left;border:0;background:none;color:var(--text);padding:8px 10px;border-radius:9px;font:500 13.5px var(--din)}
+.ai-pop button:hover,.ai-pop button:focus-visible{background:rgba(122,156,255,.1);outline:none}
+.ai-pop button.on{background:rgba(110,115,255,.18)}
+.ai-pop button.on::after{content:"✓";margin-left:auto;color:#B9B6FF}
+.ai-pop-mode svg{margin-top:2px;color:#B9B6FF;flex:none}
+.ai-pop-mode span{display:grid;gap:2px}
+.ai-pop-mode small{font:400 12px var(--ui);color:var(--muted);line-height:1.4}
+.ai-pop-h{padding:6px 10px 4px;font-size:12px;color:var(--dim)}
+.ai-pop-list{display:grid}
+.ai-pop-note{padding:10px;color:var(--muted);font-size:13px}
+.ai-pop .ai-pop-foot{margin-top:4px;border-top:1px solid var(--line);border-radius:0 0 9px 9px;color:var(--muted);font-size:12.5px}
+.ai-pop::-webkit-scrollbar{width:8px} .ai-pop::-webkit-scrollbar-thumb{border:2px solid transparent;background-clip:padding-box;border-radius:8px;background-color:rgba(150,160,255,.28)}
