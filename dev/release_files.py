@@ -6,7 +6,7 @@
 import os
 import subprocess
 
-SKIP_TOP = {"dev", ".github", "data", "apps", "_backup"}
+SKIP_TOP = {"dev", ".github", "data", "apps", "_backup", "docs"}   # docs — логотипы и скриншоты для страницы GitHub, программе не нужны
 
 
 def published_files(root):
