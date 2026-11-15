@@ -62,7 +62,7 @@
 
 Внутри архива — официальная сборка Python с python.org (подписана Python Software Foundation) и пакеты psutil и yara-x.
 
-**Если у тебя уже стоит Python 3.14+**, можно взять исходный код (**Code → Download ZIP**), в папке выполнить `pip install -r requirements.txt` и запустить **ScanHub.exe** — он найдёт установленный Python сам.
+**Если у тебя уже стоит Python 3.12 или новее**, можно взять исходный код (**Code → Download ZIP**), в папке выполнить `pip install -r requirements.txt` и запустить **ScanHub.exe** — он найдёт установленный Python сам.
 
 Необязательно:
 - **7-Zip** — нужен только для Emsisoft Emergency Kit.

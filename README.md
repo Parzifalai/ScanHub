@@ -60,7 +60,7 @@ Unpack the archive into any folder and run **ScanHub.exe**. Nothing to install, 
 
 The archive contains the official Python build from python.org (signed by the Python Software Foundation) and the psutil and yara-x packages.
 
-**If you already have Python 3.14+**, you can take the source code (**Code → Download ZIP**), run `pip install -r requirements.txt` in the folder and start **ScanHub.exe**. It finds the installed Python by itself.
+**If you already have Python 3.12 or newer**, you can take the source code (**Code → Download ZIP**), run `pip install -r requirements.txt` in the folder and start **ScanHub.exe**. It finds the installed Python by itself.
 
 Optional:
 - **7-Zip**: needed only for Emsisoft Emergency Kit.

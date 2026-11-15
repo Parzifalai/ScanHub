@@ -18,13 +18,14 @@ def windows_lang():
         return "ru"
 
 
-if sys.version_info < (3, 14) or sys.platform != "win32":
+MIN_PY = (3, 12)          # проверено запуском на Python 3.12.10 (портативная сборка ScanHub идёт со своим Python 3.14)
+if sys.version_info < MIN_PY or sys.platform != "win32":
     # pythonw не показывает ошибок — без этого окна ScanHub на старом Python просто молча не открылся бы
     ru = sys.platform != "win32" or windows_lang() == "ru"
-    msg = (f"ScanHub нужен Python 3.14 или новее для Windows, а запущен Python {sys.version.split()[0]}.\n\n"
+    msg = (f"ScanHub нужен Python 3.12 или новее для Windows, а запущен Python {sys.version.split()[0]}.\n\n"
            "Проще всего скачать портативный ScanHub-Windows.zip — в нём Python уже есть. Или поставь Python с python.org "
            "(при установке отметь «Add python.exe to PATH») и выполни:\npip install -r requirements.txt") if ru else (
-           f"ScanHub needs Python 3.14 or newer for Windows, but this is Python {sys.version.split()[0]}.\n\n"
+           f"ScanHub needs Python 3.12 or newer for Windows, but this is Python {sys.version.split()[0]}.\n\n"
            "The easiest way is the portable ScanHub-Windows.zip — Python is already inside. Or install Python from python.org "
            "(tick \"Add python.exe to PATH\") and run:\npip install -r requirements.txt")
     if sys.platform == "win32":

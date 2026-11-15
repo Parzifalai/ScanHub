@@ -1,4 +1,4 @@
-# ScanHub: Python 3.14+ для Windows 10/11 (x64)
+# ScanHub: Python 3.12+ для Windows 10/11 (x64); портативная сборка идёт со своим Python 3.14
 psutil>=7.0
 yara-x>=1.0
 anthropic>=1.0

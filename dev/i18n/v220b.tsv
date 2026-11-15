@@ -1,0 +1,75 @@
+Уведомления	Notifications
+Написать автору	Message the author
+Выйти из ScanHub	Quit ScanHub
+Закрыть ScanHub	Close ScanHub
+Идёт проверка — остановить и закрыть ScanHub?	A scan is running — stop it and close ScanHub?
+Если закрыть сейчас, эти проверки оборвутся.	If you close now, these scans will be cut short.
+Остановить и закрыть	Stop and close
+Не закрывать	Don't close
+Как отвечать: быстро или точно	How to answer: fast or thorough
+Модель помощника	Assistant model
+Лучшая модель подписки	Best model in the subscription
+Вернуться к разговору	Back to the chat
+Модель и ключи	Model and keys
+К разговору	Back to the chat
+Спроси про эту проверку…	Ask about this scan…
+Спроси или попроси: «проверь на майнеры», «что можно очистить?»	Ask or request: "check for miners", "what can I clean up?"
+На весь экран	Full screen
+На всё окно	Full window
+Панелью сбоку	As a side panel
+Скрыть меню	Hide menu
+Показать меню	Show menu
+Приложить фото	Attach a photo
+Приложить фото или скриншот (или просто вставь его в поле — Ctrl+V)	Attach a photo or screenshot (or just paste it into the box — Ctrl+V)
+Убрать картинку	Remove picture
+картинка к вопросу	picture attached to the question
+Отправить — Enter (новая строка — Shift+Enter)	Send — Enter (new line — Shift+Enter)
+Чем помочь?	How can I help?
+Быстрый режим	Fast mode
+Точный режим	Thorough mode
+Короткое размышление и меньше шагов — ответ за секунды. Интернет — только если попросишь.	Short thinking and fewer steps — an answer in seconds. Internet only if you ask.
+Модель думает дольше и сама проверяет больше данных. Для сложных вопросов.	The model thinks longer and checks more data itself. For hard questions.
+Ищу модели…	Looking for models…
+Другой сервис и ключи…	Another service and keys…
+Скорость ответа	Answer speed
+Эта модель не видит картинки	This model can't see pictures
+опиши словами или выбери в ⚙ помощника Gemini, Claude или ChatGPT	describe it in words or pick Gemini, Claude or ChatGPT in the assistant's ⚙
+Не больше 4 картинок к одному вопросу	No more than 4 pictures per question
+Не получилось открыть картинку	Couldn't open the picture
+Что на этой картинке и что мне делать?	What's in this picture and what should I do?
+Что на этих картинках и что мне делать?	What's in these pictures and what should I do?
+не видит картинки — опиши словами или выбери в настройках помощника Gemini, Claude или ChatGPT	can't see pictures — describe it in words or pick Gemini, Claude or ChatGPT in the assistant settings
+Очистить мусор этих категорий:	Clean up junk in these categories:
+Удаляются только временные файлы и кэши — то же, что кнопка «Очистить» в «Очистка и место».	Only temporary files and caches are deleted — the same as the "Clean" button in "Cleanup & space".
+Очистить мусор	Clean up junk
+кат.)	cat.)
+запускаю проверку	running a check
+запускаю поиск майнеров	running the miner search
+запускаю быструю проверку Defender	running a Defender quick scan
+запускаю поиск мусора	looking for junk
+запускаю автозагрузку	checking startup
+запускаю здоровье ПК	checking PC health
+запускаю комплектующие	checking the hardware
+смотрю картинку	looking at the picture
+смотрю картинки	looking at the pictures
+очищаю мусор	cleaning up junk
+Вт	W
+угроз нет, но есть что исправить	no threats, but there are things to fix
+мин, а процессор загружен в среднем на	min, and the processor is loaded on average at
+% — работают фоновые задачи	% — background tasks are running
+этот файл — служба обновлений программы	this file is the program's updater
+этот файл — отправка отчётов о вылетах разработчику	this file is the crash reporter
+этот файл — установщик или удаляльщик	this file is an installer or uninstaller
+этот файл — её фоновая служба	this file is its background service
+этот файл — её вспомогательный процесс	this file is its helper process
+этот файл — запускалка	this file is the launcher
+этот файл — значок у часов и уведомления	this file is the tray icon and notifications
+ScanHub нужен Python 3.12 или новее для Windows, а запущен Python	ScanHub needs Python 3.12 or newer for Windows, but this is Python
+Проще всего скачать портативный ScanHub-Windows.zip — в нём Python уже есть. Или поставь Python с python.org (при установке отметь «Add python.exe to PATH») и выполни:	The easiest way is the portable ScanHub-Windows.zip — Python is already inside. Or install Python from python.org (tick "Add python.exe to PATH") and run:
+(в текущей папке). Сначала открой и посмотри	-
+Человек приложил к вопросу картинк	-
+ещё проверяет — вызови run_check с тем же kind ещё раз через минуту	-
+проверка ещё идёт — вызови run_check с тем же kind ещё раз через минуту, ход виден в окне ScanHub	-
+нажми «Подготовить ScanHub» на главной или поставь сканер в разделе «Сканеры»	-
+не прочитал отчёт MinerSearch:	-
+нет таких категорий мусора с файлами:	-

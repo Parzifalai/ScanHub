@@ -62,7 +62,6 @@
 1–2 тревоги из 70 эвристикой — обычно ложные. Если файл скачан не с официального сайта или ты его не знаешь — убери в карантин.	1–2 heuristic alerts out of 70 are usually false. If the file wasn't downloaded from the official site or you don't know it — quarantine it.
 2,5 мин	2.5 min
 3D, игры и графика	3D, games and graphics
-5 мин	5 min
 7 тыс. правил Elastic и YARA Forge по тем же файлам	7k Elastic and YARA Forge rules on the same files
 7 тыс. правил Elastic и YARA Forge по тем же файлам, что и ClamAV	7k Elastic and YARA Forge rules on the same files as ClamAV
 7 тыс. правил исследователей безопасности: узнаёт известные вирусы, майнеры и хакерские утилиты.	7k rules by security researchers: recognizes known viruses, miners and hacking tools.

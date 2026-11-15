@@ -551,6 +551,16 @@ def hosts_prepare(enable):
 
 # ================================================================ сторож (задача планировщика)
 
+def _cut(t, n):
+    """Укоротить по концу предложения, а не посреди слова: обрубок фразы не переводится словарём английского режима
+    (на экране выходило «Программа повредила свою memory: обнови её…»)."""
+    t = t or ""
+    if len(t) <= n:
+        return t
+    end = max(t.rfind(". ", 0, n), t.rfind("; ", 0, n))
+    return t[:end + 1] if end > n // 3 else t[:t.rfind(" ", 0, n)].rstrip(",;:— ") + "…"
+
+
 def watch_explain(text):
     """Срабатывание Сторожа простыми словами: насколько это страшно, что это и что делать.
     lvl: ok — не страшно, warn — стоит посмотреть, bad — важно. go — раздел ScanHub для кнопки."""
@@ -590,12 +600,12 @@ def watch_explain(text):
                 "todo": "Если не замечал проблем — ничего делать не надо. Если вылетает часто или мешает — открой «Сбои и ошибки»: там видно, как часто и почему.",
                 "go": "health:crash", "go_label": "Сбои и ошибки"}
     if re.search(r"синий экран|BugCheck|аппаратн|WHEA", t, re.I):
-        return {"lvl": "bad", "title": "Серьёзный сбой Windows", "what": t[:200],
+        return {"lvl": "bad", "title": "Серьёзный сбой Windows", "what": _cut(t, 300),
                 "todo": "Открой «Сбои и ошибки» — там причина и что сделать.", "go": "health:crash", "go_label": "Сбои и ошибки"}
     if re.search(r"выключ|Kernel-Power", t, re.I):
-        return {"lvl": "warn", "title": "Компьютер выключился неправильно", "what": t[:200],
+        return {"lvl": "warn", "title": "Компьютер выключился неправильно", "what": _cut(t, 300),
                 "todo": "Если выключал кнопкой или садилась батарея — не страшно. Если сам — открой «Сбои и ошибки».", "go": "health:crash", "go_label": "Сбои и ошибки"}
-    return {"lvl": "warn", "title": t.split(" — ")[0][:120], "what": t[:240], "todo": "Подробности — в «Сбоях и ошибках».",
+    return {"lvl": "warn", "title": t.split(" — ")[0][:120], "what": _cut(t, 360), "todo": "Подробности — в «Сбоях и ошибках».",
             "go": "health:crash", "go_label": "Сбои и ошибки"}
 
 
@@ -688,7 +698,7 @@ def watch_once():
     if last:
         import diag
         for e in diag.new_events_since(last)[:5]:
-            found.append(f"{e['title']} — {e['text'][:120]}")
+            found.append(f"{e['title']} — {_cut(e['text'], 260)}")
     json.dump({"events_from": now_iso}, open(st_path, "w", encoding="utf-8"))
     if found:
         path = os.path.join(DATA, "watch_alerts.json")
