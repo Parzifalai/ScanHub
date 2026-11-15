@@ -17,6 +17,7 @@ const calm = () => RM.matches;
 function sideMini(on, save = true){
   document.body.classList.toggle("side-mini", on);
   if (save) store.set("sideMini", on ? "1" : "");
+  NAV_Y = null;                                      // у свёрнутого меню другие отступы — подсветку ставим сразу, без поездки
   if (typeof renderNav === "function") renderNav();
 }
 if (store.get("sideMini") === "1") document.body.classList.add("side-mini");
@@ -35,16 +36,18 @@ renderNav = function(){
   if (!box) return;
   const ind = document.createElement("i");
   ind.className = "nav-ind"; ind.setAttribute("aria-hidden", "true");
-  box.prepend(ind);
-  if (!on) { ind.style.opacity = 0; NAV_Y = null; return }
+  if (!on) { ind.style.opacity = 0; box.prepend(ind); NAV_Y = null; return }
+  // место считаем ДО вставки и ставим без анимации: иначе новая подсветка рождается вверху и едет вниз
+  // при каждой перерисовке меню (а оно перерисовывается каждые несколько секунд вместе со счётчиками)
   const y = on.offsetTop, h = on.offsetHeight;
+  const move = NAV_Y != null && NAV_Y !== y && !calm();
   ind.style.height = h + "px";
-  if (NAV_Y == null || NAV_Y === y || calm()) { ind.style.transform = `translateY(${y}px)`; NAV_Y = y; return }
   ind.style.transition = "none";
-  ind.style.transform = `translateY(${NAV_Y}px)`;
-  ind.getBoundingClientRect();                       // зафиксировать старое место, потом — плавно к новому
+  ind.style.transform = `translateY(${move ? NAV_Y : y}px)`;
+  box.prepend(ind);
+  ind.getBoundingClientRect();
   ind.style.transition = "";
-  ind.style.transform = `translateY(${y}px)`;
+  if (move) ind.style.transform = `translateY(${y}px)`;   // раздел сменился — плавно к новому пункту
   NAV_Y = y;
 };
 
@@ -135,6 +138,15 @@ renderNav();
 enterView(true, document.body.classList.contains("boot-full") ? 820 : 120);
 tweenIn(document.getElementById("hStats"));
 
-// подсветка строки помощника в меню, пока панель открыта
-new MutationObserver(() => document.getElementById("aiTop")?.classList.toggle("on", document.body.classList.contains("ai-open")))
-  .observe(document.body, {attributes: true, attributeFilter: ["class"]});
+// помощник открылся или закрылся: страница перестраивается под новую ширину сразу (раньше ширина менялась
+// плавно, и блоки на полпути перескакивали из двух колонок в одну), а смену прикрывает короткое проявление
+let AI_WAS = document.body.classList.contains("ai-open");
+new MutationObserver(() => {
+  const open = document.body.classList.contains("ai-open");
+  document.getElementById("aiTop")?.classList.toggle("on", open);
+  if (open === AI_WAS) return;
+  AI_WAS = open;
+  if (calm() || innerWidth < 1180) return;           // на узком экране помощник открывается поверх, страница не меняется
+  document.querySelector("main")?.animate([{opacity: .25, transform: "translateY(4px)"}, {opacity: 1, transform: "none"}],
+    {duration: 320, easing: "cubic-bezier(.2,.8,.2,1)"});
+}).observe(document.body, {attributes: true, attributeFilter: ["class"]});

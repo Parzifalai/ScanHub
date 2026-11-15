@@ -1660,3 +1660,22 @@ body.side-mini .side-ai .orb{width:32px;height:32px}
 main{container:main / inline-size}
 @container main (max-width:1000px){ .home-top{grid-template-columns:minmax(0,1fr)} }
 @container main (max-width:760px){ .quick,.quick-more{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
+/* ---------- 2.2 правки после первого показа */
+/* верхняя полоса: вместо тёмного прямоугольника — размытие, которое к низу плавно сходит на нет */
+header{background:none;backdrop-filter:none;isolation:isolate}
+header::before{content:"";position:absolute;inset:0 0 -34px 0;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(7,12,27,.72) 0%,rgba(7,12,27,.38) 55%,rgba(7,12,27,0) 100%);
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-mask:linear-gradient(180deg,#000 0%,#000 45%,transparent 100%);mask:linear-gradient(180deg,#000 0%,#000 45%,transparent 100%)}
+/* вкладки раздела: если не помещаются (например, открыт помощник) — переносятся на вторую строку, а не прячутся за краем */
+.tabs{flex-wrap:wrap;overflow:visible;row-gap:2px}
+/* ширина страницы меняется сразу — без плавного сдвига, на котором блоки дёргались */
+@media (min-width:1180px){ main{transition:none} }
+/* содержимое — по центру свободного места; при свёрнутом меню страница чуть шире */
+main{margin-inline:auto;max-width:1400px}
+body.side-mini main{max-width:1500px}
+@media (min-width:1180px){
+  body.ai-open main{max-width:calc(1400px + var(--aiw) + 24px)}
+  body.side-mini.ai-open main{max-width:calc(1500px + var(--aiw) + 24px)}
+}
