@@ -14,14 +14,10 @@ SKIP_EXT = (".pyc", ".lock", ".tmp", ".log")
 os.makedirs(OUT_DIR, exist_ok=True)
 out = os.path.join(OUT_DIR, f"ScanHub-{VERSION}.zip")
 n = 0
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from release_files import published_files       # только файлы из git — без служебных и личных файлов рядом
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
-    for root, dirs, files in os.walk(SRC):
-        rel = os.path.relpath(root, SRC)
-        dirs[:] = [d for d in dirs if not (rel == "." and d in SKIP_DIRS) and d != "__pycache__"]
-        for f in files:
-            if f.endswith(SKIP_EXT):
-                continue
-            p = os.path.join(root, f)
-            z.write(p, os.path.join("ScanHub", os.path.relpath(p, SRC)))
-            n += 1
+    for rel in published_files(SRC):
+        z.write(os.path.join(SRC, rel), os.path.join("ScanHub", rel))
+        n += 1
 print(out, n, "files", round(os.path.getsize(out) / 2 ** 20, 2), "MB")

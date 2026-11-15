@@ -2,7 +2,13 @@
 // Тексты ScanHub пишутся по-русски; в режиме English окно на лету заменяет их по словарю en.json
 // (фразы и куски фраз, собранные из кода — dev\i18n_extract.py). Работает для всего, что появляется в окне:
 // разделы, кнопки, подсказки, сообщения сервера, окна подтверждения. Ответы ИИ-помощника — сразу по-английски.
-const LANG = (() => { try { return localStorage.getItem("lang") === "en" ? "en" : "ru" } catch { return "ru" } })();
+// язык: выбранный в ⚙ Настройках (хранится в окне), иначе — тот, что прислал сервер (сохранённый или язык Windows)
+const LANG = (() => {
+  let saved = null;
+  try { saved = localStorage.getItem("lang") } catch {}
+  if (saved === "en" || saved === "ru") return saved;
+  return typeof SRV_LANG === "string" && SRV_LANG === "en" ? "en" : "ru";
+})();
 document.documentElement.lang = LANG;
 let I18N = null, I18N_RX = null;
 const CYR = /[А-Яа-яЁё]/;

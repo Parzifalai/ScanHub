@@ -10,11 +10,23 @@ VERSION = "2.2.0"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
+def windows_lang():
+    """Язык интерфейса Windows: «ru» для русской, «en» для остальных (первый запуск ScanHub — на языке системы)."""
+    try:
+        return "ru" if ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF == 0x19 else "en"
+    except (AttributeError, OSError):
+        return "ru"
+
+
 if sys.version_info < (3, 14) or sys.platform != "win32":
     # pythonw не показывает ошибок — без этого окна ScanHub на старом Python просто молча не открылся бы
+    ru = sys.platform != "win32" or windows_lang() == "ru"
     msg = (f"ScanHub нужен Python 3.14 или новее для Windows, а запущен Python {sys.version.split()[0]}.\n\n"
-           "Скачай его с python.org (при установке отметь «Add python.exe to PATH»), затем выполни:\n"
-           "pip install -r requirements.txt")
+           "Проще всего скачать портативный ScanHub-Windows.zip — в нём Python уже есть. Или поставь Python с python.org "
+           "(при установке отметь «Add python.exe to PATH») и выполни:\npip install -r requirements.txt") if ru else (
+           f"ScanHub needs Python 3.14 or newer for Windows, but this is Python {sys.version.split()[0]}.\n\n"
+           "The easiest way is the portable ScanHub-Windows.zip — Python is already inside. Or install Python from python.org "
+           "(tick \"Add python.exe to PATH\") and run:\npip install -r requirements.txt")
     if sys.platform == "win32":
         ctypes.windll.user32.MessageBoxW(None, msg, "ScanHub", 0x10)
     sys.exit(msg)
@@ -159,7 +171,7 @@ def unseal(value):
 
 def config():
     cfg = {"github_token": "", "check_every_hours": 6, "virustotal_key": "", "filescan_key": "", "metadefender_key": "", "hybrid_key": "",
-           "gemini_key": "", "deepseek_key": "", "ai_provider": "", "ai_model": "", "ai_files": "meta", "report_url": "", "lang": "ru",
+           "gemini_key": "", "deepseek_key": "", "ai_provider": "", "ai_model": "", "ai_files": "meta", "report_url": "", "lang": windows_lang(),
            "alerts_on": True,
            "vt_files": 8, "fs_files": 20, "smart_mb": 100, "folder_full": False}
     raw = load_json(CONFIG_FILE, {})
@@ -2755,7 +2767,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         q = dict(urllib.parse.parse_qsl(u.query))
         if u.path in ("/", "/index.html"):
             WIN_SEEN[0] = time.time()                 # окно открылось (для запасного пути через Edge)
-            html = open(UI_FILE, encoding="utf-8").read().replace("__TOKEN__", TOKEN).replace("__VERSION__", VERSION)
+            # язык окна по умолчанию — сохранённый в настройках, а если его не выбирали — язык Windows
+            html = open(UI_FILE, encoding="utf-8").read().replace("__TOKEN__", TOKEN).replace("__VERSION__", VERSION) \
+                .replace("__LANG__", config().get("lang") if config().get("lang") in ("ru", "en") else windows_lang())
             return self.send(200, html.encode("utf-8"), "text/html; charset=utf-8")
         if u.path in STATIC:
             data = open(os.path.join(ROOT, "ui", u.path.lstrip("/")), "rb").read()

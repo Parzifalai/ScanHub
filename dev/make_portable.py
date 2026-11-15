@@ -40,15 +40,13 @@ def main():
     shutil.rmtree(BUILD, ignore_errors=True)
     app = os.path.join(BUILD, "ScanHub")
     py = os.path.join(app, "python")
-    step("копирую ScanHub")
-    for root, dirs, files in os.walk(SRC):
-        rel = os.path.relpath(root, SRC)
-        dirs[:] = [d for d in dirs if not (rel == "." and d in SKIP_DIRS) and d != "__pycache__"]
-        for f in files:
-            if not f.endswith(SKIP_EXT):
-                dst = os.path.join(app, rel, f)
-                os.makedirs(os.path.dirname(dst), exist_ok=True)
-                shutil.copy2(os.path.join(root, f), dst)
+    step("копирую ScanHub (только файлы из git)")
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from release_files import published_files   # без служебных и личных файлов, которые лежат рядом, но не в репозитории
+    for rel in published_files(SRC):
+        dst = os.path.join(app, rel)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy2(os.path.join(SRC, rel), dst)
     step(f"распаковываю Python {PYVER}")
     with zipfile.ZipFile(emb) as z:
         z.extractall(py)

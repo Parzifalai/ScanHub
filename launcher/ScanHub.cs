@@ -5,6 +5,7 @@
 //   /r:..\window\Microsoft.Web.WebView2.Core.dll /r:..\window\Microsoft.Web.WebView2.WinForms.dll ScanHub.cs Window.cs
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -20,6 +21,10 @@ using System.Windows.Forms;
 
 static class Launcher
 {
+    // окна ошибок — на языке Windows: русский для русской Windows, английский для остальных
+    static readonly bool Ru = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ru";
+    static string T(string ru, string en) { return Ru ? ru : en; }
+
     static string Quote(string a)
     {
         if (a.Length > 0 && a.IndexOfAny(new[] { ' ', '\t', '"' }) < 0) return a;
@@ -52,7 +57,8 @@ static class Launcher
         string script = Path.Combine(root, "scanhub.py");
         if (!File.Exists(script))
         {
-            MessageBox.Show("Рядом с ScanHub.exe нет файла scanhub.py.\n\nРаспакуй архив ScanHub целиком и запускай ScanHub.exe из этой папки.",
+            MessageBox.Show(T("Рядом с ScanHub.exe нет файла scanhub.py.\n\nРаспакуй архив ScanHub целиком и запускай ScanHub.exe из этой папки.",
+                              "scanhub.py is missing next to ScanHub.exe.\n\nUnpack the whole ScanHub archive and run ScanHub.exe from that folder."),
                             "ScanHub", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return 1;
         }
@@ -60,9 +66,10 @@ static class Launcher
         if (!File.Exists(py)) py = FindOnPath("pythonw.exe");
         if (py == null)
         {
-            var r = MessageBox.Show("Не найден Python.\n\nПроще всего скачать портативную версию ScanHub — в ней Python уже есть. Открыть страницу загрузки?",
+            var r = MessageBox.Show(T("Не найден Python.\n\nПроще всего скачать портативную версию ScanHub (ScanHub-Windows.zip) — в ней Python уже есть. Открыть страницу загрузки?",
+                                      "Python was not found.\n\nThe easiest fix is the portable ScanHub (ScanHub-Windows.zip) — Python is already inside. Open the download page?"),
                                     "ScanHub", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
-            if (r == DialogResult.Yes) Process.Start("https://www.python.org/downloads/windows/");
+            if (r == DialogResult.Yes) Process.Start("https://github.com/Parzifalai/ScanHub/releases/latest");
             return 2;
         }
         var line = new StringBuilder(Quote(script));
@@ -71,7 +78,7 @@ static class Launcher
         try { Process.Start(psi); }
         catch (Exception e)
         {
-            MessageBox.Show("Не удалось запустить ScanHub: " + e.Message, "ScanHub", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(T("Не удалось запустить ScanHub: ", "Couldn't start ScanHub: ") + e.Message, "ScanHub", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return 3;
         }
         return 0;
