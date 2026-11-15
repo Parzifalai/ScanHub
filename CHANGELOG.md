@@ -4,6 +4,26 @@
 
 The text of the newest version's section goes into the GitHub release description, and ScanHub shows it in the “Update ScanHub” window.
 
+## 2.2.0
+
+**New look: frosted glass**
+- Panels are now frosted glass over slowly drifting light, and the side menu floats as a separate card instead of sticking to the window edge.
+- The menu collapses into a narrow strip of icons (the button next to the logo) and remembers your choice. Section names show as tooltips, and counters turn into coloured dots.
+- The highlight of the current section now slides over to the item you clicked instead of jumping.
+
+**The assistant moved into the menu**
+- The AI assistant is now the first item of the side menu, right under the logo: a glowing orb with “AI assistant”. **Ctrl+K** opens it from any page and puts the cursor in the input box. The “Assistant” button at the top of the window is gone.
+- The assistant chat slides in from the right as a glass card of its own. On a wide screen it sits next to the page, and the home page switches to one column so the shield and the load meters don't overlap.
+
+**Motion**
+- On launch the logo draws itself, then the window comes into focus out of a blur. Opening a section, its blocks appear one after another. Everything takes under a second.
+- Load meters on the home page count up from zero, and on every update the numbers roll smoothly to the new value instead of jumping.
+- If animations are turned off in Windows (Settings → Accessibility → Visual effects), ScanHub shows everything at once without motion.
+
+**Fixes**
+- Atomdrift didn't start: ScanHub downloaded the newest rules, which were written for the 3.0 beta of the scanner and break the stable 2.13.0 (“unknown identifier uint64”). The rules now match the scanner version from the stable channel of its manifest.
+- Translated into English the strings that were left untranslated in 2.1.0 and 2.1.1 (“Scan finished”, “What the scanners found” and the new verdict hints).
+
 ## 2.1.1
 
 **One scan verdict, written by the assistant**
