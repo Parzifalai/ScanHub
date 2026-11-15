@@ -1515,3 +1515,144 @@ button.hs-go:hover{color:var(--accent2);background:rgba(122,156,255,.05)}
 @media (prefers-reduced-motion:reduce){.vd-verdict,.vd-trace li.cur .vd-si{animation:none}}
 @media (max-width:640px){.vd-word{font-size:21px}.vd-ask{flex-direction:column}}
 .ai-input .ai-box textarea{border:0!important;background:transparent!important;border-radius:0;padding:4px 0;box-shadow:none;outline:none}
+
+/* ================================================================ 2.2 «Стекло» — слой поверх «Ночной смены» (2026-11)
+   Идея: панели — матовое стекло над медленно плывущим светом; меню и помощник парят отдельными карточками;
+   единственная «живая» деталь в покое — шарик помощника. Движение — только на запуске, при переходе и в ответ на действие. */
+:root{--glass-line:rgba(160,185,255,.14);--glass-hi:rgba(255,255,255,.075);--blur:saturate(160%) blur(18px);
+  --ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.34,1.36,.5,1);--sw:264px;
+  --orb:radial-gradient(circle at 32% 28%,#E4EAFF 0,#9E9BFF 20%,#5A72FA 52%,#1C2C88 100%)}
+html{background:var(--bg)}
+body{background:transparent}
+
+/* ---------- свет за стеклом */
+.atmo{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.atmo i{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
+.atmo i:nth-child(1){width:640px;height:640px;left:-180px;top:-240px;background:#2F63E8;opacity:.42;animation:drA 40s ease-in-out infinite alternate}
+.atmo i:nth-child(2){width:520px;height:520px;right:-160px;top:28%;background:#5B44D6;opacity:.24;animation:drB 52s ease-in-out infinite alternate}
+.atmo i:nth-child(3){width:760px;height:460px;left:26%;bottom:-300px;background:#1683B5;opacity:.18;animation:drC 60s ease-in-out infinite alternate}
+@keyframes drA{to{transform:translate(220px,140px) scale(1.15)}}
+@keyframes drB{to{transform:translate(-260px,-120px) scale(.9)}}
+@keyframes drC{to{transform:translate(-180px,-80px) scale(1.1)}}
+
+/* ---------- заставка: логотип рисуется линией, стрелка «выпрыгивает», затем интерфейс проявляется из размытия */
+.boot{position:fixed;inset:0;z-index:500;display:grid;place-content:center;justify-items:center;gap:16px;background:var(--bg);pointer-events:none;
+  animation:bootOut .45s var(--ease) .95s forwards}
+.boot svg{width:88px;height:88px;color:#4A7BF7;overflow:visible;filter:drop-shadow(0 0 26px rgba(74,123,247,.6))}
+.boot-s{fill:none;stroke:currentColor;stroke-width:46;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:bootDraw .7s var(--ease) .08s forwards}
+.boot-a{fill:currentColor;stroke:currentColor;stroke-width:12;stroke-linejoin:round;transform-box:fill-box;transform-origin:30% 50%;transform:scale(0);animation:bootPop .42s var(--spring) .6s forwards}
+.boot b{font:600 21px var(--din);letter-spacing:.3px;color:var(--text);opacity:0;transform:translateY(6px);animation:bootTxt .4s var(--ease) .5s forwards}
+@keyframes bootDraw{to{stroke-dashoffset:0}}
+@keyframes bootPop{to{transform:none}}
+@keyframes bootTxt{to{opacity:1;transform:none}}
+@keyframes bootOut{to{opacity:0;visibility:hidden}}
+body.boot-quick .boot{animation:bootOut .2s ease forwards}
+body.boot-quick .boot *{animation:none;stroke-dashoffset:0;transform:none;opacity:1}
+body.boot-full .layout{animation:layoutIn .75s var(--ease) .9s both}
+@keyframes layoutIn{from{opacity:0;filter:blur(14px);transform:scale(.985)}}
+
+/* ---------- каркас: меню — парящая стеклянная карточка, ширина плавно меняется при сворачивании */
+.layout{grid-template-columns:var(--sw) minmax(0,1fr);transition:grid-template-columns .42s var(--ease)}
+body.side-mini{--sw:92px}
+.side{top:12px;height:calc(100vh - 24px);margin:12px 0 12px 12px;padding:16px 12px 14px;border:1px solid var(--glass-line);border-radius:22px;
+  background:linear-gradient(180deg,rgba(24,36,78,.6),rgba(10,16,38,.55));backdrop-filter:var(--blur);overflow-x:hidden;
+  box-shadow:inset 0 1px 0 var(--glass-hi),0 24px 60px -26px rgba(0,0,0,.85)}
+header{background:linear-gradient(180deg,rgba(7,12,27,.7),rgba(7,12,27,.35));backdrop-filter:var(--blur)}
+.brand-row{display:flex;align-items:center;gap:6px;padding:2px 0 16px 8px}
+.side .brand{padding:0;flex:1;min-width:0;overflow:hidden}
+.side .brand span{white-space:nowrap}
+.side-fold{width:32px;height:32px;padding:0;flex:none;display:grid;place-items:center;border-radius:10px;background:none;border:1px solid transparent;color:var(--muted)}
+.side-fold:hover{color:var(--text);background:rgba(122,156,255,.1);border-color:transparent}
+.side-fold svg{width:19px;height:19px}
+.fold-chev{transition:transform .4s var(--ease);transform-box:fill-box;transform-origin:center}
+body.side-mini .fold-chev{transform:scaleX(-1)}
+
+/* ---------- помощник — первая строка меню: шарик, подсказка, Ctrl K */
+.side-ai{display:flex;align-items:center;gap:10px;width:100%;margin:0 0 18px;padding:7px 8px 7px 7px;border-radius:14px;
+  border:1px solid rgba(160,165,255,.22);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.015));
+  color:var(--muted);font:500 14px var(--din);text-align:left;box-shadow:inset 0 1px 0 rgba(255,255,255,.06);transition:border-color .2s,background .2s,color .2s}
+.side-ai:hover,.side-ai.on{color:var(--text);border-color:rgba(160,165,255,.48);background:rgba(110,115,255,.13)}
+.side-ai:focus-visible{outline:2px solid #9E9BFF;outline-offset:2px}
+.side-ai .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-ai kbd{font:600 11px/18px var(--din);color:var(--dim);border:1px solid var(--line2);border-radius:6px;padding:0 6px;background:rgba(5,9,20,.4);white-space:nowrap}
+.orb{position:relative;width:26px;height:26px;border-radius:50%;flex:none;background:var(--orb);
+  box-shadow:0 0 14px rgba(120,120,255,.55),inset 0 -3px 6px rgba(10,20,80,.55);animation:orbBreath 4.5s ease-in-out infinite}
+.orb::after{content:"";position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 55%,rgba(190,195,255,.85) 75%,transparent 95%);
+  -webkit-mask:radial-gradient(circle,transparent 60%,#000 63%);mask:radial-gradient(circle,transparent 60%,#000 63%);animation:rot 3.4s linear infinite}
+@keyframes orbBreath{50%{box-shadow:0 0 24px rgba(140,135,255,.85),inset 0 -3px 6px rgba(10,20,80,.55);transform:scale(1.07)}}
+.ai-mark{background:var(--orb);box-shadow:0 0 14px rgba(120,120,255,.5);border-radius:50%}
+
+/* ---------- текущий раздел: одна подсветка, которая переезжает между пунктами */
+.nav-main{position:relative}
+.nav-ind{position:absolute;left:0;right:0;top:0;border-radius:12px;pointer-events:none;
+  background:linear-gradient(90deg,rgba(47,99,232,.58),rgba(47,99,232,.14));box-shadow:inset 0 0 0 1px rgba(91,140,255,.34),0 10px 26px -14px var(--glow);
+  transition:transform .46s var(--spring),height .3s var(--ease),opacity .2s}
+.side .nav-main a.nav{z-index:1}
+.side .nav-main a.nav.on{background:none;box-shadow:none}
+.side a.nav.on::before{display:none}
+
+/* ---------- свёрнутое меню: только значки, подписи — во всплывающих подсказках */
+body.side-mini .side{padding:16px 10px 14px}
+body.side-mini .brand span,body.side-mini .side a.nav .t,body.side-mini .side-ai .t,body.side-mini .side-ai kbd,body.side-mini .side-foot{display:none}
+body.side-mini .brand-row{flex-direction:column;gap:10px;padding:2px 0 14px}
+body.side-mini .side .brand{flex:none}
+body.side-mini .side a.nav{justify-content:center;padding:11px 0}
+body.side-mini .side .cnt{position:absolute;top:6px;right:9px;width:9px;height:9px;min-width:0;padding:0;font-size:0;border-radius:50%;background:var(--accent2);box-shadow:0 0 0 2px #101a3c}
+body.side-mini .side .cnt.ok{background:var(--ok)} body.side-mini .side .cnt.warn{background:var(--warn)} body.side-mini .side .cnt.bad{background:var(--bad)}
+body.side-mini .side-ai{justify-content:center;padding:6px 0;border-color:transparent;background:none;box-shadow:none}
+body.side-mini .side-ai .orb{width:32px;height:32px}
+
+/* ---------- поверхности: матовое стекло с кромкой света сверху */
+.pnl,.panel,.result,.recent,.summary,.scanbar,.ultra-cta,.chart,.kpi,.tile,.card,.hcard,.todo-pnl,.hstats,.qa,.action,.quick-more .qa{
+  background:linear-gradient(165deg,rgba(28,42,88,.5),rgba(11,18,42,.46));border-color:var(--glass-line);backdrop-filter:var(--blur);
+  box-shadow:inset 0 1px 0 var(--glass-hi),0 20px 44px -30px rgba(0,0,0,.95)}
+.pnl .chart,.pnl .kpi,.pnl .tile,.pnl .card,.pnl .panel{backdrop-filter:none;box-shadow:inset 0 1px 0 var(--glass-hi)}
+.qa:hover,.action:hover,.hstats:hover{background:linear-gradient(165deg,rgba(36,54,112,.58),rgba(13,21,48,.5));border-color:rgba(130,160,255,.4)}
+#sFile{background:linear-gradient(160deg,rgba(47,99,232,.38),rgba(14,22,48,.55));border-color:rgba(91,140,255,.45)}
+.qa{transition:border-color .2s,transform .25s var(--spring),background .2s}
+.qa:hover{transform:translateY(-3px)}
+.hero-menu,.mdl,.fixw,.setup,dialog,.toast{background:rgba(16,25,56,.82);backdrop-filter:var(--blur);border-color:rgba(160,185,255,.2)}
+.mdl-back,.fixw-back,dialog::backdrop{background:rgba(3,6,15,.5);backdrop-filter:blur(8px)}
+.mdl{animation:mdlPop .32s var(--spring)}
+@keyframes mdlPop{from{transform:translateY(10px) scale(.97);opacity:0}}
+
+/* ---------- помощник: такая же парящая карточка справа; въезжает пружиной, уходит быстро */
+.ai-panel{top:12px;right:12px;bottom:12px;height:auto;border:1px solid rgba(160,165,255,.22);border-radius:22px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(22,30,74,.78),rgba(9,14,36,.8));backdrop-filter:var(--blur);
+  box-shadow:inset 0 1px 0 var(--glass-hi),0 30px 70px -20px rgba(0,0,0,.85),0 0 0 1px rgba(0,0,0,.2)}
+.ai-panel:not([hidden]){animation:aiIn .5s var(--spring)}
+.ai-panel.closing{animation:aiOut .19s ease-in forwards}
+@keyframes aiIn{from{opacity:0;transform:translateX(36px) scale(.97)}}
+@keyframes aiOut{to{opacity:0;transform:translateX(30px) scale(.98)}}
+.ai-head{border-bottom-color:var(--glass-line)}
+.ai-input{border-top-color:var(--glass-line)}
+.ai-box{background:rgba(5,9,22,.45)}
+.ai-msg{animation:msgIn .35s var(--ease) both}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}}
+@media (min-width:1180px){
+  .ai-panel{top:calc(var(--hdr-h,57px) + 4px);z-index:19;box-shadow:inset 0 1px 0 var(--glass-hi),0 30px 70px -30px rgba(0,0,0,.8)}
+  body.ai-open main{padding-right:calc(var(--aiw) + 24px)}
+  main{transition:padding-right .42s var(--ease)}
+}
+
+/* ---------- переход между разделами: блоки проявляются по очереди (номер --i ставит motion.js) */
+.view.enter > *,.enter .quick > .qa,.enter .actions > .action,.enter .home-top > *,#pageHead.enter > *{
+  animation:rise .62s var(--ease) both;animation-delay:calc(var(--d0,0ms) + min(var(--i,0),9) * 55ms)}
+#pageHead.enter > *{--i:0}
+.view.enter > .home-top,.view.enter > div:has(> .quick){animation:none}
+@keyframes rise{from{opacity:0;transform:translateY(14px);filter:blur(6px)}}
+
+/* ---------- узкое окно: меню выезжает поверх, свёрнутого режима нет */
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .side{top:10px;left:10px;bottom:10px;height:auto;margin:0;width:276px}
+  body.side-mini .side a.nav .t,body.side-mini .side-ai .t,body.side-mini .brand span,body.side-mini .side-foot{display:revert}
+  .side-fold{display:none}
+  .ai-panel{top:8px;right:8px;bottom:8px;left:8px;width:auto}
+}
+@media (prefers-reduced-motion:reduce){
+  .atmo i,.orb,.orb::after,.boot,.boot *{animation:none!important}
+  .boot{display:none}
+  .layout,.nav-ind,main{transition:none}
+  .view.enter > *,.enter .quick > .qa,.enter .actions > .action,.enter .home-top > *,.ai-panel,.ai-msg,.mdl{animation:none!important}
+}

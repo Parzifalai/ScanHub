@@ -9,6 +9,9 @@
 <link rel="stylesheet" href="/app.css">
 </head>
 <body>
+<!-- 2.2: свет за стеклом (пятна медленно плывут) и заставка запуска; заставка прячется сама через CSS, даже если скрипты не загрузились -->
+<div class="atmo" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="boot" id="boot" aria-hidden="true"><svg viewBox="0 0 256 256"><g transform="translate(6 14)"><path class="boot-s" d="M34 196C58 232 132 232 152 190C170 150 132 136 104 126C74 116 32 102 50 66C60 46 90 42 146 42" pathLength="1"/><path class="boot-a" d="M140 0L209.28 40L140 80Z"/></g></svg><b>ScanHub</b></div>
 <div class="layout">
   <nav class="side" id="side" aria-label="Разделы"></nav>
   <div class="maincol">
@@ -22,7 +25,6 @@
     <span class="sub dev-only" id="lastCheck"></span>
     <button class="dev-only tb" id="conBtn" title="Вывод сканеров">⌨ Консоль</button>
     <button class="dev-only tb" id="checkBtn">Проверить обновления</button>
-    <button class="tb ai" id="aiTop" title="ИИ-помощник: объяснит находки и ответит «почему у меня…»"><span class="ai-star">✦</span><span class="tb-t">Помощник</span></button>
     <button class="tb ic-only" id="alertsBtn" data-go-page="health:alerts" title="Предупреждения ScanHub"><span data-ic="bell"></span><i class="tb-dot" hidden></i></button>
     <button class="tb ic-only" id="bugBtn" title="Нашёл ошибку или есть идея? Напиши автору — сообщение уйдёт ему в Telegram"><span data-ic="bug"></span></button>
     <button class="tb ic-only" id="settingsBtn" title="Настройки"><span data-ic="gear"></span></button>
@@ -239,5 +241,6 @@ window.addEventListener("load", () => setTimeout(() => {
 <script src="/summary.js"></script>
 <script src="/verdict.js"></script>
 <script src="/pages.js"></script>
+<script src="/motion.js"></script>
 </body>
 </html>
