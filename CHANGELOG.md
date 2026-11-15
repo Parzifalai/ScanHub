@@ -6,23 +6,29 @@ The text of the newest version's section goes into the GitHub release descriptio
 
 ## 2.2.0
 
+**The AI assistant does things for you**
+- Ask in plain words — "check for miners", "what can I clean up?", "check startup" — and the assistant runs the ScanHub check itself (miner search, Defender quick scan, junk search, startup, PC health, hardware) and answers from the result. Anything that changes the PC (for example cleaning junk) it only proposes, and it runs only after you press "Do it for me".
+- Photos and screenshots: attach a picture to the question with the button or just paste it with Ctrl+V (up to 4). Works with Gemini, Claude, ChatGPT, OpenRouter, Ollama, Claude Code, Codex and Antigravity; for models that can't see pictures the button is hidden.
+- Fast / Thorough switch above the input. Fast (the default) uses the same model with short thinking, fewer steps and no web search unless you ask for it, so simple questions take seconds. "How big is this program" is now one step: the program list shows each app's folder and size.
+- Opened from the menu or with **Ctrl+K**, the assistant takes the whole window like a section of its own: "How can I help?", the input in the middle, suggested questions below, the mode and the model as drop-down lists. The menu stays on the left, and a button hides it completely. "✦ How to fix" next to a finding still opens it as a side panel.
+- The chat no longer flickers or jumps to the bottom while the assistant is answering, and has a slim scrollbar. Settings open from the top with a clear "← Back to the chat" button; ⚙ again or Esc also gets you back.
+
 **New look: frosted glass**
-- Panels are now frosted glass over slowly drifting light, and the side menu floats as a separate card instead of sticking to the window edge.
-- The menu collapses into a narrow strip of icons (the button next to the logo) and remembers your choice. Section names show as tooltips, and counters turn into coloured dots.
-- The highlight of the current section now slides over to the item you clicked instead of jumping.
+- Panels are frosted glass over slowly drifting light, and the side menu floats as a separate card. It collapses into a strip of icons and remembers your choice; the highlight of the current section slides to the item you clicked.
+- The top bar now only holds "Simple / Developer". Notifications, "Message the author" and Settings moved to the bottom of the menu, and the window's ✕ closes ScanHub completely (if a scan is running, it asks first).
+- On launch the logo draws itself and the window fades in. Opening a section, its blocks appear one after another, and when the assistant opens or closes, the blocks glide to their new places. Load meters count up and roll smoothly to new values. With animations turned off in Windows there is no motion.
 
-**The assistant moved into the menu**
-- The AI assistant is now the first item of the side menu, right under the logo: a glowing orb with “AI assistant”. **Ctrl+K** opens it from any page and puts the cursor in the input box. The “Assistant” button at the top of the window is gone.
-- The assistant chat slides in from the right as a glass card of its own. On a wide screen it sits next to the page, and the home page switches to one column so the shield and the load meters don't overlap.
-
-**Motion**
-- On launch the logo draws itself, then the window comes into focus out of a blur. Opening a section, its blocks appear one after another. Everything takes under a second.
-- Load meters on the home page count up from zero, and on every update the numbers roll smoothly to the new value instead of jumping.
-- If animations are turned off in Windows (Settings → Accessibility → Visual effects), ScanHub shows everything at once without motion.
+**First start in your language**
+- On a non-Russian Windows, ScanHub now opens in English right away (it used to always start in Russian). A language you picked in Settings still wins. Error windows of ScanHub.exe are in English on English Windows too.
+- Translated the remaining mixed-language lines in English mode (crash hints, idle-CPU note, process roles, units like "1 d" and "W", decimal points in sizes).
 
 **Fixes**
-- Atomdrift didn't start: ScanHub downloaded the newest rules, which were written for the 3.0 beta of the scanner and break the stable 2.13.0 (“unknown identifier uint64”). The rules now match the scanner version from the stable channel of its manifest.
-- Translated into English the strings that were left untranslated in 2.1.0 and 2.1.1 (“Scan finished”, “What the scanners found” and the new verdict hints).
+- The "Download" link in the README returned 404: release 2.1.1 had no ScanHub-Windows.zip. This release has both archives again plus SHA256SUMS.txt.
+- Release archives are now built only from files tracked in git, so no stray local files from the build machine can end up inside.
+- Atomdrift didn't start: ScanHub downloaded rules written for the scanner's 3.0 beta, which break the stable 2.13.0. The rules now match the scanner version.
+- Running from source now needs Python 3.12 or newer (was 3.14), checked by running ScanHub on Python 3.12.10.
+- Watchdog alerts are no longer cut off in the middle of a sentence.
+- New screenshots in the README, in Russian and English.
 
 ## 2.1.1
 
