@@ -1,42 +1,44 @@
-# Логотип ScanHub — «Стрелка-S»
+🇷🇺 [Русская версия](README.ru.md)
 
-**Идея.** Буква S, верхний хвост которой уходит вправо стрелкой: «вперёд, разберёмся». ScanHub не пугает щитом, а показывает, что не так, и ведёт по шагам. Остриё вынесено за край буквы — поэтому даже в 16 px знак читается как стрелка, а не как «$».
+# ScanHub logo — "Arrow-S"
 
-## Файлы
+**Idea.** The letter S, with its upper tail extending to the right as an arrow: "forward, we'll sort it out". ScanHub doesn't scare people with a shield; it shows what's wrong and walks you through the steps. The arrowhead sticks out past the edge of the letter, so even at 16 px the mark reads as an arrow rather than a "$".
 
-| Файл | Где использовать |
+## Files
+
+| File | Where to use |
 |---|---|
-| `scanhub-symbol.svg` | основной знак — от 64 px |
-| `scanhub-symbol-small.svg` | для 16–48 px: штрих толще, изгибы проще, остриё крупнее (значок окна, панель задач, вкладка) |
-| `scanhub-symbol-dark.svg`, `scanhub-symbol-small-dark.svg` | на тёмном фоне (светлее синий) |
-| `scanhub-symbol-white.svg`, `scanhub-symbol-small-white.svg` | белый — на синем, тёмном или на фото |
-| `scanhub-symbol-black.svg`, `scanhub-symbol-small-black.svg` | ч/б печать, гравировка |
-| `scanhub-horizontal.svg` | знак + надпись на светлом фоне (README, сайты) |
-| `scanhub-horizontal-on-dark.svg` | знак + надпись на тёмном фоне |
-| `scanhub-horizontal-black.svg`, `scanhub-horizontal-white.svg` | одноцветные горизонтальные |
-| `scanhub-wordmark.svg`, `scanhub-wordmark-white.svg` | только надпись |
-| `scanhub-512.png`, `scanhub-1024.png` | растровый знак (аватарки, соцсети) |
+| `scanhub-symbol.svg` | main mark — from 64 px |
+| `scanhub-symbol-small.svg` | for 16–48 px: thicker stroke, simpler curves, larger arrowhead (window icon, taskbar, tab) |
+| `scanhub-symbol-dark.svg`, `scanhub-symbol-small-dark.svg` | on a dark background (lighter blue) |
+| `scanhub-symbol-white.svg`, `scanhub-symbol-small-white.svg` | white — on blue, dark or photo backgrounds |
+| `scanhub-symbol-black.svg`, `scanhub-symbol-small-black.svg` | black-and-white print, engraving |
+| `scanhub-horizontal.svg` | mark + wordmark on a light background (README, websites) |
+| `scanhub-horizontal-on-dark.svg` | mark + wordmark on a dark background |
+| `scanhub-horizontal-black.svg`, `scanhub-horizontal-white.svg` | single-color horizontal versions |
+| `scanhub-wordmark.svg`, `scanhub-wordmark-white.svg` | wordmark only |
+| `scanhub-512.png`, `scanhub-1024.png` | raster mark (avatars, social networks) |
 
-Значки окна и программы: `ui/logo.svg`, `ui/logo-small.svg`, `ui/icon-32.png`, `ui/icon-256.png`, `ui/scanhub.ico` (16–256 px; до 48 px — мелкий знак), значок `ScanHub.exe`. Собираются скриптами `dev/build_logo.py` → `dev/export_icons.py`.
+Window and program icons: `ui/logo.svg`, `ui/logo-small.svg`, `ui/icon-32.png`, `ui/icon-256.png`, `ui/scanhub.ico` (16–256 px; the small mark is used up to 48 px), the `ScanHub.exe` icon. They are built by the scripts `dev/build_logo.py` → `dev/export_icons.py`.
 
-## Цвет
+## Color
 
-| | HEX | RGB | Где |
+| | HEX | RGB | Where |
 |---|---|---|---|
-| Синий ScanHub | `#2F63E8` | 47 99 232 | знак на светлом фоне, значки программы |
-| Синий на тёмном | `#4A7BF7` | 74 123 247 | знак на тёмном фоне |
-| Графит | `#141820` | 20 24 32 | надпись на светлом фоне |
-| Белый | `#FFFFFF` | 255 255 255 | надпись на тёмном, белый знак |
+| ScanHub blue | `#2F63E8` | 47 99 232 | mark on a light background, program icons |
+| Blue on dark | `#4A7BF7` | 74 123 247 | mark on a dark background |
+| Graphite | `#141820` | 20 24 32 | wordmark on a light background |
+| White | `#FFFFFF` | 255 255 255 | wordmark on dark, white mark |
 
-Синий `#2F63E8` выбран так, чтобы знак был виден и на белом (контраст 5,2:1), и на тёмной панели задач Windows (3,2:1) — для значков нужно не меньше 3:1. На тёмном фоне `#4A7BF7` — 4,2:1.
+The blue `#2F63E8` was chosen so the mark is visible both on white (contrast 5.2:1) and on the dark Windows taskbar (3.2:1); icons need at least 3:1. On a dark background, `#4A7BF7` gives 4.2:1.
 
-## Шрифт
+## Typeface
 
-Надпись — Bahnschrift SemiBold (шрифт оформления окна), буквы переведены в контуры: в файлах нет живого текста, шрифт для показа не нужен.
+The wordmark is set in Bahnschrift SemiBold (the window's UI font), with the letters converted to outlines: the files contain no live text, so the font is not needed to display them.
 
-## Правила
+## Rules
 
-- **Свободное поле** вокруг знака — не меньше высоты острия стрелки.
-- **Минимальный размер:** основной знак — 64 px, мелкий — 16 px; горизонтальный вариант — 120 px в ширину.
-- **Фон:** светлый — синий знак; тёмный — `-dark`; синий, цветной или фото — `-white`.
-- **Нельзя:** отделять или убирать стрелку, разворачивать стрелку в другую сторону, перекрашивать в другие цвета, растягивать, добавлять обводку, тени и градиенты, ставить надпись слева от знака или другим шрифтом.
+- **Clear space** around the mark: at least the height of the arrowhead.
+- **Minimum size:** main mark — 64 px, small mark — 16 px; horizontal version — 120 px wide.
+- **Background:** light — blue mark; dark — `-dark`; blue, colored or photo — `-white`.
+- **Don't:** separate or remove the arrow, flip the arrow the other way, recolor to other colors, stretch, add outlines, shadows or gradients, put the wordmark to the left of the mark or set it in another typeface.

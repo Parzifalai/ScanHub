@@ -1,16 +1,18 @@
-# Сторонние программы, базы и сервисы
+🇷🇺 [Русская версия](THIRD_PARTY_NOTICES.ru.md)
 
-Сторонние программы, правила, наборы данных и сервисы, которые ScanHub скачивает или вызывает по просьбе пользователя, НЕ входят в «Software» и не покрываются лицензией MIT из файла LICENSE. Они остаются под своими лицензиями и условиями.
+# Third-party programs, databases and services
 
-Кроме библиотек WebView2 (первый раздел), ScanHub **не содержит и не распространяет** перечисленное ниже. Программы и базы скачиваются на компьютере пользователя с официальных источников, когда он сам нажимает «Установить» / «Скачать» или запускает проверку; сервисы вызываются по их публичным API. Всё остаётся под лицензиями и условиями своих авторов — ими нужно руководствоваться при использовании.
+Third-party programs, rules, datasets and services that ScanHub downloads or calls at the user's request are NOT part of the "Software" and are not covered by the MIT license in the LICENSE file. They remain under their own licenses and terms.
 
-## Входит в ScanHub
+Apart from the WebView2 libraries (first section), ScanHub **does not contain or distribute** anything listed below. Programs and databases are downloaded onto the user's computer from official sources when the user clicks "Install" / "Download" or starts a scan; services are called through their public APIs. Everything remains under the licenses and terms of its authors, and those terms apply when you use it.
 
-- **Microsoft WebView2 SDK** 1.0.4314.35 (Microsoft.Web.WebView2.Core.dll, Microsoft.Web.WebView2.WinForms.dll, WebView2Loader.dll в папке `window`) — © Microsoft Corporation, лицензия BSD-3-Clause (`window/LICENSE-WebView2.txt`). Окно ScanHub без рамки Edge; сам движок WebView2 — часть Windows.
+## Included in ScanHub
 
-## Программы (скачиваются с официальных сайтов)
+- **Microsoft WebView2 SDK** 1.0.4314.35 (Microsoft.Web.WebView2.Core.dll, Microsoft.Web.WebView2.WinForms.dll, WebView2Loader.dll in the `window` folder) — © Microsoft Corporation, BSD-3-Clause license (`window/LICENSE-WebView2.txt`). It gives the ScanHub window a frame without the Edge chrome; the WebView2 engine itself is part of Windows.
 
-| Программа | Источник | Лицензия |
+## Programs (downloaded from official sites)
+
+| Program | Source | License |
 |---|---|---|
 | ClamAV | github.com/Cisco-Talos/clamav | GPL-2.0 |
 | Atomdrift Scan | github.com/atomdrift-project/scan | Apache-2.0 |
@@ -21,36 +23,36 @@
 | TruffleHog | github.com/trufflesecurity/trufflehog | AGPL-3.0 |
 | witr | github.com/pranshuparmar/witr | Apache-2.0 |
 | NtWarden | github.com/mrT4ntr4/NtWarden | MIT |
-| MinerSearch | github.com/BlendLog/MinerSearch | лицензия автора |
-| HiJackThis+ | dragokas.com / github.com/dragokas/hijackthis | лицензия автора |
-| Sysinternals Autoruns, Sigcheck | Microsoft | условия Sysinternals |
-| Microsoft Safety Scanner | Microsoft | условия Microsoft |
-| Kaspersky Virus Removal Tool | Kaspersky | лицензионное соглашение Kaspersky |
-| Dr.Web CureIt! | Doctor Web | бесплатно для домашнего использования, лицензия Dr.Web |
-| ESET Online Scanner | ESET | условия ESET |
-| Emsisoft Emergency Kit | Emsisoft | лицензия Emsisoft |
-| Malwarebytes, AdwCleaner | Malwarebytes | условия Malwarebytes |
+| MinerSearch | github.com/BlendLog/MinerSearch | author's license |
+| HiJackThis+ | dragokas.com / github.com/dragokas/hijackthis | author's license |
+| Sysinternals Autoruns, Sigcheck | Microsoft | Sysinternals terms |
+| Microsoft Safety Scanner | Microsoft | Microsoft terms |
+| Kaspersky Virus Removal Tool | Kaspersky | Kaspersky license agreement |
+| Dr.Web CureIt! | Doctor Web | free for home use, Dr.Web license |
+| ESET Online Scanner | ESET | ESET terms |
+| Emsisoft Emergency Kit | Emsisoft | Emsisoft license |
+| Malwarebytes, AdwCleaner | Malwarebytes | Malwarebytes terms |
 | yara-x (pip) | github.com/VirusTotal/yara-x | BSD-3-Clause |
 | psutil (pip) | github.com/giampaolo/psutil | BSD-3-Clause |
-| anthropic (pip, официальный пакет Claude API) и его зависимости (httpx2, pydantic, anyio и др.) | github.com/anthropics/anthropic-sdk-python | MIT (зависимости — MIT / BSD / Apache-2.0) |
-| Claude Code, Codex — не входят в ScanHub: запускаются, если человек сам их установил | claude.ai, developers.openai.com/codex | условия Anthropic и OpenAI |
+| anthropic (pip, the official Claude API package) and its dependencies (httpx2, pydantic, anyio, etc.) | github.com/anthropics/anthropic-sdk-python | MIT (dependencies: MIT / BSD / Apache-2.0) |
+| Claude Code, Codex — not part of ScanHub: launched only if the user has installed them | claude.ai, developers.openai.com/codex | Anthropic and OpenAI terms |
 
-## Базы и правила (скачиваются на компьютер пользователя)
+## Databases and rules (downloaded to the user's computer)
 
-| База | Источник | Лицензия |
+| Database | Source | License |
 |---|---|---|
-| Правила YARA Forge | github.com/YARAHQ/yara-forge | GPL-3.0 (сборка; у отдельных правил — лицензии их авторов) |
-| Правила Elastic Security | github.com/elastic/protections-artifacts | Elastic License 2.0 |
-| Maltrail Trails | github.com/stamparm/trails | Maltrail Trails Community Data License 1.0 — бесплатно для защиты своих систем, исследований и обучения; встраивание в продукт или сервис для третьих лиц требует письменного разрешения авторов. Поэтому ScanHub скачивает базы только после того, как пользователь сам нажмёт «Скачать базы» для своего компьютера |
+| YARA Forge rules | github.com/YARAHQ/yara-forge | GPL-3.0 (the bundle; individual rules carry their authors' licenses) |
+| Elastic Security rules | github.com/elastic/protections-artifacts | Elastic License 2.0 |
+| Maltrail Trails | github.com/stamparm/trails | Maltrail Trails Community Data License 1.0 — free for protecting your own systems, research and education; embedding in a product or service for third parties requires written permission from the authors. For this reason ScanHub downloads these databases only after the user clicks "Download databases" for their own computer |
 | FMHY Filterlist | github.com/fmhy/FMHYFilterlist | GPL-3.0 |
 | LOLDrivers | loldrivers.io / github.com/magicsword-io/LOLDrivers | Apache-2.0 |
 | MalExt Sentry | github.com/toborrm9/malicious_extension_sentry | MIT |
 | NoCoin adblock list | github.com/hoshsadiq/adblock-nocoin-list | MIT |
 
-## Онлайн-сервисы (вызываются по API)
+## Online services (called through APIs)
 
-VirusTotal, Filescan.io, MetaDefender Cloud (OPSWAT), Hybrid Analysis (CrowdStrike) — по бесплатному ключу пользователя и на условиях каждого сервиса. CIRCL hashlookup (CERT Люксембурга) и OSV.dev (Google) — публичные API без ключа.
+VirusTotal, Filescan.io, MetaDefender Cloud (OPSWAT), Hybrid Analysis (CrowdStrike) — using the user's own free key and under each service's terms. CIRCL hashlookup (CERT Luxembourg) and OSV.dev (Google) — public APIs, no key required.
 
-## Благодарности
+## Acknowledgments
 
-Набор функций очистки, обслуживания и твиков вдохновлён программой [Kudu](https://github.com/AdventDevInc/kudu) (MIT, © 2026 Advent Development Inc). Код ScanHub написан отдельно, на Python.
+The set of cleanup, maintenance and tweak features is inspired by [Kudu](https://github.com/AdventDevInc/kudu) (MIT, © 2026 Advent Development Inc). ScanHub's code is written separately, in Python.

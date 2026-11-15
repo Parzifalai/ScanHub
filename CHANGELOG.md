@@ -1,311 +1,313 @@
-# Что нового в ScanHub
+# What's new in ScanHub
 
-Текст раздела новой версии попадает в описание выпуска на GitHub — его ScanHub показывает в окне «Обновить ScanHub».
+🇷🇺 [Русская версия](CHANGELOG.ru.md)
+
+The text of the newest version's section goes into the GitHub release description, and ScanHub shows it in the “Update ScanHub” window.
 
 ## 2.1.1
 
-**Один итог проверки — от помощника**
-- После проверки файла или папки итог теперь один. Пока ИИ-помощник читает результаты сканеров, «можно запускать или нет» не показывается — вместо него «Проверка завершена» и ожидание. Когда помощник ответил, его вывод становится единственным итогом, а прежний предварительный итог сканеров лежит под спойлером «Что нашли сканеры». Если помощник выключен или не смог ответить, показывается обычный итог, как раньше.
+**One scan verdict, written by the assistant**
+- A file or folder scan now ends with a single verdict. While the AI assistant is reading the scanner results, the “safe to run or not” verdict is hidden; you see “Check finished” and a wait indicator instead. Once the assistant answers, its verdict becomes the only one, and the earlier preliminary scanner verdict moves under a “What the scanners found” spoiler. If the assistant is turned off or couldn't answer, you get the regular verdict as before.
 
-**Меньше ложных тревог**
-- Filescan часто называет опасными честные файлы. Его тревоги на файлах с действующей подписью (Microsoft, Valve и др.) и на известных оригиналах из базы NSRL теперь считаются слабыми; если он так ошибся на нескольких честных файлах, все его тревоги в этой проверке слабые.
-- Файл, который VirusTotal знает больше двух лет и которого не трогает ни один из 60+ антивирусов, больше не становится «опасным» из-за одиночных тревог песочницы Hybrid Analysis, MetaDefender или Filescan.
-- Повреждённая цифровая подпись у такого давно известного чистого файла — теперь предупреждение «файл изменили после подписи, проверь, откуда он», а не «в папке опасные файлы». Вирусом это само по себе не считается.
-- Если проверена лишь часть файлов папки или какой-то сканер сломался, в итоге написано: «Проверено N из M файлов — запусти полную проверку папки».
-- Финальный вывод помощника следует тем же правилам: «нельзя» — только при подтверждённой угрозе.
+**Fewer false alarms**
+- Filescan often flags legitimate files as dangerous. Its alerts on files with a valid signature (Microsoft, Valve and others) and on known originals from the NSRL database now count as weak. If it got several legitimate files wrong in one scan, all of its alerts in that scan are treated as weak.
+- A file that VirusTotal has known for over two years and that none of the 60+ antivirus engines flags no longer becomes “dangerous” because of isolated alerts from the Hybrid Analysis, MetaDefender or Filescan sandboxes.
+- A broken digital signature on such a long-known clean file now produces the warning “the file was modified after signing, check where it came from” instead of “dangerous files in the folder”. By itself it is not treated as a virus.
+- If only some of a folder's files were scanned or a scanner broke, the verdict now says: “Scanned N of M files — run a full folder scan”.
+- The assistant's final verdict follows the same rules: “don't run it” only for a confirmed threat.
 
 ## 2.1.0
 
-**Помощник через Antigravity по подписке Google**
-- В настройках помощника появился вариант «Gemini по подписке (Antigravity)». ScanHub запускает официальную программу Antigravity, в которую ты вошёл аккаунтом Google, и ответы идут в лимиты твоей подписки, как уже было с Claude Code и Codex.
-- Модели берутся из самой подписки: Gemini 4 Hydrogen и Argon, Gemini 3.8 Flash, Orchestrator, а также Claude Opus/Sonnet и GPT-OSS, если они у тебя есть. Модель и уровень размышлений (Быстро, Средне, Глубоко, Очень глубоко) выбираются двумя отдельными списками. По умолчанию стоит Hydrogen, уровень «Глубоко (High)».
-- Antigravity работает как агент: данные компьютера берёт инструментами ScanHub, а справки может искать в интернете (выключается в настройках помощника). Перед каждым его шагом ScanHub проверяет, что это можно: командная строка, чтение и запись файлов и браузер запрещены.
-- Твои настройки Antigravity не меняются. После каждого ответа ScanHub удаляет переписку из папки Antigravity, чтобы данные компьютера там не оставались.
+**Assistant via Antigravity on your Google subscription**
+- The assistant settings have a new option, “Gemini with your subscription (Antigravity)”. ScanHub launches the official Antigravity app, where you are signed in with your Google account, and the answers count against your subscription limits, as already happens with Claude Code and Codex.
+- Models come from the subscription itself: Gemini 4 Hydrogen and Argon, Gemini 3.8 Flash, Orchestrator, plus Claude Opus/Sonnet and GPT-OSS if you have them. The model and the reasoning level (Fast (Low), Balanced (Medium), Deep (High), Very deep (XHigh)) are chosen from two separate lists. The defaults are Hydrogen and “Deep (High)”.
+- Antigravity works as an agent: it gets computer data through ScanHub's tools and can search the internet for reference information (you can turn this off in the assistant settings). Before each of its steps, ScanHub checks that the step is allowed: the command line, reading and writing files, and the browser are blocked.
+- Your Antigravity settings are left unchanged. After each answer, ScanHub deletes the conversation from Antigravity's folder so that no computer data stays there.
 
-**Перевод**
-- Переведены на английский строки, которые оставались без перевода в 2.0.10.
+**Translation**
+- Translated into English the strings that were left untranslated in 2.0.10.
 
 ## 2.0.10
 
-**Меньше ложных тревог в итоге проверки**
-- ИИ-сканер Atomdrift, если сам ломался (например, на своём неисправном правиле), выходил с тем же кодом, что и при находке, — и ScanHub писал «Вредонос», а итог становился «Лучше не запускать». Теперь такой сбой показывается честно: «Сканер не сработал», с пояснением в журнале, что это не находка, и советом обновить Atomdrift. В глубокой проверке тоже — раньше там выходило «чисто (0 файлов)».
-- В итоге проверки папки пропала строка без имени («: ИИ-сканер Atomdrift…»): если путь кончается на «\», теперь пишется название папки.
+**Fewer false alarms in the scan verdict**
+- When the AI scanner Atomdrift itself crashed (for example, on its own faulty rule), it exited with the same code as when it finds something, so ScanHub reported “Malware” and the verdict became “Better not to run it”. Now such a failure is shown honestly: “Scanner failed”, with a note in the log that this is not a finding and a suggestion to update Atomdrift. The same applies to the deep scan, which previously reported “clean (0 files)”.
+- The folder scan verdict no longer shows a line with a missing name (“: AI scanner Atomdrift…”): if the path ends in “\”, the folder name is now used.
 
-**Сводка для другого ИИ**
-- Прошлые запуски сканеров по этому пути теперь идут отдельно, с пометкой, что они старые и вывод нужно делать по свежей проверке. Сбой сканера в них подписан как «сканер не сработал», а не голым «Код выхода 1», — чтобы его не принимали за тревогу.
-- Папка с «\» на конце и без него считается одной и той же — история проверок больше не теряется.
+**Summary for another AI**
+- Earlier scanner runs on the same path are now listed separately, marked as old, with a note to base the verdict on the fresh scan. A scanner failure in them is labeled “scanner failed” rather than a bare “Exit code 1”, so it isn't mistaken for an alert.
+- A folder path with and without a trailing “\” is treated as the same folder, so scan history is no longer lost.
 
-**Обновление**
-- ScanHub понимает номера версий из четырёх чисел (например, 2.0.10.1).
+**Update**
+- ScanHub understands four-part version numbers (for example, 2.0.10.1).
 
 ## 2.0.9
 
-**Финальный вывод ИИ после проверки**
-- После проверки файла или папки, глубокой и ультра проверки встроенный помощник сам читает итог всех сканеров и коротко говорит: «Можно открывать», «Лучше не открывать» или «Не открывай» (для проверки компьютера — «Всё в порядке», «Есть что проверить», «Найдена угроза») и что сделать прямо сейчас.
-- Помощник по-настоящему ищет в интернете: ScanHub сам ищет имя файла, его отпечаток (SHA-256) и файлы с тревогами, а помощник может искать дальше и открывать страницы. В выводе — что о файле пишут, со ссылками на источники.
-- Под выводом — поле «Спросить про эту проверку» и кнопки «Обсудить с помощником» и «Спросить другой ИИ» (сводка для Claude, ChatGPT или Gemini). Разговор продолжается в панели помощника, и помощник помнит эту проверку.
-- Выключается в настройках помощника: «Финальный вывод после проверок». Для старых итогов, открытых позже, — по кнопке «Спросить помощника».
-- В «Сводке для ИИ» просьба теперь начинается с поиска в интернете: что это за файл, официальный ли он, что о нём пишут. Появилась сводка и для глубокой проверки.
+**AI final verdict after a scan**
+- After a file or folder scan, a deep scan or an ultra scan, the built-in assistant reads the results of all scanners on its own and briefly tells you “Safe to open”, “Better not to open” or “Don't open it” (for a computer scan: “All good”, “Something to check”, “Threat found”) and what to do right now.
+- The assistant really searches the internet: ScanHub itself looks up the file name, its fingerprint (SHA-256) and the files that raised alerts, and the assistant can keep searching and open pages. The verdict includes what is written about the file, with links to the sources.
+- Below the verdict there is an “Ask about this scan” field and the buttons “Discuss with the assistant” and “Ask another AI” (a summary for Claude, ChatGPT or Gemini). The conversation continues in the assistant panel, and the assistant remembers this scan.
+- Turn it off in the assistant settings: “Final verdict after scans”. For old results opened later, use the “Ask the assistant” button.
+- In the “Summary for AI”, the request now starts with an internet search: what this file is, whether it is official, what is written about it. A summary for the deep scan was added too.
 
-**Новый чат помощника**
-- Панель помощника на широком экране стоит рядом со страницей и не закрывает её; на узком — выезжает поверх.
-- Видно, о какой проверке разговор, и подсказки-вопросы по её теме («Что это за файл?», «С чего начать?»).
-- Пока помощник отвечает, видно, что он сейчас делает: ищет в интернете, читает страницу, смотрит журналы.
-- Свои сообщения — справа, ответы — текстом с линией слева; поле ввода растёт с текстом, Enter — отправить.
+**New assistant chat**
+- On a wide screen the assistant panel sits next to the page and doesn't cover it; on a narrow one it slides in over the page.
+- You can see which scan the conversation is about, plus suggested questions on its topic (“What is this file?”, “Where do I start?”).
+- While the assistant is answering, you can see what it is doing right now: searching the internet, reading a page, looking at logs.
+- Your messages are on the right; replies are text with a line on the left; the input field grows with the text, and Enter sends.
 
-**Исправлено**
-- Дополнительные антивирусы в ультра проверке не запускались. Dr.Web даёт CureIt! случайное имя файла, помощник с правами администратора его не узнавал, и весь набор антивирусов уходил на повторный запрос UAC. Теперь CureIt! узнаётся по цифровой подписи Dr.Web, а антивирус, который не прошёл проверку, просто пропускается и не мешает остальным.
-- «Остановить» в проверке файла не останавливал VirusTotal (и Filescan): они ждали лимит бесплатного ключа по минуте. Теперь останавливаются сразу.
-- Сканеры, скачанные в «Подготовке», больше не скачиваются второй раз в шаге «Дополнительные антивирусы».
+**Fixed**
+- The extra antivirus tools in the ultra scan didn't run. Dr.Web gives CureIt! a random file name, the admin-rights helper didn't recognize it, and the whole set of antiviruses went back for another UAC prompt. Now CureIt! is recognized by Dr.Web's digital signature, and an antivirus that fails the check is simply skipped without blocking the others.
+- “Stop” in the file scan didn't stop VirusTotal (and Filescan): they kept waiting out the free key's per-minute limit. They now stop immediately.
+- Scanners downloaded in “Preparation” are no longer downloaded a second time in the “Extra antiviruses” step.
 
-**Дополнительные антивирусы готовятся в начале ультра проверки**
-- Kaspersky, Microsoft Safety Scanner, AdwCleaner, Emsisoft и ESET скачиваются (и обновляются, если устарели) ещё в «Подготовке» — первом шаге, а не через пару часов в конце. Если интернет подведёт, это видно сразу.
-- В окне выбора шагов у каждого антивируса видно, готов ли он: «готов», «скачается в «Подготовке»», «обновится», «не скачан — скачай сам» (Dr.Web CureIt!), «не установлен — пропустится» (Malwarebytes).
-- У CureIt! прямо там кнопки «Скачать с сайта Dr.Web» и «Я скачал — найти» — его можно взять заранее, до старта проверки.
+**Extra antiviruses are prepared at the start of the ultra scan**
+- Kaspersky, Microsoft Safety Scanner, AdwCleaner, Emsisoft and ESET are downloaded (and updated if outdated) in “Preparation”, the first step, rather than a couple of hours later at the end. If the internet drops, you see it right away.
+- In the step selection window, each antivirus shows whether it is ready: “ready”, “downloads during “Preparation””, “updates during “Preparation””, “not downloaded — download it yourself” (Dr.Web CureIt!), “not installed — will be skipped” (Malwarebytes).
+- CureIt! has the buttons “Download from the Dr.Web site” and “I downloaded it — find it” right there, so you can get it ahead of time, before the scan starts.
 
 ## 2.0.7
 
-**Ультра проверка — одно окно UAC на всю проверку**
-- Права администратора спрашиваются один раз, в самом начале. Раньше окно UAC появлялось до пяти раз: перед глубокой проверкой, очисткой системных папок и драйверов, проверкой системных файлов и дисков, обновлением программ «для всех» и дополнительными антивирусами.
-- Права получает помощник, который живёт только до конца ультра проверки (и обновления программ в её конце). Он выполняет лишь то, что делает сама проверка, — каждое задание подписано ключом, который знают только ScanHub и помощник, а чужую команду, правку реестра или удаление файла не из списка он не выполнит.
-- Проверка закончилась, её остановили или закрыли ScanHub — помощник завершается сам (не позже чем через 30 секунд) и закрывает всё, что запускал с правами администратора.
-- Если окно UAC в начале отменить — проверка идёт как раньше: шаги, которым нужны права, спросят их сами.
+**Ultra scan: one UAC prompt for the whole scan**
+- Administrator rights are requested once, at the very start. Before, the UAC prompt could appear up to five times: before the deep scan, system folder and driver cleanup, system file and disk checks, “for all users” program updates, and the extra antiviruses.
+- The rights go to a helper that lives only until the end of the ultra scan (and the program updates at its end). It runs only what the scan itself does: every job is signed with a key known only to ScanHub and the helper, and the helper won't run a foreign command, a registry edit or a file deletion that isn't on the list.
+- If the scan finishes, is stopped, or ScanHub is closed, the helper exits on its own (within 30 seconds at most) and closes everything it launched with administrator rights.
+- If you cancel the UAC prompt at the start, the scan runs as before: steps that need rights ask for them themselves.
 
 ## 2.0.6
 
-**Меньше ложных тревог в итоге проверки**
-- Давно известные честные файлы больше не попадают в «опасно» из-за единичных срабатываний. Файл считается известным, если он есть в базе NIST NSRL, в белом списке Hybrid Analysis или VirusTotal знает его больше года с хорошей репутацией. Тревоги по таким файлам остаются в списке с пояснением, почему они похожи на ложные.
-- Запись «вредоносный» в базе CIRCL с низким доверием (меньше 50 из 100) — больше не приговор, а обычный сигнал.
-- 1–2 срабатывания из десятков антивирусов на VirusTotal и MetaDefender — слабый сигнал. Если по одному незнакомому файлу тревогу поднимают сразу три сервиса и больше, итог — «лучше не запускать».
-- Пример: папка старой игры (Call of Duty 4) раньше получала «опасно — не запускай», теперь — «можно пользоваться» со списком тревог, похожих на ложные.
+**Fewer false alarms in the scan verdict**
+- Long-known legitimate files no longer end up as “dangerous” because of isolated detections. A file counts as known if it is in the NIST NSRL database, on the Hybrid Analysis allowlist, or VirusTotal has known it for over a year with a good reputation. Alerts on such files stay in the list, with an explanation of why they look like false positives.
+- A “malicious” entry in the CIRCL database with low confidence (below 50 out of 100) is no longer a verdict, just an ordinary signal.
+- 1–2 detections out of dozens of antiviruses on VirusTotal and MetaDefender are a weak signal. If three or more services raise an alert on one unfamiliar file, the verdict is “better not to run it”.
+- Example: an old game folder (Call of Duty 4) used to get “dangerous — don't run it”; now it gets “safe to use”, with a list of alerts that look like false positives.
 
-**Сводка для ИИ стала в 4–5 раз короче, данных в ней столько же**
-- Из журналов убраны полоски хода сканеров (у Atomdrift их были сотни строк) и рамки предупреждений ClamAV.
-- VirusTotal и MetaDefender: поимённо только сработавшие антивирусы, остальные — числами («чисто — 68, не успел — 2»).
-- У онлайн-сервисов журнал не повторяет подробности — из него остаются итог и ошибки.
-- Для папки видно, что в ней лежит (файлы с размерами), и какие именно файлы проверены при быстрой проверке.
+**The summary for AI is 4–5 times shorter, with the same data**
+- Scanner progress bars (Atomdrift had hundreds of lines of them) and ClamAV warning frames are removed from the logs.
+- VirusTotal and MetaDefender: only the antiviruses that fired are listed by name, the rest as counts (“clean — 68, didn't finish — 2”).
+- For online services, the log no longer repeats the details: only the result and errors remain.
+- For a folder, the summary shows what is in it (files with sizes) and which files exactly were scanned in the quick scan.
 
 ## 2.0.5
 
-**Своё окно вместо Edge**
-- ScanHub открывается в собственном окне — без чёрной полосы Edge сверху. Кнопки «свернуть / развернуть / закрыть» стоят в тёмной шапке ScanHub, окно перетаскивается за шапку (двойной щелчок — развернуть), края, тень, Snap и Win+стрелки работают как у обычного окна, размер и место запоминаются. Движок — WebView2, встроенный в Windows 11. Если его нет (бывает на Windows 10) или окно не открылось — ScanHub сам откроется по-старому, через Edge.
+**Own window instead of Edge**
+- ScanHub opens in its own window, without Edge's black strip at the top. The minimize / maximize / close buttons sit in ScanHub's dark header, the window is dragged by the header (double-click to maximize), and the edges, shadow, Snap and Win+arrows work like in a regular window; size and position are remembered. The engine is WebView2, built into Windows 11. If it isn't available (this happens on Windows 10) or the window fails to open, ScanHub opens the old way, through Edge.
 
-**Дополнительные антивирусы сами в конце ультра проверки**
-- Новый шаг «Дополнительные антивирусы»: Kaspersky Virus Removal Tool, Microsoft Safety Scanner, AdwCleaner, Emsisoft Emergency Kit и Dr.Web CureIt! (если скачан) запускаются по очереди в фоне — полная проверка всех дисков, только поиск. Найденное — в итогах ультра проверки с кнопкой «Вылечить». Любой антивирус можно пропустить кнопкой; если ScanHub закроют, сканеры остановятся сами.
-- ESET Online Scanner и Malwarebytes (если установлен) открываются своими окнами — ScanHub сам нажимает «Начать» / «Сканировать», а когда кнопки нажаты, поднимает их окно.
-- Сканеры скачиваются сами со своих официальных сайтов; галочка «Удалить сканеры после проверки» убирает их и их следы (C:\AdwCleaner, журнал Microsoft), отчёты остаются в ScanHub. Отдельно: «Скачать все» и «Удалить скачанные» в «Защита от вирусов → Проверка».
+**Extra antiviruses run on their own at the end of the ultra scan**
+- A new “Extra antiviruses” step: Kaspersky Virus Removal Tool, Microsoft Safety Scanner, AdwCleaner, Emsisoft Emergency Kit and Dr.Web CureIt! (if downloaded) run one after another in the background: a full scan of all disks, detection only. Findings appear in the ultra scan results with a “Cure” button. You can skip any antivirus with a button; if ScanHub is closed, the scanners stop on their own.
+- ESET Online Scanner and Malwarebytes (if installed) open in their own windows: ScanHub clicks “Start” / “Scan” itself, and once the buttons are pressed, it brings their window up.
+- Scanners are downloaded automatically from their official sites; the “Remove scanners after the scan” checkbox deletes them and their traces (C:\AdwCleaner, the Microsoft log), while the reports stay in ScanHub. Separately: “Download all” and “Remove downloaded” in “Virus protection → Check”.
 
-**Очистка оперативной памяти прямо на главной**
-- На плитке «Оперативная память» — кнопка «Очистить», как в Mem Reduct (полная очистка, если её включали; иначе быстрая — сжать память неактивных программ). Под процентами видно, сколько освобождено. Остальные плитки по нажатию открывают «Нагрузку сейчас».
+**RAM cleanup right on the home page**
+- The “RAM” tile has a “Clean” button, as in Mem Reduct (a full cleanup if it was enabled; otherwise a quick one that compresses the memory of inactive programs). Under the percentages you can see how much was freed. The other tiles open “Load now” when clicked.
 
-**Сводки для второго мнения ИИ**
-- «Сводка для ИИ» в итогах ультра проверки: каждый шаг и каждая находка, советы ScanHub и сведения о компьютере.
-- Во всех сводках просьба к ИИ отвечать в двух частях: «Коротко» — вердикт в 2–5 словах и что делать, без терминов (для тех, кто не разбирается), и «Подробно» — по пунктам, каждый вывод с фактом из сводки и уверенностью, ложные тревоги отдельно от настоящих.
-- «Скопировать сводку для ИИ» в итоге проверки файла: подпись, хэши MD5/SHA-1/SHA-256, откуда скачан, прошлые проверки, итог ScanHub, каждый сканер с вердиктом, подробностями (VirusTotal — по каждому движку) и журналом, проверенные файлы — и готовая просьба дать второе мнение. Вставь в Claude, ChatGPT или Gemini.
-- «Полная сводка компьютера для ИИ» («Здоровье ПК → Обзор» и меню «⋯» у щита): 28 разделов — защита, находки, сбои, железо, датчики, диски, программы, автозагрузка, драйверы, приватность, браузеры, сеть, угрозы, история проверок и здоровья — с просьбой оценить систему.
-- По умолчанию имя учётной записи и компьютера и почта скрыты (галочка показывает); ключи и пароли скрыты всегда. «Сохранить файлом» — копия в «Загрузки».
+**Summaries for an AI second opinion**
+- A “Summary for AI” in the ultra scan results: every step and every finding, ScanHub's advice and information about the computer.
+- In all summaries, the request asks the AI to answer in two parts: “Briefly”, a verdict in 2–5 words and what to do, without jargon (for people who don't know the subject), and “In detail”, point by point, each conclusion with a fact from the summary and a confidence level, with false alarms kept apart from real ones.
+- “Copy summary for AI” in the file scan result: signature, MD5/SHA-1/SHA-256 hashes, where it was downloaded from, past scans, ScanHub's verdict, each scanner with its verdict, details (VirusTotal per engine) and log, the scanned files, and a ready-made request for a second opinion. Paste it into Claude, ChatGPT or Gemini.
+- “Full PC summary for AI” (“PC health → Overview” and the “⋯” menu on the shield): 28 sections — protection, findings, crashes, hardware, sensors, disks, programs, startup, drivers, privacy, browsers, network, threats, scan and health history — with a request to assess the system.
+- By default the account name, computer name and email are hidden (a checkbox reveals them); keys and passwords are always hidden. “Save as file” puts a copy in “Downloads”.
 
-**Помощник на Gemini отвечает по данным компьютера**
-- Если в вопросе есть программа, код или «вылетает / сбой / зависает», ScanHub ещё до ответа прикладывает её сбои и записи журнала — даже быстрая модель называет настоящую причину, а не общие слова. Число после «time stamp» в событии помощник больше не принимает за код ошибки.
-- Модель Gemini по умолчанию — 3.5 Flash (умнее); если она перегружена — сама переключается на Flash-Lite.
-- В ответах больше нет мусора вроде «[[crashes]]».
-- «Объясни» начинается со строки «Коротко» — одна простая фраза: опасно или нет и что сделать.
+**The Gemini assistant answers using your computer's data**
+- If the question mentions a program, code, or “crashes / fails / hangs”, ScanHub attaches that program's crashes and log entries before answering, so even the fast model names the real cause instead of generic words. The assistant no longer mistakes the number after “time stamp” in an event for an error code.
+- The default Gemini model is 3.5 Flash (smarter); if it is overloaded, it switches to Flash-Lite on its own.
+- Answers no longer contain junk like “[[crashes]]”.
+- “Explain” starts with a “Briefly” line: one plain sentence saying whether it is dangerous and what to do.
 
-**«Сбои и ошибки»**
-- У вылетов программ на .NET показывается текст ошибки из журнала — настоящая причина (например, «Класс не зарегистрирован»).
+**“Crashes and errors”**
+- For crashes of .NET programs, the error text from the log is shown: the real cause (for example, “Class not registered”).
 
-**Исправлено**
-- «Нагрузка подробно» в блоке показателей на главной налезала на полоску диска — теперь отдельной строкой.
+**Fixed**
+- “Load in detail” in the metrics block on the home page overlapped the disk bar; it is now on a separate line.
 
 ## 2.0.0
 
-**Новое оформление «Ночная смена»**
-- Тёмный интерфейс с мягким свечением: меню разделов на всю высоту слева, шапка с помощником, предупреждениями, «Ошибка или идея?», настройками и выходом; крупные понятные заголовки и вкладки.
-- **Живой щит на главной.** Честно показывает состояние: синий с галочкой — всё в порядке; с жёлтым значком — есть что поправить; красный — найдена угроза или выключена защита. Во время ультра, глубокой или проверки файла по щиту бежит луч, кольцо заполняется, в середине — проценты; в конце — вспышка и новая отметка рисуется штрихом. Щит слегка наклоняется и бликует за мышью. Цвета перетекают плавно, а при настройке Windows «меньше анимации» всё стоит на месте.
-- **Показатели рядом со щитом:** стабильность Windows, процессор, оперативная память, свободное место на системном диске — с графиками; нажатие открывает «Скорость и игры → Нагрузка сейчас».
-- «Что стоит сделать» — одной панелью, у каждого пункта знак формой и цветом (треугольник — стоит исправить, круг — к сведению, восьмиугольник — срочно). Быстрые действия: четыре главных крупно, остальные — «Все быстрые действия».
+**New “Night shift” look**
+- A dark interface with a soft glow: a full-height section menu on the left, a header with the assistant, alerts, “Bug or idea?”, settings and exit; large, clear headings and tabs.
+- **A live shield on the home page.** It shows the state honestly: blue with a checkmark means all is well; with a yellow badge means something needs fixing; red means a threat was found or protection is off. During an ultra scan, a deep scan or a file scan, a beam runs along the shield, the ring fills up, and the percentage is in the middle; at the end there is a flash and a new mark is drawn in one stroke. The shield tilts slightly and glints as you move the mouse. Colors blend smoothly, and with the Windows “reduce animations” setting everything stays still.
+- **Metrics next to the shield:** Windows stability, CPU, RAM, free space on the system disk, with charts; clicking opens “Speed & games → Load now”.
+- “What's worth doing” is a single panel, and each item has a sign by shape and color (triangle: worth fixing, circle: for your information, octagon: urgent). Quick actions: the four main ones are large, the rest are under “All quick actions”.
 
-**Разделы пересобраны по задачам**
-- Было 12 разделов, стало 7 + история проверок и настройки внизу меню:
-  - **Защита от вирусов** — проверка, ультра и глубокая проверка, проверить программу, карантин, браузеры, Защита Windows (вместе с брандмауэром и защитой от майнеров);
-  - **Очистка и место** — мусор и кэши, что занимает место, дубликаты и пустые папки, битые ярлыки, старые драйверы;
-  - **Программы** — удаление, обновления, автозагрузка (перенесена из «Скорости»), встроенные приложения, меню правой кнопки;
-  - **Скорость и игры** — игровой режим и FPS, нагрузка сейчас (бывшие «Ресурсы»), почему шумит, память, интернет;
-  - **Здоровье ПК** — обзор, сбои и ошибки, устройства, комплектующие и драйверы (вместе), компоненты для программ, история, предупреждения;
-  - **Приватность** — слежка Windows, точки восстановления, что изменил ScanHub;
-  - **Телефон**.
-- Старые ссылки из подсказок, предупреждений и ответов помощника сами ведут на новые места; помощник знает новую карту разделов.
+**Sections rebuilt around tasks**
+- There were 12 sections; now there are 7, plus scan history and settings at the bottom of the menu:
+  - **Virus protection** — check, ultra and deep scan, check a program, quarantine, browsers, Windows Security (together with the firewall and miner protection);
+  - **Cleanup & space** — junk and caches, what takes up space, duplicates and empty folders, broken shortcuts, old drivers;
+  - **Programs** — uninstall, updates, startup (moved from “Speed”), built-in apps, the right-click menu;
+  - **Speed & games** — game mode and FPS, load now (formerly “Resources”), why it's noisy, memory, internet;
+  - **PC health** — overview, crashes and errors, devices, hardware and drivers (together), components for programs, history, alerts;
+  - **Privacy** — Windows tracking, restore points, what ScanHub changed;
+  - **Phone**.
+- Old links from hints, alerts and assistant answers lead to the new places on their own; the assistant knows the new section map.
 
 ## 1.5.2
 
-**Исправлено**
-- Окно ScanHub и его кнопка на панели задач показывали старый значок (щит), даже после перезагрузки: окно — это Edge, и он брал значок из своего кэша. Теперь при новой версии ScanHub сам сбрасывает этот кэш, а значок окна всегда берётся свежий.
+**Fixed**
+- The ScanHub window and its taskbar button kept showing the old icon (a shield), even after a reboot: the window is Edge, and it was taking the icon from its own cache. On a new version, ScanHub now clears that cache itself, so the window icon is always up to date.
 
 ## 1.5.1
 
-**Логотип «Стрелка-S»**
-- Знак стал легче: синяя буква S, верхний хвост которой уходит вправо стрелкой, — без таблички. Остриё вынесено за край буквы, поэтому даже в 16 px знак не путается с «$». Синий подобран так, чтобы значок был виден и на светлой, и на тёмной панели задач. Новый значок у программы, ярлыков, окна и вкладки; все варианты и правила — в `docs/logo`.
+**“Arrow-S” logo**
+- The mark is lighter: a blue letter S whose upper tail extends to the right as an arrow, with no plate behind it. The arrow tip sits past the edge of the letter, so even at 16 px the mark is not confused with “$”. The blue is chosen to stay visible on both light and dark taskbars. The new icon is used for the app, shortcuts, the window and the tab; all variants and rules are in `docs/logo`.
 
 ## 1.5.0
 
-**Новый логотип «Поворот»**
-- Вместо щита с радаром — синяя табличка, как в оформлении окна, а в ней S-стрелка: ScanHub показывает, что не так, и ведёт по шагам. Новый значок у программы, ярлыков, окна и вкладки; для маленьких размеров (панель задач) — отдельный упрощённый знак, который читается даже в 16 px. Все варианты и правила — в `docs/logo`.
+**New “Turn” logo**
+- Instead of a shield with a radar, there is now a blue plate, matching the window styling, with an S-arrow on it: ScanHub shows what is wrong and walks you through the fix step by step. The new icon is used for the app, shortcuts, the window and the tab; for small sizes (the taskbar) there is a separate simplified mark that stays readable even at 16 px. All variants and rules are in `docs/logo`.
 
-**Новое**
-- «Проверить обновления» (режим «Разработчик») проверяет ещё и новую версию самого ScanHub; итог — уведомлением справа снизу, оттуда же можно обновиться.
-- Если ScanHub пригодился, можно поставить ему звезду на GitHub — тихая просьба в мастере первого запуска и в карточке «Помочь автору ScanHub?».
+**New**
+- “Check for updates” (“Developer” mode) now also checks for a new version of ScanHub itself; the result appears as a notification at the bottom right, and you can update from there.
+- If ScanHub was useful, you can give it a star on GitHub — a quiet request in the first-run wizard and in the “Help the ScanHub author?” card.
 
-**Исправлено**
-- В README на GitHub больше не написано «Версия 1.0.0»: версия показывается значком и всегда актуальна. Исправлено, где переключается язык (⚙ Настройки).
+**Fixed**
+- The GitHub README no longer says “Version 1.0.0”: the version is shown as a badge and is always current. Fixed where the language is switched (⚙ Settings).
 
 ## 1.4.4
 
-**Новое**
-- **«Как быстро загружается Windows» (Скорость → Автозагрузка):** столбики теперь нажимаются — выбери загрузку и увидишь, что замедлило именно её; под столбиками — даты. Строку «что замедлило» можно нажать: что это за программа, драйвер или служба, насколько замедлила, что сделать (например, «Выключить автозапуск» прямо отсюда) и «✦ Как решить».
+**New**
+- **“How fast Windows boots” (Speed → Startup):** the bars are now clickable — pick a boot and you will see what slowed that particular one; dates are shown under the bars. You can click the “what slowed it down” line: it shows what the program, driver or service is, how much it slowed the boot, what to do (for example, “Turn off autostart” right from here) and “✦ How to fix”.
 
-**Исправлено**
-- Драйверы (.sys) в описаниях больше не называются «приложением из Microsoft Store».
-- Понятные описания частых частей Windows: поиск (SearchProtocolHost, SearchIndexer), Проводник, svchost, Defender, OneDrive.
+**Fixed**
+- Drivers (.sys) are no longer described as a “Microsoft Store app”.
+- Clear descriptions of common Windows components: search (SearchProtocolHost, SearchIndexer), Explorer, svchost, Defender, OneDrive.
 
-Подробности по каждой загрузке появятся после нажатия «обновить» под графиком (одно окно UAC): журнал загрузок Windows читается только с правами администратора.
+Details for each boot appear after you click “refresh” under the chart (one UAC prompt): the Windows boot log can only be read with administrator rights.
 
 ## 1.4.3
 
-**Новое**
-- Окно обновления ScanHub можно **свернуть**: оно превращается в плашку справа снизу (там, где уведомления) с процентами и полоской. Нажми на плашку — окно откроется снова.
+**New**
+- The ScanHub update window can be **minimized**: it turns into a badge at the bottom right (where notifications appear) with a percentage and a progress bar. Click the badge to open the window again.
 
-**Исправлено**
-- Карточки про сам ScanHub на главной («Вышла новая версия», «Создай ярлык», статистика) снова выглядят ровно: текст начинается от значка, кнопка — справа. Раньше их ломало оформление списка программ.
+**Fixed**
+- The cards about ScanHub itself on the home screen (“A new version of ScanHub is out”, “Create a shortcut”, statistics) look even again: the text starts next to the icon and the button is on the right. They used to be broken by the program list styling.
 
 ## 1.4.2
 
-**Новое**
-- **Обновление ScanHub с прогрессом:** после «Обновить» открывается окно с полоской и процентами — скачивание, сверка контрольной суммы с GitHub, установка файлов, перезапуск. Если что-то пошло не так, окно пишет почему и даёт ссылку на страницу выпуска.
+**New**
+- **ScanHub update with progress:** after “Update”, a window opens with a progress bar and percentages — download, checksum verification against GitHub, file installation, restart. If something goes wrong, the window says why and gives a link to the release page.
 
-**Исправлено**
-- Проверка новой версии после сбоя сети (например, оборвалось соединение с GitHub) ждала 6 часов, и карточка «Вышла новая версия» не появлялась. Теперь повторяет через 10 минут.
-- Анонимная статистика: если обновиться или сменить язык в тот же день, автор видел старую версию. Теперь отметка обновляется сразу. День считается по местному времени.
-- На карточках про сам ScanHub (новая версия, ярлык, статистика) больше нет лишней кнопки «✦ Как решить», кнопка стоит ровно.
+**Fixed**
+- After a network failure (for example, the connection to GitHub dropped), the new-version check waited 6 hours, so the “A new version of ScanHub is out” card never appeared. It now retries after 10 minutes.
+- Anonymous statistics: if you updated or switched the language on the same day, the author saw the old version. The record is now updated immediately. The day is counted in local time.
+- The cards about ScanHub itself (new version, shortcut, statistics) no longer have a stray “✦ How to fix” button, and the button is aligned properly.
 
-**Понятнее**
-- Подвал боковой панели: без длинного описания режимов, версия ScanHub — в самом низу.
-- Выбор языка (Русский · English) — в самом начале ⚙ Настроек.
+**Clearer**
+- Sidebar footer: no long description of the modes, and the ScanHub version is at the very bottom.
+- Language selection (Russian · English) is at the very top of ⚙ Settings.
 
 ## 1.4.1
 
-**Новое**
-- **«✦ Есть ли тут важное?» стала намного умнее.** Перед вопросом ScanHub сам собирает факты о каждом файле и папке: чья это программа, запущено ли сейчас, когда меняли и открывали, что лежит внутри, подпись, откуда скачан, копия ли это и не лежит ли рядом уже распакованная папка. Незнакомые названия помощник обязательно ищет в интернете, а лишнее, найденное внутри папок и в Загрузках (повторные установщики, старые архивы), добавляет сам.
-- **Оценка по пунктам:** «Можно удалить» (сколько освободится), «Сначала посмотри» и «Не удаляй», у каждого — понятная причина и ссылка на папку.
-- **«✦ Проверить и удалить с помощью ИИ»:** окно со списком — нажми на путь, чтобы открыть папку, «✦ Что это?», чтобы помощник рассказал подробнее, и «Удалить выбранное» (в Корзину или навсегда). Не удалилось — ScanHub пишет почему и что сделать: «Удалить с правами администратора», «Удалить при перезагрузке» или «✦ Как удалить?». Удалить можно только то, что помощник не пометил «Не удаляй»; диски, папку Windows и файл подкачки — никогда.
-- **«✦ Продолжить разговор»:** спросить помощника про любой пункт оценки.
+**New**
+- **“✦ Anything important here?” got much smarter.** Before asking, ScanHub collects facts about each file and folder: whose program it is, whether it is running now, when it was changed and opened, what is inside, the signature, where it was downloaded from, whether it is a copy and whether an already unpacked folder sits next to it. The assistant always searches the web for unfamiliar names, and on its own adds extra items it finds inside folders and in Downloads (repeated installers, old archives).
+- **Per-item rating:** “Safe to delete” (with how much space it frees), “Look first” and “Don't delete”, each with a clear reason and a link to the folder.
+- **“✦ Review and delete with AI”:** a window with a list — click a path to open the folder, “✦ What is it?” to have the assistant explain in more detail, and “Delete selected” (to the Recycle Bin or permanently). If something was not deleted, ScanHub says why and what to do: “Delete as administrator”, “Delete on restart” or “✦ How to delete?”. Only items the assistant did not mark “Don't delete” can be deleted; drives, the Windows folder and the page file never can.
+- **“✦ Continue the conversation”:** ask the assistant about any item in the rating.
 
-**Понятнее**
-- «Скрыть оценку» больше не стирает её: оценка сворачивается в строку, «Показать» — открыть снова. Она не пропадает и после перезагрузки окна.
-- Шредер спрятан в режим «Разработчик».
+**Clearer**
+- “Hide the rating” no longer erases it: the rating collapses into a single line, and “Show” opens it again. It also survives a window reload.
+- The shredder is moved into “Developer” mode.
 
 ## 1.4.0
 
-**Новое**
-- **«✦ Есть ли тут важное?»** во всех очистках: мусор и кэши, «Что занимает место» (там кнопка «✦ Что можно удалить?» — смотрит самые большие файлы и папки), дубликаты, остатки программ, пустые папки, битые ярлыки, старые драйверы. Помощник смотрит каждый пункт, а если непонятно — ищет в интернете, и ставит метку «Можно удалить», «Сначала посмотри» или «Не удаляй» с причиной. Безопасное сразу отмечает галочками, опасное снимает.
-- **Помощник ищет в интернете** с любой моделью, не только с Claude и ChatGPT по подписке: что это за программа или ошибка, знают ли о проблеме другие. Включается и выключается в настройках помощника.
-- **Безопасные ссылки на скачивание:** если помощник советует удалить файл, скачанный с ненадёжного сайта, он даёт ссылку на официальный сайт (берёт её из каталога winget и проверяет, что сайт не переадресует на чужой домен). Ссылки в ответах нажимаются и открываются после подтверждения.
-- **Ответы автора:** если написать автору через «Ошибка или идея?», его ответ придёт прямо в ScanHub (уведомление и «Мои сообщения»). Ответ видит только тот, кто писал.
-- **Удаление расширений браузера:** кнопка «Удалить» в «Приватность и защита → Браузеры» открывает страницу расширения в нужном браузере и профиле.
-- **Брандмауэр:** объяснение, откуда правила от удалённых программ, и кнопка «Удалить правила от удалённых программ».
-- **Сторож объясняет срабатывания:** у каждого — «Не страшно», «Стоит посмотреть» или «Важно», что это и что делать (например, «PhoneExperienceHost.exe — это Связь с телефоном, одиночный вылет не опасен»).
-- **Обновления программ решают сами:** если у новой версии нет подходящего установщика (например, OLE DB Driver 18 → 19 — это отдельная программа, она ставится рядом), ScanHub объясняет, оставляет как есть и больше не предлагает. У каждой программы есть «Не предлагать», а спрятанные лежат в «Скрытых обновлениях».
-- **«Показать FPS»** в «Быстрых действиях» на главной: включает и выключает счётчик в один клик.
+**New**
+- **“✦ Anything important here?”** in all cleanups: junk and caches, “What takes up space” (with a “✦ What can I delete?” button that looks at the biggest files and folders), duplicates, program leftovers, empty folders, broken shortcuts, old drivers. The assistant looks at every item and searches the web when unsure, then labels it “Safe to delete”, “Look first” or “Don't delete” with a reason. Safe items are ticked right away; risky ones are unticked.
+- **The assistant searches the web** with any model, not just Claude and ChatGPT via subscription: what a program or error is, whether others have run into the problem. It can be turned on and off in the assistant's settings.
+- **Safe download links:** if the assistant advises deleting a file downloaded from an untrusted site, it gives a link to the official site (taken from the winget catalog, with a check that the site doesn't redirect to a foreign domain). Links in answers are clickable and open after confirmation.
+- **Replies from the author:** if you write to the author via “Bug or idea?”, the reply arrives right in ScanHub (a notification and “My messages”). Only the person who wrote can see the reply.
+- **Removing browser extensions:** the “Delete” button in “Privacy & protection → Browsers” opens the extension's page in the right browser and profile.
+- **Firewall:** an explanation of where rules from uninstalled programs come from, and a “Delete rules of uninstalled programs” button.
+- **The watchdog explains its alerts:** each one gets “Nothing to worry about”, “Worth a look” or “Important”, what it is and what to do (for example, “PhoneExperienceHost.exe is Phone Link; a single crash is harmless”).
+- **Program updates decide for themselves:** if a new version has no suitable installer (for example, OLE DB Driver 18 → 19 is a separate program installed alongside), ScanHub explains, leaves it as is and stops offering it. Every program has “Don't offer”, and hidden ones are in “Hidden updates”.
+- **“Show FPS”** in “Quick actions” on the home screen: turns the counter on and off in one click.
 
-**Исправлено**
-- После каждого ответа помощника появлялась красная строка «Помощник не ответил: ошибка», хотя ответ был.
-- «✦ Сделай сам» не работал: помощник получал пустое сообщение и писал «твоё сообщение пришло пустым».
-- После «Отключить драйвер» ничего не происходило на экране, хотя драйвер отключался. Теперь ScanHub пишет «Готово — перезагрузи компьютер», а отключённый, но ещё не выгруженный драйвер больше не считается опасным.
-- «Что занимает место»: из папки нельзя было вернуться на уровень диска — теперь есть путь от корня и «← назад».
-- Проверка микрофона: запись было почти не слышно на тихом микрофоне. Теперь она усиливается, есть «Послушать ещё раз».
-- Проверка клавиатуры: на время проверки окно разворачивается на весь экран и клавиши Win, Alt+Tab, Alt+F4 не срабатывают в Windows. Выход — Shift+Esc или кнопка.
-- Окошко «только FPS» — одни цифры, без подложки и тёмной каймы.
+**Fixed**
+- After every assistant reply, a red line “The assistant did not respond: error” appeared even though the reply had arrived.
+- “✦ Do it for me” did not work: the assistant received an empty message and wrote “your message came through empty”.
+- After “Disable driver”, nothing happened on screen even though the driver was disabled. ScanHub now says “Done — restart the computer”, and a driver that is disabled but not yet unloaded is no longer considered dangerous.
+- “What takes up space”: there was no way back from a folder to the drive level — there is now a path from the root and “← back”.
+- Microphone test: the recording was barely audible on a quiet microphone. It is now amplified, and there is “Listen again”.
+- Keyboard test: during the test the window goes full screen, and the Win, Alt+Tab and Alt+F4 keys do not trigger in Windows. Exit with Shift+Esc or the button.
+- The “FPS only” window shows just the numbers, with no backdrop and no dark border.
 
-**Понятнее**
-- Напоминания про сам ScanHub (подготовка, ярлык, новая версия, счётчик запусков) выделены своим цветом и значком «S», чтобы не путать их с проблемами компьютера.
-- Кнопку «Вернуться к исправлению» можно убрать крестиком.
-- В «Дополнительных сканерах» больше нет MinerSearch — он уже запускается внутри глубокой и ультра проверки.
+**Clearer**
+- Reminders about ScanHub itself (setup, shortcut, new version, launch counter) have their own color and an “S” icon, so they are not confused with problems on the computer.
+- The “Back to fixing” button can be dismissed with a cross.
+- “Extra scanners” no longer lists MinerSearch — it already runs inside the deep and ultra checks.
 
 ## 1.3.2
 
-**Новое**
-- Окошко FPS по умолчанию показывает только цифры FPS. Подробный вариант (просадки, температура, мощность видеокарты) включается в «Игровом режиме» → «FPS и температуры».
-- У «Предложить улучшение» своя иконка — лампочка (звёздочка ✦ — это ИИ-помощник).
+**New**
+- The FPS window shows only the FPS numbers by default. The detailed version (drops, temperature, GPU power) is turned on in “Game mode” → “FPS and temperatures”.
+- “Suggest an improvement” has its own icon — a light bulb (the ✦ star is the AI assistant).
 
-**Исправлено**
-- «Видеокарта сейчас» и проверка комплектующих больше не пишут «включён тихий режим», когда на ноутбуке Lenovo включена «Производительность» (ScanHub читает режим с датчиков). Если лимит ниже максимума — объясняет, что последние ватты видеокарта получает только при слабо загруженном процессоре (NVIDIA Dynamic Boost), а если видеокарта и так не упирается в лимит — что мощности хватает и дело в процессоре или игре.
+**Fixed**
+- “GPU right now” and the hardware check no longer say “quiet mode is on” when a Lenovo laptop is set to “Performance” (ScanHub reads the mode from the sensors). If the limit is below the maximum, it explains that the GPU gets the last few watts only when the CPU is lightly loaded (NVIDIA Dynamic Boost); if the GPU is not hitting the limit anyway, it says the power is sufficient and the bottleneck is the CPU or the game.
 
 ## 1.3.1
 
-**Исправлено**
-- Если окно ScanHub долго было свёрнуто (например, пока идёт игра), ScanHub мог сам закрыться, а окно оставалось — и кнопки в нём молча не работали (например, «Выключить игровой режим»). Теперь свёрнутое окно не «засыпает», а если ScanHub всё же закрыт, окно прямо об этом говорит и само оживает, когда ScanHub открывают снова.
-- «Выключить игровой режим» больше не ждёт окна администратора: всё возвращается сразу, а службы обновлений перезапускаются отдельно.
+**Fixed**
+- If the ScanHub window stayed minimized for a long time (for example, during a game), ScanHub could close by itself while the window stayed open, and its buttons silently did nothing (for example, “Turn off game mode”). A minimized window no longer “falls asleep”, and if ScanHub is closed anyway, the window says so directly and revives itself when ScanHub is opened again.
+- “Turn off game mode” no longer waits for the administrator prompt: everything is restored immediately, and the update services are restarted separately.
 
 ## 1.3.0
 
-**Игры**
-- **FPS в игре**: маленькое окошко в углу экрана — FPS, просадки, температура и мощность видеокарты. Мышь проходит сквозь него, игре не мешает. Считает официальный счётчик Intel PresentMon (ScanHub скачает его сам, нужно одно окно UAC). Окно ScanHub можно закрыть — счётчик доработает, пока не выключишь.
-- **Итог после игры**: средний FPS, насколько сильные просадки, были ли подлагивания и перегрев — и что с этим делать.
+**Games**
+- **In-game FPS**: a small window in the corner of the screen showing FPS, drops, temperature and GPU power. The mouse passes through it, so it does not get in the game's way. The counting is done by the official Intel PresentMon counter (ScanHub downloads it itself; one UAC prompt is needed). You can close the ScanHub window — the counter keeps running until you turn it off.
+- **Post-game summary**: average FPS, how severe the drops were, whether there were stutters and overheating — and what to do about it.
 
-**Видеокарта вживую** (Здоровье ПК → Комплектующие и Игровой режим): сколько ватт она берёт прямо сейчас, какой лимит разрешён и какой максимум, от зарядки или от батареи. Подключи зарядку или включи режим «Производительность» — и сразу видно, как поднимается лимит.
+**GPU live** (PC health → Hardware and Game mode): how many watts it draws right now, what limit is allowed and what the maximum is, on charger or on battery. Plug in the charger or switch to “Performance” mode and you immediately see the limit rise.
 
 ## 1.2.0
 
-**Новое**
-- **Проверка телефона** (раздел «Телефон»): Android по кабелю через отладку по USB. Ищет приложения-следилки, приложения не из магазина (сверяет с VirusTotal по хэшу), смотрит, у кого спец. возможности, права администратора и доступ к уведомлениям, есть ли root, давно ли были обновления безопасности, что с батареей и памятью. На телефон ничего не ставится, связь с ним ScanHub закрывает сам.
-- **Устройства** (Здоровье ПК → Устройства): клавиатура, мышь, микрофон, звук, камера, Bluetooth — работают ли и почему нет. Живые проверки прямо в окне: уровень микрофона и запись на 3 секунды, все клавиши (и «дребезг»), кнопки мыши, двойной щелчок сам по себе, частота опроса, звук слева и справа, камера. Исправляет залипание и фильтрацию клавиш, запрет микрофона и камеры. Видно, кто недавно включал микрофон и камеру.
-- **Мастер первого запуска** «Подготовим ScanHub к работе»: скачивает все сканеры, базы и списки угроз (базы опасных адресов Maltrail — с твоего согласия, иначе проверка сети была неполной), а пока качается — помогает вставить ключи VirusTotal, MetaDefender, Filescan и Hybrid Analysis и сразу проверяет, что ключ работает. Открыть заново: ⚙ Настройки → «Мастер первого запуска».
-- **MinerSearch внутри глубокой и ультра проверки**: сам скачивается (при подготовке и перед проверкой), запускается сам, в том же окне UAC, что и проверка процессов, только ищет (ничего не удаляет). Его мелкие пометки о подписях и сертификатах объясняются простыми словами и не считаются угрозой.
-- Понятнее про корневые сертификаты: что это такое, какие обычно безвредны (VPN, банки, утилиты ноутбука, античиты), а какие опасны.
-- **«Ошибка или идея?»**: в том же окне теперь можно предложить улучшение. Можно приложить до трёх снимков экрана (кнопкой, Ctrl+V или перетаскиванием) — они сжимаются в окне и уходят автору картинками. Журнал ошибок ScanHub прикладывается отдельной галочкой, видно, сколько в нём записей.
-- **Проценты и «осталось ~N мин»** у долгих дел: очистка, анализ диска, дубликаты, шредер, подготовка ScanHub, проверка интернета, проверки файлов, глубокая и ультра проверка.
-- Анонимный счётчик запусков — **только с твоего согласия** (спросит один раз на главной, меняется в ⚙ Настройках).
+**New**
+- **Phone check** (“Phone” section): Android over a cable via USB debugging. It looks for stalkerware apps and apps not from the store (checked against VirusTotal by hash), and checks which apps have accessibility permissions, device administrator rights and notification access, whether the phone is rooted, how long ago the last security update was, and the state of the battery and storage. Nothing is installed on the phone, and ScanHub closes the connection itself.
+- **Devices** (PC health → Devices): keyboard, mouse, microphone, sound, camera, Bluetooth — whether they work and, if not, why. Live checks right in the window: microphone level and a 3-second recording, all keys (and key “chatter”), mouse buttons, accidental double-clicks, polling rate, left and right sound, camera. Fixes sticky and filter keys and blocked microphone and camera access. Shows who recently used the microphone and camera.
+- **First-run wizard** “Let's get ScanHub ready”: downloads all scanners, databases and threat lists (the Maltrail databases of dangerous addresses — with your consent, otherwise the network check would be incomplete), and while that downloads, helps you paste your VirusTotal, MetaDefender, Filescan and Hybrid Analysis keys and immediately checks that each key works. To reopen it: ⚙ Settings → “First-run setup”.
+- **MinerSearch inside the deep and ultra checks**: it downloads itself (during setup and before a check), runs itself, in the same UAC prompt as the process check, and only searches (it deletes nothing). Its minor notes about signatures and certificates are explained in plain words and are not counted as a threat.
+- Clearer explanation of root certificates: what they are, which ones are usually harmless (VPNs, banks, laptop utilities, anti-cheats) and which are dangerous.
+- **“Bug or idea?”**: you can now suggest an improvement in the same window. You can attach up to three screenshots (with a button, Ctrl+V or drag and drop) — they are compressed in the window and sent to the author as images. The ScanHub error log is attached with a separate checkbox, and you can see how many entries it has.
+- **Percentages and “~N min left”** for long tasks: cleanup, disk analysis, duplicates, shredder, ScanHub setup, internet check, file checks, deep and ultra checks.
+- The anonymous launch counter is **only with your consent** (asked once on the home screen, changeable in ⚙ Settings).
 
-**Понятнее**
-- Проверка системных файлов говорит по-человечески: что именно повреждено (например, «938 файлов оформления — на работу почти не влияет»), предлагает «Восстановить» только когда это поможет, а если Windows уже не нашла исправных копий (ошибка 0x800f0915 на тестовых сборках) — честно пишет, что делать ничего не нужно. Если проверка не запустилась из-за ожидающей перезагрузки — так и говорит. Одна старая метка Windows больше не показывается красной ошибкой.
-- «Сбои и ошибки»: у каждого сбоя пометка «Не страшно / Стоит посмотреть / Важно» с объяснением, итог по каждому дню и общий вывод — опасно или это обычные мелочи.
-- Советы других антивирусов больше не похожи на рекламу: спокойный список «что ищет и как работает», без «самых сильных» и ярких кнопок; когда находок нет — свёрнут и помечен «необязательно».
-- ИИ-помощник (Claude Code / Codex) теперь может искать справки в интернете — это выключается в настройках помощника. Описание того, что ему доступно, исправлено.
+**Clearer**
+- The system file check speaks plainly: what exactly is damaged (for example, “938 theme files — barely affects operation”), offers “Repair” only when it will help, and if Windows can no longer find intact copies (error 0x800f0915 on test builds), it honestly says there is nothing to do. If the check did not start because of a pending restart, it says so. One old Windows flag is no longer shown as a red error.
+- “Crashes and errors”: each crash is marked “Nothing to worry about / Worth a look / Important” with an explanation, plus a summary for each day and an overall verdict — dangerous, or just ordinary small stuff.
+- Suggestions of other antivirus programs no longer look like ads: a calm list of “what it looks for and how it works”, with no “strongest” labels or bright buttons; when there are no findings, it is collapsed and marked “optional”.
+- The AI assistant (Claude Code / Codex) can now search the web for reference information — this can be turned off in the assistant's settings. The description of what it has access to has been corrected.
 
-**Исправлено**
-- Кнопка «Скачать» у сканера не менялась ни во время загрузки, ни после установки (в блоке сканеров глубокой и ультра проверки). Теперь сразу пишет «Скачиваю…», показывает ход и сама становится «Запустить».
-- В конце глубокой и ультра проверки — блок «Чтобы быть максимально уверенным в чистоте ПК — заверши проверку дополнительными сканерами».
-- Обрыв связи с окном (закрыл или перезагрузил его посреди ответа) больше не записывается в журнал как ошибка ScanHub.
+**Fixed**
+- The scanner's “Download” button did not change either during the download or after installation (in the scanner block of the deep and ultra checks). It now immediately says “Downloading…”, shows progress and turns into “Run” by itself.
+- At the end of the deep and ultra checks there is a block: “To be as sure as possible that the PC is clean — finish the check with extra scanners”.
+- A dropped connection to the window (you closed or reloaded it mid-reply) is no longer logged as a ScanHub error.
 
 ## 1.1.1
 
-- Исправлено: если на компьютере другая программа уже заняла порт 8765, окно ScanHub могло открыть чужую страницу («Directory listing»), а ScanHub запускался по второму разу при каждом нажатии на ярлык. Теперь порт занимается только ScanHub, а если он занят — ScanHub сам берёт следующий свободный (8766–8775).
+- Fixed: if another program on the computer had already taken port 8765, the ScanHub window could open someone else's page (“Directory listing”), and ScanHub started a second copy on every shortcut click. Now only ScanHub takes the port, and if it is busy, ScanHub picks the next free one (8766–8775) by itself.
 
 ## 1.1.0
 
-**ИИ-помощник**
-- Claude и ChatGPT по своей подписке: ScanHub запускает официальные Claude Code или Codex, в которые ты вошёл, — запросы идут в лимиты подписки. Вход — кнопкой в настройках помощника.
-- Работает как агент: сам собирает данные инструментами ScanHub (журналы, сбои, устройства, защита, файлы). Командной строки, интернета и твоих файлов у него нет.
-- **«✦ Сделай сам»**: если помощник предложил действия (отключить уязвимый драйвер, обновить программу, выключить из автозагрузки, включить защиту…), он выполнит их по очереди и проверит результат. Только одобренные действия, через те же проверки и окна UAC, с записью в «Что изменил ScanHub». Работает и с моделями по ключу API.
-- Новые варианты по ключу API: Claude (Anthropic), ChatGPT (OpenAI), OpenRouter (сотни моделей по одному ключу).
+**AI assistant**
+- Claude and ChatGPT through your own subscription: ScanHub launches the official Claude Code or Codex that you are signed in to, so requests count against your subscription limits. Sign in with a button in the assistant's settings.
+- It works as an agent: it collects data itself with ScanHub's tools (logs, crashes, devices, protection, files). It has no command line, no internet and no access to your files.
+- **“✦ Do it for me”**: if the assistant suggested actions (disable a vulnerable driver, update a program, remove something from startup, turn on protection…), it carries them out one by one and checks the result. Only approved actions, through the same checks and UAC prompts, recorded in “What ScanHub changed”. It also works with API-key models.
+- New API-key options: Claude (Anthropic), ChatGPT (OpenAI), OpenRouter (hundreds of models with one key).
 
-## 1.0.0 — первый выпуск
+## 1.0.0 — first release
 
-**Проверка на вирусы**
-- Файл, папка или программа — сразу несколькими движками (Microsoft Defender, ClamAV, YARA, Atomdrift, цифровая подпись, онлайн-сверка по хэшу) с общим итогом «можно запускать / лучше не запускать».
-- Глубокая проверка всей системы, «Ультра проверка» (всё по очереди с отчётом в PDF и сравнением с прошлой), мастер исправлений.
-- Сторонние сканеры в один клик: Kaspersky VRT, Dr.Web CureIt!, ESET, Emsisoft, Malwarebytes, AdwCleaner, HiJackThis+ и другие — с официальных сайтов, с проверкой подписи и контрольной суммы.
-- Проверка до запуска: правая кнопка по файлу → «Проверить в ScanHub».
+**Virus scanning**
+- A file, folder or program — checked by several engines at once (Microsoft Defender, ClamAV, YARA, Atomdrift, digital signature, online hash lookup) with an overall verdict of “safe to run / better not to run”.
+- Deep scan of the whole system, “Ultra check” (everything in sequence with a PDF report and a comparison with the previous one), fix wizard.
+- Third-party scanners in one click: Kaspersky VRT, Dr.Web CureIt!, ESET, Emsisoft, Malwarebytes, AdwCleaner, HiJackThis+ and others — from official sites, with signature and checksum verification.
+- Check before running: right-click a file → “Check in ScanHub”.
 
-**Обслуживание**
-- Очистка мусора с объяснениями, место на диске, дубликаты, удаление программ с остатками, обновление программ, старые драйверы, PATH.
-- Здоровье ПК: сбои и их причины (с итогом «опасно / стоит посмотреть / можно не читать», поиском по программе и таблицей всех программ со сбоями), индекс стабильности с объяснением, что его снизило, «что это за программа» у каждого сбоя, комплектующие, история здоровья (батарея, диски).
-- «Почему тормозит интернет»: Wi-Fi, роутер, интернет, DNS, скорость.
+**Maintenance**
+- Junk cleanup with explanations, disk space, duplicates, uninstalling programs with their leftovers, program updates, old drivers, PATH.
+- PC health: crashes and their causes (with a verdict of “dangerous / worth a look / can be ignored”, search by program and a table of all crashing programs), a stability index with an explanation of what lowered it, “what is this program” for every crash, hardware, health history (battery, disks).
+- “Why is the internet slow”: Wi-Fi, router, internet, DNS, speed.
 
-**Приватность и защита**
-- Настройки приватности и встроенные защиты Windows, браузеры, меню правой кнопки, брандмауэр, защита от майнеров, шредер.
-- «Что изменил ScanHub»: все изменения с кнопкой «Отменить».
+**Privacy & protection**
+- Privacy settings and built-in Windows protections, browsers, right-click menu, firewall, miner protection, shredder.
+- “What ScanHub changed”: all changes, with an “Undo” button.
 
-**Прочее**
-- ИИ-помощник (Ollama, Gemini или DeepSeek): «✦ Как решить» у любой находки и чат про свой ПК; только читает и советует.
-- Русский и английский интерфейс.
-- Обновление в одну кнопку, «Нашёл ошибку?» — отчёт автору, удаление ScanHub со всеми следами.
+**Other**
+- AI assistant (Ollama, Gemini or DeepSeek): “✦ How to fix” on any finding and a chat about your own PC; it only reads and advises.
+- Russian and English interface.
+- One-button update, “Found a bug?” — a report to the author, and uninstalling ScanHub with all its traces.

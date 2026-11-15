@@ -1,23 +1,25 @@
-# Приём отчётов «Нашёл ошибку?»
+🇷🇺 [Русская версия](README.ru.md)
 
-Кнопка «Нашёл ошибку?» в ScanHub отправляет отчёт на посредник — Cloudflare Worker из `cloudflare-worker.js`, — а он пересылает его автору в Telegram. Ключ Telegram-бота хранится только в Worker, поэтому в открытом коде ScanHub его нет.
+# Receiving "Found a bug?" reports
 
-Что получает автор: текст, который человек написал сам, версию ScanHub и Windows, раздел, где была ошибка, и последние ошибки из журнала ScanHub (`data\errors.log`). Имя пользователя, имя компьютера, почта и ключи вычищаются ещё на компьютере, и человек видит отчёт целиком до отправки.
+The "Found a bug?" button in ScanHub sends a report to an intermediary, a Cloudflare Worker from `cloudflare-worker.js`, which forwards it to the author on Telegram. The Telegram bot key lives only in the Worker, so it is not in ScanHub's open source code.
 
-## Как поднять свой приём отчётов (для форков)
+What the author receives: the text the user wrote, the ScanHub and Windows versions, the section where the error occurred, and the latest errors from the ScanHub log (`data\errors.log`). The user name, computer name, email and keys are scrubbed on the computer itself, and the user sees the whole report before it is sent.
 
-1. Создай бота в [@BotFather](https://t.me/BotFather) (`/newbot`) и нажми «Старт» в чате с ним.
-2. Узнай свой числовой ID в Telegram, например у [@userinfobot](https://t.me/userinfobot).
-3. На [dash.cloudflare.com](https://dash.cloudflare.com) (бесплатный аккаунт): **Workers & Pages → Create → Create Worker** → «Hello World» → **Deploy** → **Edit code**, замени код на `cloudflare-worker.js` → **Deploy**.
-4. В Worker: **Settings → Variables and Secrets** → **Add**:
-   - `BOT_TOKEN` — тип **Secret**, ключ бота;
-   - `CHAT_ID` — тип **Text**, твой ID.
-5. Адрес Worker вида `https://….workers.dev` + `/report` впиши в `report.py` → `REPORT_URL` (или в `data\config.json` → `report_url`).
+## Setting up your own report receiver (for forks)
 
-Ограничения от спама: не больше 5 отчётов за 10 минут с одного адреса и 200 за сутки, отчёт до 24 КБ. Бесплатного тарифа Cloudflare (100 000 запросов в сутки) хватает с запасом.
+1. Create a bot with [@BotFather](https://t.me/BotFather) (`/newbot`) and press "Start" in the chat with it.
+2. Find your numeric Telegram ID, for example with [@userinfobot](https://t.me/userinfobot).
+3. On [dash.cloudflare.com](https://dash.cloudflare.com) (a free account): **Workers & Pages → Create → Create Worker** → "Hello World" → **Deploy** → **Edit code**, replace the code with `cloudflare-worker.js` → **Deploy**.
+4. In the Worker: **Settings → Variables and Secrets** → **Add**:
+   - `BOT_TOKEN` — type **Secret**, the bot key;
+   - `CHAT_ID` — type **Text**, your ID.
+5. Put the Worker address (`https://….workers.dev`) + `/report` into `report.py` → `REPORT_URL` (or into `data\config.json` → `report_url`).
+
+Spam limits: no more than 5 reports per 10 minutes and 200 per day from one address, and a report is at most 24 KB. The Cloudflare free tier (100,000 requests per day) is more than enough.
 
 
-## Обновить посредник (wrangler)
+## Updating the intermediary (wrangler)
 
 ```
 npm i -g wrangler
@@ -26,4 +28,4 @@ wrangler login
 wrangler deploy
 ```
 
-`wrangler.toml` уже настроен: имя `scanhub-reports`, хранилище счётчика `USAGE`, сводка в Telegram раз в день. `CHAT_ID` задан на сайте Cloudflare и при деплое сохраняется (`keep_vars`). Секреты задаются один раз: `wrangler secret put BOT_TOKEN`, `wrangler secret put STATS_KEY`. Статистика: `https://<адрес>.workers.dev/stats?key=<STATS_KEY>`.
+`wrangler.toml` is already configured: the name is `scanhub-reports`, the counter storage is `USAGE`, and a summary goes to Telegram once a day. `CHAT_ID` is set on the Cloudflare site and is preserved on deploy (`keep_vars`). Secrets are set once: `wrangler secret put BOT_TOKEN`, `wrangler secret put STATS_KEY`. Statistics: `https://<address>.workers.dev/stats?key=<STATS_KEY>`.
