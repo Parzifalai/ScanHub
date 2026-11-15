@@ -1334,6 +1334,7 @@ def tools_view():
 assistant.HOOKS["tools"] = tools_view      # помощник видит список сканеров, не импортируя сервер
 assistant.HOOKS["act"] = lambda action, arg: agent_action(action, arg)   # «Сделай сам»: действия из одобренного плана
 assistant.HOOKS["url"] = lambda: f"http://{HOST}:{PORT}"                  # адрес для инструментов агента (mcp_server.py)
+assistant.HOOKS["check"] = lambda kind: agent_check(kind)                 # 2.2: проверки, которые помощник запускает сам
 
 
 def pick(kind):
@@ -2303,7 +2304,74 @@ def agent_action(action, arg):
     if action == "wu_drivers":
         os.startfile("ms-settings:windowsupdate-optionalupdates")
         return {"ok": True, "итог": "открыт Windows Update → необязательные обновления (драйверы) — выбрать и установить там"}
+    if action == "junk_clean":
+        # только категории, которые есть в списке очистки и в которых сейчас что-то есть (как кнопка «Очистить»)
+        found = {c["id"]: c for c in (_last("junk_scan") or pcclean.junk_scan()).get("categories", [])}
+        ids = [i.strip() for i in arg.split(",") if i.strip() in found and found[i.strip()].get("size_all")]
+        if not ids:
+            return {"ok": False, "ошибка": f"нет таких категорий мусора с файлами: {arg}"}
+        return _wait_task("junk_clean", {"ids": ids})
     return {"ok": False, "ошибка": "неизвестное действие"}
+
+
+# 2.2: проверки, которые помощник запускает сам по просьбе человека — только чтение, ничего не меняют
+AGENT_CHECKS = {"miners": ("job", "minersearch", "scanonly"), "quick_scan": ("job", "defender", "quick"),
+                "junk": ("task", "junk_scan"), "startup": ("task", "startup"), "health": ("task", "health"), "hardware": ("task", "hwcheck")}
+_AGENT_RUNS = {}                 # вид проверки → id запущенного сканера: повторный вызов ждёт ту же, а не запускает вторую
+
+
+def agent_check(kind, wait=240):
+    spec = AGENT_CHECKS.get(kind)
+    if not spec:
+        return {"ошибка": "неизвестная проверка"}
+    t0 = time.time()
+    if spec[0] == "task":
+        t = TASKS.get(spec[1])
+        if not (t and t.get("status") == "running"):
+            t = start_task(spec[1], {})
+        while t.get("status") == "running" and time.time() - t0 < wait:
+            time.sleep(1)
+            t = TASKS.get(spec[1]) or t
+        if t.get("status") == "running":
+            return {"идёт": True, "итог": "проверка ещё идёт — вызови run_check с тем же kind ещё раз через минуту, ход виден в окне ScanHub"}
+        if t.get("status") == "error":
+            return {"ошибка": t.get("error")}
+        res = t.get("result")
+        if spec[1] == "junk_scan":          # для очистки нужны id категорий — отдаём коротко и понятно
+            res = {"категории": [{"id": c["id"], "что": c.get("label"), "размер": f"{c.get('size', 0) / 2 ** 20:,.0f} МБ".replace(",", " "),
+                                  "безопасно": c.get("safe"), "нужны_права_администратора": bool(c.get("admin"))}
+                                 for c in sorted(res.get("categories", []), key=lambda c: -c.get("size", 0)) if c.get("size_all")],
+                   "корзина": res.get("recycle"), "свободно_на_C": f"{res.get('c_free', 0) / 2 ** 30:.1f} ГБ"}
+        return {"готово": True, "итог": json.loads(json.dumps(res, ensure_ascii=False, default=str))}
+    _, tid, mode = spec
+    jid = _AGENT_RUNS.get(kind)
+    job = jobs.get(jid) if jid else None
+    if not (job and job["status"] == "running"):
+        try:
+            job = start_job(tid, mode, None)
+        except (RuntimeError, StopIteration) as e:
+            return {"ошибка": f"{e} — нажми «Подготовить ScanHub» на главной или поставь сканер в разделе «Сканеры»"}
+        _AGENT_RUNS[kind] = job["id"]
+    while job["status"] == "running" and time.time() - t0 < wait:
+        time.sleep(1)
+    if job["status"] == "running":
+        return {"идёт": True, "итог": f"{job['tool_name']} ещё проверяет — вызови run_check с тем же kind ещё раз через минуту"}
+    lines = [l for l in job.get("lines") or [] if str(l).strip()]
+    out = {"готово": True, "сканер": job["tool_name"], "вердикт": job.get("verdict"), "код_выхода": job.get("code"), "конец_журнала": lines[-40:]}
+    if kind == "miners":            # MinerSearch пишет итог в свой отчёт — разбираем так же, как глубокая проверка
+        try:
+            started = datetime.fromisoformat(job["started"]).timestamp() if isinstance(job.get("started"), str) else t0
+            logs = sorted((p for p in glob.glob(os.path.join(deepscan.MS_LOGS, "MinerSearch_*.log")) if os.path.getmtime(p) >= started - 5),
+                          key=os.path.getmtime)
+            if logs:
+                raw = open(logs[-1], "rb").read()
+                r = deepscan.parse_minersearch(raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8", "replace"))
+                out.update(угрозы=r["threats"][:15], предупреждения=r["warn"][:10],
+                           мелкие_пометки_не_угрозы={k: len(v) for k, v in r["minor"].items()}, отчёт=logs[-1])
+                out.pop("конец_журнала", None)
+        except (OSError, ValueError) as e:
+            out["отчёт"] = f"не прочитал отчёт MinerSearch: {e}"
+    return out
 
 
 def start_task(name, args):
@@ -3068,6 +3136,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
                         c["ai_web"] = bool(body["web"])
                     if "verdict" in body:
                         c["ai_verdict"] = bool(body["verdict"])
+                    if body.get("speed") in ("fast", "precise"):        # 2.2: «Быстро» / «Точно»
+                        c["ai_speed"] = body["speed"]
                     for k in AI_KEYS:
                         if k in body:
                             v = str(body[k]).strip()

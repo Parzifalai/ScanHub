@@ -32,6 +32,8 @@ const AI_ACT = {
   free_ram: {label: () => "Освободить память", ask: () => "Освободить оперативную память (как Mem Reduct)? Открытые программы не закроются."},
   sfc: {label: () => "Восстановить системные файлы", ask: () => "Запустить восстановление системных файлов (DISM + SFC) в окне администратора? 10–30 минут."},
   wu_drivers: {label: () => "Драйверы в Windows Update", ask: null},
+  junk_clean: {label: a => `Очистить мусор (${String(a).split(",").filter(Boolean).length} кат.)`,
+               ask: a => `Очистить мусор этих категорий: ${a}? Удаляются только временные файлы и кэши — то же, что кнопка «Очистить» в «Очистка и место».`},
 };
 function aiActions(src){
   const acts = [...String(src || "").matchAll(/\[\[действие:([a-z_]+)(?::([^\]]+))?\]\]/g)].map(m => ({id: m[1], arg: (m[2] || "").trim()})).filter(a => AI_ACT[a.id]);
@@ -53,6 +55,7 @@ async function aiDoAction(a){
     if (a.id === "security_on") [name, args] = ["security_apply", {ids: [a.arg]}];
     if (a.id === "restore_on") [name, args] = ["restore_enable", {}];
     if (a.id === "free_ram") [name, args] = ["mem_quick", {}];
+    if (a.id === "junk_clean") [name, args] = ["junk_clean", {ids: a.arg.split(",").map(s => s.trim()).filter(Boolean)}];
     if (a.id === "startup_off") {
       const st = (await runTask("startup", undefined, true)).result || {};
       const it = (st.items || []).find(i => i.name.toLowerCase() === a.arg.toLowerCase()) || (st.items || []).find(i => i.name.toLowerCase().includes(a.arg.toLowerCase()));
@@ -105,9 +108,12 @@ function aiPanel(){
       <button class="ai-ib" id="aiNew" title="Новый разговор" aria-label="Новый разговор">＋</button><button class="ai-ib" id="aiGear" title="Модель и ключи" aria-label="Настройки помощника">⚙</button><button class="ai-ib${document.body.classList.contains("ai-full") ? " on" : ""}" id="aiFull" title="${document.body.classList.contains("ai-full") ? "Обычный размер" : "На весь экран"}" aria-label="На весь экран"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="fx-out" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button class="ai-ib" id="aiClose" title="Закрыть (Esc)" aria-label="Закрыть">✕</button></div>
     <div class="ai-ctx" id="aiCtx" hidden></div>
     <div class="ai-body" id="aiBody"></div>
-    <form class="ai-input" id="aiForm"><div class="ai-box"><textarea id="aiText" rows="1" placeholder="Спроси про свой ПК: «почему ноутбук греется?»" spellcheck="true"></textarea>
+    <form class="ai-input" id="aiForm"><div class="ai-box"><div class="ai-thumbs" id="aiThumbs" hidden></div><textarea id="aiText" rows="1" placeholder="Спроси или попроси: «проверь на майнеры», «что можно очистить?»" spellcheck="true"></textarea>
       <div class="ai-box-row"><button class="ai-ib" id="aiAttach" type="button" title="Выбрать файл или папку на компьютере — помощник посмотрит сведения о нём" aria-label="Прикрепить файл или папку">⊕</button>
-      <span class="sub ai-hint">Enter — отправить, Shift+Enter — новая строка</span><button class="ai-send" id="aiSend" aria-label="Отправить" title="Отправить">↑</button></div></div></form>`;
+      <button class="ai-ib" id="aiPhoto" type="button" title="Приложить фото или скриншот (или просто вставь его в поле — Ctrl+V)" aria-label="Приложить фото"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-8.5 8"/></svg></button>
+      <input type="file" id="aiPhotoIn" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
+      <div class="ai-speed" role="group" aria-label="Скорость ответа"><button type="button" data-ai-speed="fast" title="Быстро: короткое размышление, меньше шагов, интернет — только если попросишь">Быстро</button><button type="button" data-ai-speed="precise" title="Точно: модель думает дольше и сама проверяет больше данных">Точно</button></div>
+      <span class="grow"></span><button class="ai-send" id="aiSend" aria-label="Отправить" title="Отправить — Enter (новая строка — Shift+Enter)">↑</button></div></div></form>`;
   document.body.appendChild(p);
   return p;
 }
@@ -131,7 +137,10 @@ function aiRender(){
   const cx = p.querySelector("#aiCtx");
   cx.hidden = !AI.ctx || AI.setup;
   if (AI.ctx) cx.innerHTML = `<span class="sub">Разговор о проверке</span><b>${esc(AI.ctx.title)}</b><span class="grow"></span><button class="ai-ib" data-ai-ctx-off title="Выйти из разговора о проверке" aria-label="Выйти из разговора о проверке">✕</button>`;
-  p.querySelector("#aiText").placeholder = AI.ctx ? "Спроси про эту проверку…" : "Спроси про свой ПК: «почему ноутбук греется?»";
+  p.querySelector("#aiText").placeholder = AI.ctx ? "Спроси про эту проверку…" : "Спроси или попроси: «проверь на майнеры», «что можно очистить?»";
+  const speed = AI.cfg?.speed || "fast";
+  p.querySelectorAll("[data-ai-speed]").forEach(b => { b.classList.toggle("on", b.dataset.aiSpeed === speed); b.setAttribute("aria-pressed", b.dataset.aiSpeed === speed) });
+  p.querySelector("#aiPhoto").hidden = AI.cfg?.vision === false;
   if (AI.setup) { body.innerHTML = aiSetupHtml(); body._chat = null; body.scrollTop = body.scrollHeight; return }
   // 2.2: разговор не перерисовывается целиком на каждом опросе (раньше — мигание и прыжок вниз при прокрутке вверх):
   // сообщения меняются только когда появилось новое, строка «что сейчас смотрю» — только когда в ней что-то изменилось
@@ -284,7 +293,7 @@ const AI_SUGGEST = ["Что с моим компьютером не так?", "�
 function aiChatHtml(){
   const j = AI.job;
   const msgs = AI.msgs.map(m => m.role === "user"
-    ? `<div class="ai-msg ai-u">${esc(m.show || m.content)}</div>`
+    ? `<div class="ai-msg ai-u">${m.imgs?.length ? `<div class="ai-u-imgs">${m.imgs.map(s => `<img src="${s}" alt="картинка к вопросу">`).join("")}</div>` : ""}${esc(m.show || m.content)}</div>`
     : m.role === "error" ? `<div class="ai-msg ai-err">${esc(m.content)} <a data-ai-gear>Настройки помощника</a></div>`
     : `<div class="ai-msg ai-a">${aiMd(m.content)}${!m.act && aiPlan(m.content).length ? `<div class="ai-do"><button class="primary small" data-ai-do="${AI.msgs.indexOf(m)}" title="Помощник сам выполнит эти действия по очереди и проверит результат">✦ Сделай сам</button><span class="sub">${aiPlan(m.content).length > 1 ? `выполнит ${aiPlan(m.content).length} действия по очереди и проверит` : "выполнит и проверит"}; системные — с окном UAC</span></div>` : ""}${aiActions(m.content) || aiButtons(m.content) ? `<div class="row-tools ai-btns">${m.act ? "" : aiActions(m.content)}${aiButtons(m.content)}</div>` : ""}${m.finding ? `<div class="sub"><a data-ai-more="${esc(JSON.stringify(m.finding))}">Подробнее — что это и насколько серьёзно</a></div>` : ""}${m.cached ? `<div class="sub">ответ из памяти · <a data-ai-fresh="${esc(m.cached)}">спросить заново</a></div>` : ""}</div>`).join("");
   // пока помощник отвечает — видно, что именно он сейчас смотрит (интернет, журналы, страницы)
@@ -335,13 +344,60 @@ async function aiDoIt(idx){
         <p class="sub">Каждое действие идёт через те же проверки, что и кнопки ScanHub: только найденное проверкой, окно UAC для системных, и всё попадает в «Приватность → Что изменил ScanHub» — там же можно отменить. Ничего сверх списка помощник сделать не может.</p>`})) return;
   aiStart({kind: "act", plan, context: m.content}, {role: "user", content: "Сделай сам", show: "✦ Сделай сам: " + plan.map(a => AI_ACT[a.id].label(a.arg)).join(", ")});
 }
-function aiAsk(text){
+function aiAsk(text, imgs = []){
   text = String(text || "").trim();
+  if (!text && imgs.length) text = imgs.length > 1 ? "Что на этих картинках и что мне делать?" : "Что на этой картинке и что мне делать?";
   if (!text) return;
   // финальный вывод уже лежит на сервере вместе со сводкой проверки (ctx_job) — в историю его не дублируем
   const hist = AI.msgs.filter(m => (m.role === "user" || m.role === "assistant") && !m.verdict).map(m => ({role: m.role, content: m.content}));
-  aiStart({kind: "chat", messages: [...hist, {role: "user", content: text}], ...(AI.ctx ? {ctx_job: AI.ctx.job} : {})}, {role: "user", content: text});
+  aiStart({kind: "chat", messages: [...hist, {role: "user", content: text}], ...(imgs.length ? {images: imgs} : {}), ...(AI.ctx ? {ctx_job: AI.ctx.job} : {})},
+          {role: "user", content: text, ...(imgs.length ? {imgs} : {})});
 }
+
+// ---------- 2.2: фото и скриншоты — кнопкой или вставкой (Ctrl+V); большие уменьшаются до 1600 точек, чтобы ответ шёл быстрее
+AI.imgs = [];
+function aiThumbs(){
+  const box = $("#aiThumbs");
+  if (!box) return;
+  box.hidden = !AI.imgs.length;
+  box.innerHTML = AI.imgs.map((src, i) => `<span class="ai-thumb"><img src="${src}" alt=""><button type="button" data-ai-img-del="${i}" title="Убрать" aria-label="Убрать картинку">✕</button></span>`).join("");
+}
+function aiAddImage(file){
+  if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) return;
+  if (AI.cfg?.vision === false) return toast("Эта модель не видит картинки", "опиши словами или выбери в ⚙ помощника Gemini, Claude или ChatGPT", "info", 7000);
+  if (AI.imgs.length >= 4) return toast("Не больше 4 картинок к одному вопросу", "", "info");
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    AI.imgs.push(file.type === "image/png" && k === 1 && file.size < 1.5e6 ? c.toDataURL("image/png") : c.toDataURL("image/jpeg", .88));
+    aiThumbs();
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast("Не получилось открыть картинку", file.name || "", "warn") };
+  img.src = url;
+}
+document.addEventListener("paste", e => {
+  if (e.target.id !== "aiText") return;
+  const files = [...(e.clipboardData?.items || [])].filter(i => i.kind === "file" && i.type.startsWith("image/")).map(i => i.getAsFile());
+  if (!files.length) return;
+  e.preventDefault();
+  files.forEach(aiAddImage);
+});
+document.addEventListener("change", e => { if (e.target.id === "aiPhotoIn") { [...e.target.files].forEach(aiAddImage); e.target.value = "" } });
+document.addEventListener("click", async e => {
+  const del = e.target.closest("[data-ai-img-del]");
+  if (del) { e.preventDefault(); AI.imgs.splice(+del.dataset.aiImgDel, 1); return aiThumbs() }
+  if (e.target.closest("#aiPhoto")) { e.preventDefault(); return $("#aiPhotoIn")?.click() }
+  const sp = e.target.closest("[data-ai-speed]");
+  if (sp) {
+    e.preventDefault();
+    try { AI.cfg = await api("/api/ai/config", {speed: sp.dataset.aiSpeed}); aiRender() }
+    catch (err) { toast("Не сохранилось", err.message, "warn") }
+  }
+});
 function aiExplain(f, fresh = false, kind = "solve"){
   aiOpen();
   if (!AI.cfg?.enabled) return;
@@ -639,7 +695,9 @@ document.addEventListener("input", e => {
 document.addEventListener("submit", e => {
   if (e.target.id !== "aiForm") return;
   e.preventDefault();
-  const t = $("#aiText"); aiAsk(t.value); t.value = ""; t.style.height = "auto";
+  const t = $("#aiText"), imgs = AI.imgs.splice(0);
+  if (AI.job?.status === "running") { AI.imgs.push(...imgs); return }      // ответ ещё идёт — картинки не теряем
+  aiAsk(t.value, imgs); t.value = ""; t.style.height = "auto"; aiThumbs();
 });
 document.addEventListener("keydown", e => {
   if (e.target.id === "aiText" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#aiForm").requestSubmit() }

@@ -207,9 +207,36 @@ def _toml(v):
     return json.dumps(v, ensure_ascii=False)
 
 
-def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, timeout=900, max_turns=30, web=False):
+IMG_EXT = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "image/gif": ".gif"}
+
+
+def _save_images(scratch, images):
+    """Картинки человека → файлы image1.png… во временной папке ответа (для Codex и Antigravity)."""
+    import base64
+    paths = []
+    for i, (mime, b64) in enumerate(images or [], 1):
+        p = os.path.join(scratch, f"image{i}{IMG_EXT.get(mime, '.png')}")
+        with open(p, "wb") as f:
+            f.write(base64.b64decode(b64))
+        paths.append(p)
+    return paths
+
+
+def _agy_model(model, fast):
+    """«Быстро» в Antigravity: та же модель с уровнем размышления low (если он есть в подписке), иначе medium."""
+    if not fast or not model or model == "auto":
+        return model
+    base = re.sub(r"-(low|medium|high|xhigh|max)$", "", model)
+    for lvl in ("low", "medium"):
+        if f"{base}-{lvl}" in AGY_MODELS:
+            return f"{base}-{lvl}"
+    return model
+
+
+def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, timeout=900, max_turns=30, web=False, fast=False, images=()):
     """Запустить агента на один ответ. Возвращает текст ответа. stop() — человек нажал «Остановить».
-    web — разрешить поиск и чтение страниц в интернете (только для вопросов; для «Сделай сам» всегда выключено)."""
+    web — разрешить поиск и чтение страниц в интернете (только для вопросов; для «Сделай сам» всегда выключено).
+    fast — режим «Быстро» (короткое размышление); images — [(mime, base64)] картинки к вопросу."""
     c = CLI[provider]
     exe = c["find"]()
     if not exe:
@@ -217,11 +244,17 @@ def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, t
     st = status(provider)
     if not st["connected"]:
         raise AgentError(st["message"])
-    scratch = tempfile.mkdtemp(prefix="scanhub-agent-")       # пустая рабочая папка: агенту нечего там читать
+    scratch = tempfile.mkdtemp(prefix="scanhub-agent-")       # пустая рабочая папка: агенту нечего там читать (кроме картинок человека)
     mcp = _mcp(url, job, key)
+    extra_env = {}
     try:
         if provider == "antigravity":
-            args = _agy_prepare(exe, scratch, system=system, model=model, mcp=mcp, web=web, timeout=timeout)
+            # Antigravity не принимает картинку в сообщении (только текст), но открывает файл из папки ответа — сторож пускает только к ним
+            pics = _save_images(scratch, images)
+            args = _agy_prepare(exe, scratch, system=system, model=_agy_model(model, fast), mcp=mcp, web=web, timeout=timeout, images=pics)
+            if pics:
+                prompt = ("Человек приложил к вопросу картинк" + ("у" if len(pics) == 1 else "и") + ": " + ", ".join(os.path.basename(p) for p in pics)
+                          + " (в текущей папке). Сначала открой и посмотри " + ("её" if len(pics) == 1 else "их") + ".\n\n" + prompt)
             stdin = json.dumps({"event": "user", "message": {"role": "user", "content": [{"type": "text", "text": prompt}]}},
                                ensure_ascii=False) + "\n"
         elif provider == "claude_code":
@@ -230,7 +263,11 @@ def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, t
                     "--strict-mcp-config", "--allowedTools", "mcp__scanhub,WebSearch,WebFetch" if web else "mcp__scanhub",
                     "--no-session-persistence", "--setting-sources", "",
                     "--max-turns", str(max_turns)] + ([] if model in ("", "auto") else ["--model", model])
-            stdin = json.dumps({"type": "user", "message": {"role": "user", "content": [{"type": "text", "text": prompt}]}}) + "\n"
+            content = [{"type": "text", "text": prompt}] + [{"type": "image", "source": {"type": "base64", "media_type": mt, "data": b}}
+                                                            for mt, b in images or []]
+            stdin = json.dumps({"type": "user", "message": {"role": "user", "content": content}}) + "\n"
+            if fast:
+                extra_env["MAX_THINKING_TOKENS"] = "2048"          # «Быстро»: короткое размышление
         else:
             answer = os.path.join(scratch, "answer.txt")
             srv = ("{" + f"command = {_toml(mcp['command'])}, args = {_toml(mcp['args'])}, "
@@ -243,10 +280,12 @@ def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, t
                     "-c", "features.shell_tool=false", "-c", "features.unified_exec=false", "-c", "features.apps=false",
                     "-c", "features.multi_agent=false", "-c", "features.hooks=false", "-c", "features.memories=false",
                     "-c", "features.plugins=false", "-c", "features.remote_plugin=false", "-c", "features.browser_use=false",
-                    "-c", "features.computer_use=false"] + ([] if model in ("", "auto") else ["--model", model]) + ["--", "-"]
+                    "-c", "features.computer_use=false"] + ([] if model in ("", "auto") else ["--model", model]) \
+                + (["-c", 'model_reasoning_effort="low"'] if fast else []) \
+                + [x for p_ in _save_images(scratch, images) for x in ("--image", p_)] + ["--", "-"]
             stdin = system + "\n\n---\n\n" + prompt
         p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=scratch,
-                             env=_env(), creationflags=NO_WINDOW)
+                             env=_env(extra_env), creationflags=NO_WINDOW)
         out = []
         threading.Thread(target=lambda: out.append(p.stdout.read(MAX_OUT)), daemon=True).start()
         threading.Thread(target=lambda: p.stderr.read(), daemon=True).start()     # диагностику с данными аккаунта не храним
@@ -288,7 +327,7 @@ AGY_RULES = """
 """
 
 
-def _agy_prepare(exe, scratch, *, system, model, mcp, web, timeout):
+def _agy_prepare(exe, scratch, *, system, model, mcp, web, timeout, images=()):
     """Временная папка ответа = проект Antigravity с одним плагином «scanhub»: правила помощника, сервер инструментов
     ScanHub и сторож (agy_gate.py), который до каждого шага разрешает только инструменты ScanHub и интернет.
     Общие настройки Antigravity пользователя не меняются."""
@@ -301,7 +340,7 @@ def _agy_prepare(exe, scratch, *, system, model, mcp, web, timeout):
     py = sys.executable.replace("pythonw.exe", "python.exe")     # сторож отвечает через stdout — нужен обычный python
     gate = f'"{py if os.path.exists(py) else sys.executable}" "{os.path.join(ROOT, "agy_gate.py")}"'
     w("hooks.json", {"scanhub-gate": {"PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": gate, "timeout": 20}]}]}})
-    w("gate.json", {"web": bool(web)})
+    w("gate.json", {"web": bool(web), "images": [os.path.abspath(p) for p in images or []]})   # 2.2: открыть можно только эти картинки
     w(os.path.join("rules", "AGENTS.md"), system + AGY_RULES)
     settings = os.path.join(scratch, "settings.json")
     open(settings, "w", encoding="utf-8").write(json.dumps({"permissions": {"allow": ["mcp(scanhub_scanhub/*)"]}}))

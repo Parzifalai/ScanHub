@@ -1701,3 +1701,20 @@ body.ai-full .ai-body > *,body.ai-full .ai-input .ai-box,body.ai-full .ai-ctx{ma
 body.ai-full .ai-body{padding-inline:24px}
 #aiFull.on{color:#B9B6FF;background:rgba(110,115,255,.16)}
 .ai-panel{transition:left .38s var(--ease),top .38s var(--ease)}
+
+/* ---------- 2.2 помощник: фото к вопросу и переключатель «Быстро / Точно» */
+.ai-box-row .grow{flex:1}
+.ai-thumbs{display:flex;gap:8px;flex-wrap:wrap;padding:4px 0 8px}
+.ai-thumbs[hidden]{display:none}
+.ai-thumb{position:relative;width:64px;height:64px;border-radius:12px;overflow:hidden;border:1px solid var(--line2);animation:msgIn .25s var(--ease)}
+.ai-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.ai-thumb button{position:absolute;top:3px;right:3px;width:20px;height:20px;padding:0;border:0;border-radius:50%;display:grid;place-items:center;
+  font-size:10px;background:rgba(5,9,22,.75);color:#fff;opacity:0;transition:opacity .15s}
+.ai-thumb:hover button,.ai-thumb button:focus-visible{opacity:1}
+.ai-u-imgs{display:flex;gap:6px;flex-wrap:wrap;margin:-2px -4px 8px}
+.ai-u-imgs img{max-width:180px;max-height:140px;border-radius:10px;display:block;border:1px solid rgba(255,255,255,.25)}
+.ai-speed{display:inline-flex;padding:2px;border-radius:10px;background:rgba(5,9,22,.45);border:1px solid var(--line);margin-left:4px}
+.ai-speed button{padding:3px 10px;border:0;border-radius:8px;background:none;color:var(--muted);font:500 12px var(--din);line-height:1.5}
+.ai-speed button:hover{color:var(--text);background:none}
+.ai-speed button.on{background:rgba(110,115,255,.22);color:#DCDBFF;box-shadow:inset 0 0 0 1px rgba(160,165,255,.35)}
+.ai-speed button:focus-visible{outline:2px solid #9E9BFF;outline-offset:1px}
