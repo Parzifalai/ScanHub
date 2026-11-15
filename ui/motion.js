@@ -123,30 +123,58 @@ document.addEventListener("keydown", e => {
   if (p.hidden) aiOpen();
   else document.getElementById("aiText")?.focus();
 });
+// ---------- помощник открылся/закрылся: страница перестраивается под новую ширину за один раз, а блоки плавно
+// доезжают со старых мест на новые (запомнили, где были → перестроили → каждый блок едет от старого места к новому).
+// Промежуточных раскладок нет — значит, нечему и перескакивать из двух колонок в одну на полпути.
+function flipMain(change){
+  if (calm() || innerWidth < 1180 || document.body.classList.contains("ai-full")) return change();
+  const sel = ["> *", ".home-top > *", ".quick > .qa", ".quick-more > .qa", ".actions > .action", ".sec-row", ".tiles > *", "#panelBox .pnl", ".hero-text", ".shield-wrap"]
+    .map(s => `main .view:not([hidden]) ${s}`).join(",") + ",#pageHead .page-h > *,#pageHead .tabs";
+  const all = [...document.querySelectorAll(sel)];
+  const els = all.filter(e => !all.some(o => o !== e && e.contains(o)));        // только «листья»: родитель и ребёнок не едут дважды
+  const vis = r => r.bottom > -40 && r.top < innerHeight + 40;
+  const before = new Map(els.map(e => [e, e.getBoundingClientRect()]));
+  change();
+  for (const [e, a] of before) {
+    const b = e.getBoundingClientRect();
+    if (!vis(a) && !vis(b)) continue;
+    const dx = a.left - b.left, dy = a.top - b.top;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+    e.animate([{transform: `translate(${dx}px,${dy}px)`}, {transform: "none"}], {duration: 460, easing: "cubic-bezier(.2,.8,.2,1)"});
+  }
+}
+if (typeof aiOpen === "function") {
+  const _aiOpen = aiOpen;
+  aiOpen = function(){ let r; const args = arguments; flipMain(() => { r = _aiOpen.apply(this, args) }); return r };
+}
 if (typeof aiClose === "function") {
   const _aiClose = aiClose;
   aiClose = function(){
     const p = aiPanel();
     if (p.hidden || calm()) return _aiClose.apply(this, arguments);
     p.classList.add("closing");
-    document.body.classList.remove("ai-open");             // страница начинает расширяться одновременно с уходом панели
+    flipMain(() => document.body.classList.remove("ai-open"));     // страница расширяется одновременно с уходом панели
     setTimeout(() => { p.classList.remove("closing"); _aiClose() }, 190);
   };
 }
+// ---------- помощник на весь экран: только разговор, остальное окно прячется (кнопка ⤢ в шапке помощника, запоминается)
+function aiFull(on){
+  document.body.classList.toggle("ai-full", on);
+  store.set("aiFull", on ? "1" : "");
+  const b = document.getElementById("aiFull");
+  if (b) { b.title = b.ariaLabel = on ? "Обычный размер" : "На весь экран"; b.classList.toggle("on", on) }
+}
+if (store.get("aiFull") === "1") document.body.classList.add("ai-full");
+document.addEventListener("click", e => {
+  if (!e.target.closest("#aiFull")) return;
+  e.preventDefault(); e.stopPropagation();
+  aiFull(!document.body.classList.contains("ai-full"));
+}, true);
 // ---------- запуск: раздел уже открыт до этого файла — перерисовать меню (свёрнутость, подсветка) и показать блоки по очереди
 renderNav();
 enterView(true, document.body.classList.contains("boot-full") ? 820 : 120);
 tweenIn(document.getElementById("hStats"));
 
-// помощник открылся или закрылся: страница перестраивается под новую ширину сразу (раньше ширина менялась
-// плавно, и блоки на полпути перескакивали из двух колонок в одну), а смену прикрывает короткое проявление
-let AI_WAS = document.body.classList.contains("ai-open");
-new MutationObserver(() => {
-  const open = document.body.classList.contains("ai-open");
-  document.getElementById("aiTop")?.classList.toggle("on", open);
-  if (open === AI_WAS) return;
-  AI_WAS = open;
-  if (calm() || innerWidth < 1180) return;           // на узком экране помощник открывается поверх, страница не меняется
-  document.querySelector("main")?.animate([{opacity: .25, transform: "translateY(4px)"}, {opacity: 1, transform: "none"}],
-    {duration: 320, easing: "cubic-bezier(.2,.8,.2,1)"});
-}).observe(document.body, {attributes: true, attributeFilter: ["class"]});
+// подсветка строки помощника в меню, пока панель открыта
+new MutationObserver(() => document.getElementById("aiTop")?.classList.toggle("on", document.body.classList.contains("ai-open")))
+  .observe(document.body, {attributes: true, attributeFilter: ["class"]});

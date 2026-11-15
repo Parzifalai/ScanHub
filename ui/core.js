@@ -773,7 +773,9 @@ async function openSettings(){
 }
 $("#settingsBtn").onclick = openSettings;
 // «Выйти»: сервер выключается сразу; если идёт проверка — сначала спросить
-$("#quitBtn").onclick = async () => {
+$("#quitBtn").onclick = () => quitScanHub(false);
+// 2.2: выход — и из пункта меню, и крестиком своего окна (window=true: после выключения сервера закрыть и само окно)
+async function quitScanHub(viaWindow){
   const quit = async force => {
     const r = await fetch("/api/quit", {method: "POST", headers: {"X-Token": TOKEN, "Content-Type": "application/json"}, body: JSON.stringify({force})});
     return {code: r.status, j: await r.json().catch(() => ({}))};
@@ -782,18 +784,22 @@ $("#quitBtn").onclick = async () => {
     let {code, j} = await quit(false);
     if (code === 409) {
       const what = [...(j.jobs || []), ...(j.tasks || []).map(t => "задача " + t)];
-      if (!await modal({title: "Сейчас идёт работа — остановить и выйти?", danger: true, icon: "!", ok: "Остановить и выйти", cancel: "Не выходить",
-                        body: "Если выйти сейчас, эти проверки оборвутся. Можно просто закрыть окно — ScanHub доработает и выключится сам.",
+      if (!await modal({title: "Идёт проверка — остановить и закрыть ScanHub?", danger: true, icon: "!", ok: "Остановить и закрыть", cancel: "Не закрывать",
+                        body: "Если закрыть сейчас, эти проверки оборвутся.",
                         list: what.slice(0, 8)})) return;
       ({code} = await quit(true));
     }
     if (code !== 200) throw new Error("сервер не ответил");
-  } catch (e) { return toast("Не получилось выйти", e.message, "err") }
+  } catch (e) {
+    if (viaWindow) return window.chrome?.webview?.postMessage("close");     // сервер уже не отвечает — окно всё равно закрыть
+    return toast("Не получилось выйти", e.message, "err");
+  }
   window.__quitting = true;
+  if (viaWindow) return window.chrome?.webview?.postMessage("close");
   document.body.innerHTML = `<div style="min-height:100vh;display:grid;place-items:center;font:15px var(--din, system-ui);color:var(--muted);background:var(--bg)">
     <div style="text-align:center"><b style="font-size:20px;color:var(--text)">ScanHub закрыт</b><p>Окно можно закрыть. Чтобы открыть снова — ярлык на рабочем столе.</p></div></div>`;
   setTimeout(() => window.close(), 300);
-};
+}
 $("#settings").addEventListener("close", async () => {
   if ($("#settings").returnValue !== "save") return;
   const f = $("#settingsForm"), body = {check_every_hours: +f.check_every_hours.value || 6, vt_files: +f.vt_files.value || 8,

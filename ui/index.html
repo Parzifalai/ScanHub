@@ -25,13 +25,10 @@
     <span class="sub dev-only" id="lastCheck"></span>
     <button class="dev-only tb" id="conBtn" title="Вывод сканеров">⌨ Консоль</button>
     <button class="dev-only tb" id="checkBtn">Проверить обновления</button>
-    <button class="tb ic-only" id="alertsBtn" data-go-page="health:alerts" title="Предупреждения ScanHub"><span data-ic="bell"></span><i class="tb-dot" hidden></i></button>
-    <button class="tb ic-only" id="bugBtn" title="Нашёл ошибку или есть идея? Напиши автору — сообщение уйдёт ему в Telegram"><span data-ic="bug"></span></button>
-    <button class="tb ic-only" id="settingsBtn" title="Настройки"><span data-ic="gear"></span></button>
-    <span class="tb-sep"></span>
-    <button class="tb" id="quitBtn" title="Закрыть ScanHub полностью — сразу, а не через 2 минуты после закрытия окна"><span data-ic="power"></span><span class="tb-t">Выйти</span></button>
+    <!-- 2.2: уведомления, «написать автору» и настройки — внизу левого меню; «Выйти» — крестик окна (в браузере — пункт меню) -->
+    <span hidden><button id="settingsBtn" type="button"></button><button id="quitBtn" type="button"></button></span>
     <!-- кнопки окна — только в своём окне ScanHub (WebView2), в Edge их рисует сам браузер -->
-    <div class="wincaps" id="wincaps" hidden data-noi18n><button data-win="min" title="Свернуть">&#xE921;</button><button data-win="max" class="maxi" title="Развернуть">&#xE922;</button><button data-win="max" class="restore" title="Свернуть в окно">&#xE923;</button><button data-win="close" class="close" title="Закрыть окно">&#xE8BB;</button></div>
+    <div class="wincaps" id="wincaps" hidden data-noi18n><button data-win="min" title="Свернуть">&#xE921;</button><button data-win="max" class="maxi" title="Развернуть">&#xE922;</button><button data-win="max" class="restore" title="Свернуть в окно">&#xE923;</button><button data-win="close" class="close" title="Закрыть ScanHub">&#xE8BB;</button></div>
   </header>
   <main>
     <div id="pageHead"></div>

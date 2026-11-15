@@ -116,7 +116,10 @@ function renderNav(){
     <button class="side-ai" id="aiTop" title="ИИ-помощник: объяснит находки и ответит «почему у меня…» (Ctrl+K)"><span class="orb" aria-hidden="true"></span><span class="t">ИИ-помощник</span><kbd data-noi18n>Ctrl K</kbd></button>
     <div class="nav-main">${vis.filter(p => !p.foot).map(item).join("")}</div>
     <div class="nav-foot">${vis.filter(p => p.foot).map(item).join("")}
-      <a class="nav" data-open-settings href="#"><span class="ico">${icon("gear")}</span><span class="t">Настройки</span></a></div>
+      ${footItem(`data-go-page="health:alerts" id="navAlerts"`, "bell", "Уведомления", alertsFresh() ? `<span class="cnt warn" title="Есть новые предупреждения">•</span>` : "")}
+      ${footItem(`id="bugBtn"`, "bug", "Написать автору", typeof REPLIES === "object" && REPLIES.unread ? `<span class="cnt ok" title="Автор ответил">${REPLIES.unread}</span>` : "")}
+      ${footItem("data-open-settings", "gear", "Настройки")}
+      ${document.body.classList.contains("in-host") ? "" : footItem(`data-quit`, "power", "Выйти из ScanHub")}</div>
     <div class="side-foot">
       <a data-idea class="idea-link" title="Чего не хватает или что неудобно — автор читает всё">${icon("idea")}Предложить улучшение</a>
       <div class="side-ver" data-noi18n>ScanHub ${esc(typeof VERSION === "string" ? VERSION : "")}</div></div>`;
@@ -125,13 +128,20 @@ function renderNav(){
     const n = tabCount(b.dataset.tabGo), c = b.querySelector(".cnt");
     if (n && c) c.textContent = n; else if (n) b.insertAdjacentHTML("beforeend", ` <span class="cnt">${n}</span>`); else c?.remove();
   });
-  const al = $("#alertsBtn .tb-dot");
-  // точка на колокольчике — свежие (за сутки) предупреждения, которые ещё не открывали
-  try { if (al) al.hidden = !ALERTS.some(a => a.level !== "info" && Date.parse(a.t) > +(store.get("alertsSeen") || 0) && Date.now() - Date.parse(a.t) < 864e5) } catch {}
   if (onTab("health", "alerts")) store.set("alertsSeen", String(Date.now()));
+}
+// пункты низа меню: «Уведомления», «Написать автору», «Настройки», «Выйти» (только в браузере — в своём окне это крестик)
+function footItem(attrs, ic, t, extra = ""){
+  const mini = document.body.classList.contains("side-mini");
+  return `<a class="nav" href="#" ${attrs}${mini ? ` title="${esc(t)}"` : ""}><span class="ico">${icon(ic)}</span><span class="t">${esc(t)}</span>${extra}</a>`;
+}
+// точка у «Уведомлений» — свежие (за сутки) предупреждения, которые ещё не открывали
+function alertsFresh(){
+  try { return !onTab("health", "alerts") && ALERTS.some(a => a.level !== "info" && Date.parse(a.t) > +(store.get("alertsSeen") || 0) && Date.now() - Date.parse(a.t) < 864e5) } catch { return false }
 }
 document.addEventListener("click", e => {
   if (e.target.closest("[data-open-settings]")) { e.preventDefault(); $("#settingsBtn").click() }
+  if (e.target.closest("[data-quit]")) { e.preventDefault(); quitScanHub(false) }
 });
 
 // ============================================================ «Подготовить ScanHub»: всё, без чего проверки неполные

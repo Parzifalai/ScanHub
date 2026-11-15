@@ -1679,3 +1679,25 @@ body.side-mini main{max-width:1500px}
   body.ai-open main{max-width:calc(1400px + var(--aiw) + 24px)}
   body.side-mini.ai-open main{max-width:calc(1500px + var(--aiw) + 24px)}
 }
+
+/* ---------- 2.2 помощник: разговор без мигания, свой ползунок прокрутки */
+.ai-list,.ai-live{display:flex;flex-direction:column;gap:14px}
+.ai-live:empty{display:none}
+.ai-msg{animation:none}
+.ai-msg.fresh{animation:msgIn .35s var(--ease) both}
+.ai-body{scrollbar-gutter:stable}   /* без scrollbar-width/color: иначе Chromium игнорирует оформление ниже */
+.ai-body::-webkit-scrollbar{width:10px}
+.ai-body::-webkit-scrollbar-track{background:transparent}
+.ai-body::-webkit-scrollbar-button{display:none;height:0}
+.ai-body::-webkit-scrollbar-thumb{border:3px solid transparent;background-clip:padding-box;border-radius:10px;
+  background-color:rgba(150,160,255,.28)}
+.ai-body::-webkit-scrollbar-thumb:hover{background-color:rgba(170,175,255,.55)}
+
+/* ---------- 2.2 помощник на весь экран: остаются шапка окна (кнопки окна, режим) и разговор */
+body.ai-full.ai-open .side,body.ai-full.ai-open main{visibility:hidden}
+body.ai-full .ai-panel{left:12px;width:auto;top:calc(var(--hdr-h,57px) + 4px);z-index:30}
+@media (max-width:1179px){ body.ai-full .ai-panel{top:8px;left:8px;right:8px;bottom:8px} }
+body.ai-full .ai-body > *,body.ai-full .ai-input .ai-box,body.ai-full .ai-ctx{max-width:880px;width:100%;margin-inline:auto}
+body.ai-full .ai-body{padding-inline:24px}
+#aiFull.on{color:#B9B6FF;background:rgba(110,115,255,.16)}
+.ai-panel{transition:left .38s var(--ease),top .38s var(--ease)}

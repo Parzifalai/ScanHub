@@ -237,6 +237,9 @@ if (HOST) {
     e.preventDefault();
     HOST.postMessage(e.detail >= 2 ? "max" : "drag");              // двойной щелчок — развернуть, как у обычного окна
   });
-  document.addEventListener("click", e => { const b = e.target.closest("[data-win]"); if (b) HOST.postMessage(b.dataset.win) });
+  // крестик закрывает ScanHub полностью (если идёт проверка — сначала спросит), а не только окно
+  document.addEventListener("click", e => { const b = e.target.closest("[data-win]"); if (!b) return;
+    if (b.dataset.win === "close") return quitScanHub(true);
+    HOST.postMessage(b.dataset.win) });
   HOST.addEventListener("message", e => { if (typeof e.data === "string" && e.data.startsWith("state:")) document.body.classList.toggle("win-max", e.data === "state:max") });
 }

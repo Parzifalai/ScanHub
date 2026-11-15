@@ -181,8 +181,7 @@ window.addEventListener("unhandledrejection", e => {
 const REPLIES = {tickets: [], unread: 0};
 async function repliesLoad(action){
   try { Object.assign(REPLIES, await api("/api/replies", action ? {action} : undefined)) } catch {}
-  const b = document.getElementById("bugBtn");
-  if (b) { b.dataset.unread = REPLIES.unread || ""; b.classList.toggle("has-reply", !!REPLIES.unread) }
+  if (typeof renderNav === "function") renderNav();     // число ответов автора — у «Написать автору» в меню
   return REPLIES;
 }
 let REPLIES_SEEN = 0;

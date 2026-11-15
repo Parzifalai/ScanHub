@@ -102,7 +102,7 @@ function aiPanel(){
   p = document.createElement("aside");
   p.id = "aiPanel"; p.className = "ai-panel"; p.hidden = true; p.setAttribute("aria-label", "ИИ-помощник");
   p.innerHTML = `<div class="ai-head"><span class="ai-mark" aria-hidden="true">✦</span><div class="ai-title"><b>Помощник</b><span class="sub" id="aiModel"></span></div><span class="grow"></span>
-      <button class="ai-ib" id="aiNew" title="Новый разговор" aria-label="Новый разговор">＋</button><button class="ai-ib" id="aiGear" title="Модель и ключи" aria-label="Настройки помощника">⚙</button><button class="ai-ib" id="aiClose" title="Закрыть (Esc)" aria-label="Закрыть">✕</button></div>
+      <button class="ai-ib" id="aiNew" title="Новый разговор" aria-label="Новый разговор">＋</button><button class="ai-ib" id="aiGear" title="Модель и ключи" aria-label="Настройки помощника">⚙</button><button class="ai-ib${document.body.classList.contains("ai-full") ? " on" : ""}" id="aiFull" title="${document.body.classList.contains("ai-full") ? "Обычный размер" : "На весь экран"}" aria-label="На весь экран"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="fx-out" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button class="ai-ib" id="aiClose" title="Закрыть (Esc)" aria-label="Закрыть">✕</button></div>
     <div class="ai-ctx" id="aiCtx" hidden></div>
     <div class="ai-body" id="aiBody"></div>
     <form class="ai-input" id="aiForm"><div class="ai-box"><textarea id="aiText" rows="1" placeholder="Спроси про свой ПК: «почему ноутбук греется?»" spellcheck="true"></textarea>
@@ -132,8 +132,21 @@ function aiRender(){
   cx.hidden = !AI.ctx || AI.setup;
   if (AI.ctx) cx.innerHTML = `<span class="sub">Разговор о проверке</span><b>${esc(AI.ctx.title)}</b><span class="grow"></span><button class="ai-ib" data-ai-ctx-off title="Выйти из разговора о проверке" aria-label="Выйти из разговора о проверке">✕</button>`;
   p.querySelector("#aiText").placeholder = AI.ctx ? "Спроси про эту проверку…" : "Спроси про свой ПК: «почему ноутбук греется?»";
-  body.innerHTML = AI.setup ? aiSetupHtml() : aiChatHtml();
-  body.scrollTop = body.scrollHeight;
+  if (AI.setup) { body.innerHTML = aiSetupHtml(); body._chat = null; body.scrollTop = body.scrollHeight; return }
+  // 2.2: разговор не перерисовывается целиком на каждом опросе (раньше — мигание и прыжок вниз при прокрутке вверх):
+  // сообщения меняются только когда появилось новое, строка «что сейчас смотрю» — только когда в ней что-то изменилось
+  const {list, live} = aiChatHtml();
+  const stick = !body._chat || body.scrollHeight - body.scrollTop - body.clientHeight < 80;   // был внизу — остаёмся внизу
+  if (!body._chat) { body.innerHTML = `<div class="ai-list"></div><div class="ai-live"></div>`; body._chat = {list: null, live: null, n: 0} }
+  const [L, V] = body.children, c = body._chat;
+  if (c.list !== list) {
+    L.innerHTML = list; c.list = list;
+    const n = L.children.length;
+    if (n > c.n) for (let i = c.n; i < n; i++) L.children[i].classList.add("fresh");          // плавно появляется только новое
+    c.n = n;
+  }
+  if (c.live !== live) { V.innerHTML = live; c.live = live }
+  if (stick) body.scrollTop = body.scrollHeight;
 }
 
 // ---------- настройки: провайдер, ключ, модель
@@ -283,7 +296,7 @@ function aiChatHtml(){
   // в разговоре о проверке — подсказки по её теме, пока человек ещё ничего не спросил
   const ctxSug = AI.ctx && !run && !AI.msgs.some(m => m.role === "user") ? `<div class="ai-sug ai-sug-ctx">${(AI_CTX_SUGGEST[AI.ctx.scope] || AI_CTX_SUGGEST.check)
       .map(s => `<button class="small" data-ai-ask="${esc(s)}" type="button">${esc(s)}</button>`).join("")}</div>` : "";
-  return empty + msgs + run + ctxSug;
+  return {list: empty + msgs, live: run + ctxSug};
 }
 const AI_CTX_SUGGEST = {
   check: ["Что это за файл и откуда он?", "Можно ли его запускать?", "Что значит эта тревога?", "Как удалить его безопасно?"],
