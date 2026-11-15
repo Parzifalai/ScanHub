@@ -1726,3 +1726,14 @@ body.ai-full .ai-body{padding-inline:24px}
 .ai-input textarea::-webkit-scrollbar-button{display:none;height:0}
 .ai-input textarea::-webkit-scrollbar-track{background:transparent}
 .ai-input textarea::-webkit-scrollbar-thumb{border:2px solid transparent;background-clip:padding-box;border-radius:8px;background-color:rgba(150,160,255,.28)}
+
+/* ---------- 2.2 правки: стекло темнее и без «вспышки», размытие сверху продолжается под меню */
+/* стекло: то же размытие, но без усиления яркости и насыщенности фона — блоки всегда такие, как в первые полсекунды */
+:root{--blur:blur(18px) saturate(115%) brightness(.72)}
+/* появление — только сдвиг и прозрачность: фильтр размытия на время анимации выключал у блоков стекло, и они «светлели» в конце */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes layoutIn{from{opacity:0;transform:scale(.985)}}
+/* размытая полоса сверху тянется и под меню (меню — слоем выше, его стекло её мягко размывает), а не обрывается у его края */
+.side{z-index:25}
+header::before{left:calc(-1 * var(--sw) - 2px)}
+@media (max-width:900px){ header::before{left:0} .side{z-index:40} }
