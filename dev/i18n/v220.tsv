@@ -1,0 +1,22 @@
+Filescan в этой проверке назвал опасными заведомо честные файлы	In this scan Filescan flagged files known to be legitimate as dangerous
+Filescan считает опасным — но	Filescan flags it as dangerous — but
+Filescan считает опасным — но в этой проверке он так же ошибся на заведомо честных файлах	Filescan flags it as dangerous — but in this scan it made the same mistake on files known to be legitimate
+Изменённые программы не используй там, где нужен вход в аккаунт или онлайн-игра.	Don't use modified programs for anything that needs an account sign-in or online play.
+Итог проверки	Scan result
+Подтверждённой угрозы нет, но есть причины насторожиться — они ниже. Что делать:	No confirmed threat, but there are reasons to be careful — see below. What to do:
+Проверка завершена	Scan finished
+Развернуть меню	Expand menu
+Свернуть меню	Collapse menu
+Сканеры закончили. Помощник читает их итог — вывод «можно запускать или нет» появится ниже.	The scanners are done. The assistant is reading their results — the verdict on whether it's safe to run will appear below.
+Что нашли сканеры (предварительный итог)	What the scanners found (preliminary result)
+антивирусов не считает его опасным	antiviruses flag it as dangerous
+года, и ни один из	and none of the
+запускай, только если доверяешь источнику.	run it only if you trust the source.
+запусти полную проверку папки, вспомни, откуда она скачана, и	run a full scan of the folder, remember where it was downloaded from, and
+запусти полную проверку папки.	run a full scan of the folder.
+не смог проверить папку — результат неполный, запусти полную проверку папки.	couldn't check the folder — the result is incomplete, run a full scan of the folder.
+но проверь, откуда этот файл	but check where this file came from
+поэтому его тревоги учтены как слабые.	so its alerts are counted as weak.
+проверь, откуда файл, лучше скачай его с официального сайта и	check where the file came from, preferably download it from the official site, and
+файл изменён после того, как его подписал издатель (похоже на пропатченную или нелицензионную копию). Само по себе это не доказывает вирус	the file was modified after the publisher signed it (looks like a patched or unlicensed copy). That alone doesn't prove a virus
+ИИ-помощник: объяснит находки и ответит «почему у меня…» (Ctrl+K)	AI assistant: explains findings and answers "why does my…" (Ctrl+K)

@@ -1656,3 +1656,7 @@ body.side-mini .side-ai .orb{width:32px;height:32px}
   .layout,.nav-ind,main{transition:none}
   .view.enter > *,.enter .quick > .qa,.enter .actions > .action,.enter .home-top > *,.ai-panel,.ai-msg,.mdl{animation:none!important}
 }
+/* раскладка главной зависит от места, которое осталось странице (помощник справа его забирает), а не от ширины окна */
+main{container:main / inline-size}
+@container main (max-width:1000px){ .home-top{grid-template-columns:minmax(0,1fr)} }
+@container main (max-width:760px){ .quick,.quick-more{grid-template-columns:repeat(2,minmax(0,1fr))} }

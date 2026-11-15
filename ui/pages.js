@@ -113,7 +113,7 @@ function renderNav(){
   // 2.2: помощник — первая строка меню, как поиск; Ctrl+K открывает его с любой страницы
   $("#side").innerHTML = `<div class="brand-row"><a class="brand" data-go="home" href="#" aria-label="ScanHub — на главную">${LOGO}<span>ScanHub</span></a>
       <button class="side-fold" data-side-fold title="${mini ? "Развернуть меню" : "Свернуть меню"}" aria-label="${mini ? "Развернуть меню" : "Свернуть меню"}" aria-expanded="${!mini}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/><path class="fold-chev" d="m15.5 10-2 2 2 2"/></svg></button></div>
-    <button class="side-ai" id="aiTop" title="ИИ-помощник: объяснит находки и ответит «почему у меня…» (Ctrl+K)"><span class="orb" aria-hidden="true"></span><span class="t">Спроси помощника…</span><kbd data-noi18n>Ctrl K</kbd></button>
+    <button class="side-ai" id="aiTop" title="ИИ-помощник: объяснит находки и ответит «почему у меня…» (Ctrl+K)"><span class="orb" aria-hidden="true"></span><span class="t">ИИ-помощник</span><kbd data-noi18n>Ctrl K</kbd></button>
     <div class="nav-main">${vis.filter(p => !p.foot).map(item).join("")}</div>
     <div class="nav-foot">${vis.filter(p => p.foot).map(item).join("")}
       <a class="nav" data-open-settings href="#"><span class="ico">${icon("gear")}</span><span class="t">Настройки</span></a></div>
