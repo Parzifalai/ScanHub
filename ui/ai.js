@@ -139,6 +139,8 @@ function aiRender(){
   cx.hidden = !AI.ctx || AI.setup;
   if (AI.ctx) cx.innerHTML = `<span class="sub">Разговор о проверке</span><b>${esc(AI.ctx.title)}</b><span class="grow"></span><button class="ai-ib" data-ai-ctx-off title="Выйти из разговора о проверке" aria-label="Выйти из разговора о проверке">✕</button>`;
   p.querySelector("#aiText").placeholder = AI.ctx ? "Спроси про эту проверку…" : "Спроси или попроси: «проверь на майнеры», «что можно очистить?»";
+  p.querySelector("#aiGear").classList.toggle("on", AI.setup);
+  p.querySelector("#aiGear").title = AI.setup && AI.cfg?.enabled ? "Вернуться к разговору" : "Модель и ключи";
   p.querySelector("#aiModeBtn").innerHTML = aiModeLabel();
   p.querySelector("#aiModelBtn").innerHTML = `<span>${esc(aiModelShort())}</span><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
   p.querySelector("#aiModelBtn").hidden = !AI.cfg?.enabled;
@@ -149,7 +151,10 @@ function aiRender(){
   const sb = p.querySelector("#aiSugBar");
   sb.hidden = !(full && empty && !AI.ctx);
   if (!sb.hidden && !sb.childElementCount) sb.innerHTML = AI_SUGGEST.map(s => `<button class="small" data-ai-ask="${esc(s)}" type="button">${esc(s)}</button>`).join("");
-  if (AI.setup) { body.innerHTML = aiSetupHtml(); body._chat = null; body.scrollTop = body.scrollHeight; return }
+  if (AI.setup) {                                       // настройки открываются с начала (там «← К разговору»), перерисовка не сбивает прокрутку
+    const keep = body._chat === null ? body.scrollTop : 0;
+    body.innerHTML = aiSetupHtml(); body._chat = null; body.scrollTop = keep; return;
+  }
   // 2.2: разговор не перерисовывается целиком на каждом опросе (раньше — мигание и прыжок вниз при прокрутке вверх):
   // сообщения меняются только когда появилось новое, строка «что сейчас смотрю» — только когда в ней что-то изменилось
   const {list, live} = aiChatHtml();
@@ -171,6 +176,7 @@ function aiSetupHtml(){
   const c = AI.cfg || {providers: []}, sel = AI.pick || c.provider || "";
   const prov = c.providers.find(x => x.id === sel);
   return `<div class="ai-setup">
+    ${c.enabled ? `<button class="ai-back" id="aiBack" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>К разговору</button>` : ""}
     <p>Помощник объясняет находки ScanHub и отвечает на вопросы «почему у меня…», сам заглядывая в журналы Windows, сбои, драйверы и питание.
       <b>Сам он ничего не меняет</b> — только читает, ищет справки в интернете и советует. Действия — по твоей кнопке: «⚡ …» у совета или «✦ Сделай сам», тогда он выполнит предложенное и проверит результат.</p>
     <div class="ai-provs">${c.providers.map(x => `<label class="ai-prov${x.id === sel ? " on" : ""}"><input type="radio" name="aiProv" value="${x.id}" ${x.id === sel ? "checked" : ""}>
@@ -183,7 +189,7 @@ function aiSetupHtml(){
         <div class="row"><select id="aiModelSel">${AI.modelsFor === prov.id && AI.models.length ? AI.models.map(m => `<option value="${esc(m)}" ${m === (AI.modelPick || c.model) ? "selected" : ""}>${esc(m === "auto" ? "лучшая модель подписки (рекомендую)" : m)}</option>`).join("") : `<option value="">${prov.needs_key && !prov.has_key ? "сначала вставь ключ" : "нажми «Найти модели»"}</option>`}</select>
         <button class="small" id="aiFindModels" type="button" ${AI.busySetup ? "disabled" : ""}>Найти модели</button></div></label>`}
       <div class="row-tools"><button class="primary" id="aiSave" type="button" ${AI.busySetup ? "disabled" : ""}>Сохранить и проверить</button>
-        ${c.enabled ? `<button id="aiOff" type="button">Выключить помощника</button>` : ""}${c.enabled ? `<button id="aiBack" type="button">К разговору</button>` : ""}</div>` : ""}
+        ${c.enabled ? `<button id="aiOff" type="button">Выключить помощника</button>` : ""}</div>` : ""}
     ${AI.note ? `<div class="note ${AI.noteKind || "info"}">${esc(AI.note)}</div>` : ""}
     ${aiFilesHtml(c, prov)}
     ${aiWebHtml()}
@@ -719,6 +725,7 @@ document.addEventListener("click", async e => {
   if (a.dataset.ai) { try { return aiExplain(JSON.parse(a.dataset.ai)) } catch { return } }
   if (a.dataset.aiAsk) { await aiOpen(); return aiAsk(a.dataset.aiAsk) }
   if (a.hasAttribute("data-ai-fresh")) { try { const f = JSON.parse(a.dataset.aiFresh); if (f) return aiExplain(f, true) } catch {} return }
+  if (a.id === "aiGear" && AI.setup && AI.cfg?.enabled) { AI.setup = false; AI.note = ""; return aiRender() }   // ⚙ ещё раз — обратно к разговору
   if (a.hasAttribute("data-ai-gear") || a.id === "aiGear") { AI.setup = true; AI.pick = AI.cfg?.provider || ""; aiRender();
     if (AI.cfg?.providers?.find(p => p.id === AI.pick)?.cli) aiCliCheck(AI.pick); return }
   if (a.id === "aiTop") return typeof aiOpenFull === "function" ? aiOpenFull() : aiPanel().hidden ? aiOpen() : aiClose();   // 2.2: из меню — сразу на всё окно
@@ -781,6 +788,9 @@ document.addEventListener("submit", e => {
 });
 document.addEventListener("keydown", e => {
   if (e.target.id === "aiText" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#aiForm").requestSubmit() }
-  if (e.key === "Escape" && !aiPanel().hidden && !document.querySelector(".mdl-back")) aiClose();
+  if (e.key === "Escape" && !aiPanel().hidden && !document.querySelector(".mdl-back")) {
+    if (AI.setup && AI.cfg?.enabled) { AI.setup = false; AI.note = ""; return aiRender() }    // из настроек — сначала к разговору
+    aiClose();
+  }
 });
 aiLoadCfg();

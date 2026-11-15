@@ -1796,3 +1796,17 @@ body.ai-full .ai-above{max-width:880px;margin:0 auto 8px;width:100%}
 .ai-pop-note{padding:10px;color:var(--muted);font-size:13px}
 .ai-pop .ai-pop-foot{margin-top:4px;border-top:1px solid var(--line);border-radius:0 0 9px 9px;color:var(--muted);font-size:12.5px}
 .ai-pop::-webkit-scrollbar{width:8px} .ai-pop::-webkit-scrollbar-thumb{border:2px solid transparent;background-clip:padding-box;border-radius:8px;background-color:rgba(150,160,255,.28)}
+
+/* ---------- 2.2 помощник на всё окно: меню скрыто — одна колонка (а не «нулевая» слева), шапка без лишнего */
+@media (min-width:901px){
+  body.ai-full.ai-open.side-hidden .layout{grid-template-columns:minmax(0,1fr)}
+  body.ai-full.ai-open.side-hidden header::before{left:0}
+}
+body.ai-full.ai-open header .seg,body.ai-full.ai-open header .dev-only{visibility:hidden}
+/* выход из настроек помощника — заметной кнопкой сверху */
+.ai-back{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:7px 14px 7px 10px;border-radius:10px;
+  background:rgba(110,115,255,.14);border:1px solid rgba(160,165,255,.35);color:#DCDBFF;font:500 14px var(--din)}
+.ai-back:hover{background:rgba(110,115,255,.24);border-color:rgba(160,165,255,.6)}
+#aiGear.on{color:#B9B6FF;background:rgba(110,115,255,.16)}
+.ai-setup > .ai-back{position:sticky;top:-6px;z-index:2;box-shadow:0 8px 20px -8px rgba(0,0,0,.8);backdrop-filter:var(--blur)}
+.ai-setup > .ai-back{justify-self:start;width:max-content}
