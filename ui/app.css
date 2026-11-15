@@ -1718,3 +1718,11 @@ body.ai-full .ai-body{padding-inline:24px}
 .ai-speed button:hover{color:var(--text);background:none}
 .ai-speed button.on{background:rgba(110,115,255,.22);color:#DCDBFF;box-shadow:inset 0 0 0 1px rgba(160,165,255,.35)}
 .ai-speed button:focus-visible{outline:2px solid #9E9BFF;outline-offset:1px}
+/* узкое окно помощника: заголовок ужимается, а не уходит под кнопки; ползунок поля ввода — как у разговора */
+.ai-head .grow{display:none}
+.ai-title{flex:1;min-width:0}
+.ai-title b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-input textarea::-webkit-scrollbar{width:8px}
+.ai-input textarea::-webkit-scrollbar-button{display:none;height:0}
+.ai-input textarea::-webkit-scrollbar-track{background:transparent}
+.ai-input textarea::-webkit-scrollbar-thumb{border:2px solid transparent;background-clip:padding-box;border-radius:8px;background-color:rgba(150,160,255,.28)}
