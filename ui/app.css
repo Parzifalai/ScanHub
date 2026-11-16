@@ -1825,3 +1825,6 @@ body.ai-full.in-host .ai-head{padding-right:158px}
 #aiGear.on{color:#B9B6FF;background:rgba(110,115,255,.16)}
 .ai-setup > .ai-back{position:sticky;top:-6px;z-index:2;box-shadow:0 8px 20px -8px rgba(0,0,0,.8);backdrop-filter:var(--blur)}
 .ai-setup > .ai-back{justify-self:start;width:max-content}
+/* значок в шапке агента — тот же живой шар, что в меню */
+.ai-mark.orb{width:30px;height:30px;border-radius:50%;display:block;background:var(--orb);
+  box-shadow:0 0 14px rgba(120,120,255,.55),inset 0 -3px 6px rgba(10,20,80,.55)}
