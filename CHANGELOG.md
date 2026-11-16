@@ -4,6 +4,14 @@
 
 The text of the newest version's section goes into the GitHub release description, and ScanHub shows it in the “Update ScanHub” window.
 
+## 2.3.1
+
+**Small fixes**
+- The "⋯" menu next to the shield now has "Ultra check", and the menu closes as soon as you pick an item.
+- "Exit" no longer asks you to stop work when ScanHub is only reading system info, and the exit window shows clear task names instead of internal ones.
+- Leaving the full-window AI agent no longer hides the window for a second.
+- The AI agent's header shows the same living orb as the "AI agent" button in the menu.
+
 ## 2.3.0
 
 **Deeper junk cleanup, with lessons from Roomy**
