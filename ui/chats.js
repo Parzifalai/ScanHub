@@ -8,9 +8,9 @@ const AI_BIN = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stro
 const AI_PIN = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l-1 6 3 3H7l3-3z"/><path d="M12 13v7"/></svg>`;
 const AI_PLUS = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
 
-// колонка на всё окно открыта по умолчанию и запоминается; список сбоку — только по кнопке
+// колонка на всё окно по умолчанию скрыта — открывается кнопкой «История» и запоминается; список сбоку — только по кнопке
 const aiHistWide = () => document.body.classList.contains("ai-full") && innerWidth >= 1100;
-function aiHistOn(){ return aiHistWide() ? store.get("aiHist") !== "0" : !!AI.histPop }
+function aiHistOn(){ return aiHistWide() ? store.get("aiHist") === "1" : !!AI.histPop }
 function aiHistToggle(force){
   if (aiHistWide()) store.set("aiHist", (force ?? !aiHistOn()) ? "1" : "0");
   else AI.histPop = force ?? !AI.histPop;
