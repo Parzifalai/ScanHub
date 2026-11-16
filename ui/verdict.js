@@ -29,10 +29,11 @@ function vdStepIcon(s){
   s = String(s || "").toLowerCase();
   return /интернет|ищу|поиск/.test(s) ? "⌕" : /страниц|читаю/.test(s) ? "▤" : /журнал|сбо|событ/.test(s) ? "≡" : /думаю|вывод/.test(s) ? "✦" : "•";
 }
-function vdTrace(steps, live){
+function vdTrace(steps, live, t0){
   const st = (steps || []).filter(Boolean);
-  if (!st.length) return `<ol class="vd-trace"><li class="cur"><span class="vd-si">✦</span>читаю итог проверки…</li></ol>`;
-  return `<ol class="vd-trace">${st.slice(-6).map((s, i, a) => `<li class="${live && i === a.length - 1 ? "cur" : ""}"><span class="vd-si">${vdStepIcon(s)}</span>${esc(s)}</li>`).join("")}</ol>`;
+  const scene = live && typeof aiScene === "function" ? aiScene(st, t0) : "";
+  if (!st.length) return scene + `<ol class="vd-trace"><li class="cur"><span class="vd-si">✦</span>читаю итог проверки…</li></ol>`;
+  return scene + `<ol class="vd-trace">${st.slice(-6).map((s, i, a) => `<li class="${live && i === a.length - 1 ? "cur" : ""}"><span class="vd-si">${vdStepIcon(s)}</span>${esc(s)}</li>`).join("")}</ol>`;
 }
 
 // карточка; key — какая проверка, body — что передать серверу ({scope, jobs, verdict, target, excluded} / {scope, deep} / {scope})
@@ -56,7 +57,7 @@ function vdCard(key, body){
   }
   const head = sub => `<div class="vd-head"><span class="vd-mark" aria-hidden="true">✦</span><b>Финальный вывод</b>${sub ? `<span class="sub">${sub}</span>` : ""}</div>`;
   if (d.status === "running") return `<section class="vd vd-run" data-vd="${esc(key)}" aria-live="polite">
-      ${head("агент читает итог и ищет в интернете — обычно 20–60 секунд")}${vdTrace(d.steps, true)}</section>`;
+      ${head("агент читает итог и ищет в интернете — обычно 20–60 секунд")}${vdTrace(d.steps, true, d.t0 ||= Date.now())}</section>`;
   if (d.status === "error") return `<section class="vd vd-err" data-vd="${esc(key)}">${head()}
       <p class="vd-lead">Агент не смог сделать вывод: ${esc(d.error || "ошибка")}.</p>
       <div class="vd-actions"><button class="small" data-vd-redo="${esc(key)}">Попробовать ещё раз</button><button class="small" data-vd-gear>Настройки агента</button></div></section>`;
@@ -86,7 +87,7 @@ function vdPaint(key){
 async function vdRun(key){
   const d = VD[key];
   if (!d?.body) return;
-  Object.assign(d, {status: "running", steps: [], answer: "", error: null, job: null});
+  Object.assign(d, {status: "running", steps: [], answer: "", error: null, job: null, t0: Date.now()});
   vdPaint(key);
   try { d.job = (await api("/api/ai/ask", {kind: "verdict", ...d.body})).id }
   catch (e) { Object.assign(d, {status: "error", error: e.message}); return vdPaint(key) }

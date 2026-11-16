@@ -3316,7 +3316,7 @@ STATIC = {"/logo.svg": "image/svg+xml", "/logo-small.svg": "image/svg+xml", "/ic
           "/app.css": "text/css; charset=utf-8", "/core.js": "text/javascript; charset=utf-8",
           "/res.js": "text/javascript; charset=utf-8", "/panels.js": "text/javascript; charset=utf-8",
           "/pages.js": "text/javascript; charset=utf-8", "/ultra.js": "text/javascript; charset=utf-8", "/fix.js": "text/javascript; charset=utf-8",
-          "/ai.js": "text/javascript; charset=utf-8", "/chats.js": "text/javascript; charset=utf-8", "/bug.js": "text/javascript; charset=utf-8",
+          "/ai.js": "text/javascript; charset=utf-8", "/chats.js": "text/javascript; charset=utf-8", "/scenes.js": "text/javascript; charset=utf-8", "/bug.js": "text/javascript; charset=utf-8",
           "/history.js": "text/javascript; charset=utf-8", "/i18n.js": "text/javascript; charset=utf-8",
           "/devices.js": "text/javascript; charset=utf-8", "/phone.js": "text/javascript; charset=utf-8", "/setup.js": "text/javascript; charset=utf-8", "/game.js": "text/javascript; charset=utf-8", "/hero.js": "text/javascript; charset=utf-8", "/summary.js": "text/javascript; charset=utf-8", "/verdict.js": "text/javascript; charset=utf-8",
           "/motion.js": "text/javascript; charset=utf-8",

@@ -336,7 +336,7 @@ function aiChatHtml(){
     : m.role === "error" ? `<div class="ai-msg ai-err">${esc(m.content)} <a data-ai-gear>Настройки агента</a></div>`
     : `<div class="ai-msg ai-a">${aiMd(m.content)}${!m.act && aiPlan(m.content).length ? `<div class="ai-do"><button class="primary small" data-ai-do="${AI.msgs.indexOf(m)}" title="Агент сам выполнит эти действия по очереди и проверит результат">✦ Сделай сам</button><span class="sub">${aiPlan(m.content).length > 1 ? `выполнит ${aiPlan(m.content).length} действия по очереди и проверит` : "выполнит и проверит"}; системные — с окном UAC</span></div>` : ""}${aiActions(m.content) || aiButtons(m.content) ? `<div class="row-tools ai-btns">${m.act ? "" : aiActions(m.content)}${aiButtons(m.content)}</div>` : ""}${m.finding ? `<div class="sub"><a data-ai-more="${esc(JSON.stringify(m.finding))}">Подробнее — что это и насколько серьёзно</a></div>` : ""}${m.cached ? `<div class="sub">ответ из памяти · <a data-ai-fresh="${esc(m.cached)}">спросить заново</a></div>` : ""}${m.mem?.length ? `<div class="ai-memnote" title="Заметки агента — их видно и можно удалить в ⚙ → «Память агента»">✦ ${m.mem.map(t => esc(/^забыл: /.test(t) ? "Забыл: " + t.slice(7) : "Запомнил: " + t)).join(" · ")}</div>` : ""}</div>`).join("");
   // пока агент отвечает — видно, что именно он сейчас смотрит (интернет, журналы, страницы)
-  const run = j && j.status === "running" ? `<div class="ai-msg ai-a ai-run" aria-live="polite">${vdTrace(j.steps, true)}
+  const run = j && j.status === "running" ? `<div class="ai-msg ai-a ai-run" aria-live="polite">${vdTrace(j.steps, true, AI.jobT0)}
       <button class="small ghost" id="aiStop" type="button">Остановить</button></div>` : "";
   const empty = !AI.msgs.length && !run && document.body.classList.contains("ai-full") && !AI.ctx
     ? `<div class="ai-hero"><span class="orb" aria-hidden="true"></span><h2>Чем помочь?</h2></div>`
@@ -358,7 +358,7 @@ async function aiStart(body, userMsg, finding = null){
   if (userMsg) AI.msgs.push({...userMsg, t: new Date().toISOString()});
   // 2.4: номер чата — для памяти и поиска по прошлым разговорам; первый вопрос — агент заодно придумает название
   body = {...body, chat_id: AI.chatId || "", ...(!AI.chatTitle && AI.msgs.filter(m => m.role === "user").length === 1 ? {want_title: true} : {})};
-  AI.job = {status: "running", steps: []}; aiRender();
+  AI.job = {status: "running", steps: []}; AI.jobT0 = Date.now(); aiRender();
   if (typeof aiSaveChat === "function") aiSaveChat();
   try {
     const r = await api("/api/ai/ask", body);
