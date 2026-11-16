@@ -33,7 +33,9 @@ const LEGACY = {ultra: ["scan", "ultra"], disk: ["clean", "disk"], res: ["speed"
 const OLD_PANELS = {deep: ["scan", "deep"], apps: ["scan", "apps"], network: ["scan", "network"], cleanup: ["clean", "junk"],
   health: ["health", "health"], drivers: ["health", "hwdrv"], hw: ["health", "hwdrv"], protect: ["scan", "winsec"],
   noise: ["speed", "noise"], autoruns: ["apps", "boot"]};
-let PAGE = store.get("page") || "home", SUB = null;
+// при запуске ScanHub — всегда «Главное»; страница помнится только до закрытия окна (перезагрузка окна после обновления её не сбивает)
+const sessPage = () => { try { return sessionStorage.getItem("scanhub.page") } catch { return null } };
+let PAGE = sessPage() || "home", SUB = null;
 const SUBS = (() => { try { return JSON.parse(store.get("subs") || "{}") } catch { return {} } })();
 const pageOf = id => PAGES.find(p => p.id === id) || PAGES[0];
 const tabsOf = p => (p.tabs || []).filter(t => t[2] !== "dev" || MODE === "dev");
@@ -60,7 +62,8 @@ function go(page, sub){
   const tabs = tabsOf(p);
   SUB = tabs.some(t => t[0] === sub) ? sub : tabs.some(t => t[0] === SUBS[PAGE]) ? SUBS[PAGE] : (tabs[0]?.[0] || null);
   SUBS[PAGE] = SUB;
-  store.set("page", PAGE); store.set("subs", JSON.stringify(SUBS));
+  try { sessionStorage.setItem("scanhub.page", PAGE) } catch {}
+  store.set("subs", JSON.stringify(SUBS));
   document.body.classList.remove("nav-open");
   showPage();
   window.scrollTo({top: 0});
