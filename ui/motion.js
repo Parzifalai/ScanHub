@@ -10,7 +10,9 @@ const calm = () => RM.matches;
   try { sessionStorage.setItem("scanhub.booted", "1") } catch {}
   document.body.classList.add(first && !calm() ? "boot-full" : "boot-quick");
   // CSS сам прячет заставку по таймеру; здесь только убираем её из документа
-  setTimeout(() => document.getElementById("boot")?.remove(), first ? 1700 : 700);
+  // вместе с заставкой снимаем и класс: иначе анимация проявления окна (0,9 с невидимости) запускалась заново,
+  // когда что-то временно её выключало — например, при выходе из агента на всё окно всё пропадало на секунду
+  setTimeout(() => { document.getElementById("boot")?.remove(); document.body.classList.remove("boot-full") }, first ? 1700 : 700);
 })();
 
 // ---------- меню: свернуть в полоску иконок (запоминается)
