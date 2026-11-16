@@ -27,13 +27,13 @@
 |---|---|
 | ![Защита от вирусов](docs/screenshots/2-scan.png) | ![Защита Windows](docs/screenshots/3-security.png) |
 
-![ИИ-помощник: спроси простыми словами или попроси что-то проверить — Ctrl+K](docs/screenshots/5-assistant.png)
+![ИИ-агент: спроси простыми словами или попроси что-то проверить — Ctrl+K](docs/screenshots/5-assistant.png)
 
 ## Что умеет
 
 - **Главная за одну секунду (2.0):** живой щит честно показывает состояние — «всё в порядке», «есть что поправить» или «найдена угроза»; во время проверки по нему бежит луч, а кольцо заполняется процентами. Рядом — стабильность Windows, процессор, память и свободное место с графиками; нажатие открывает подробную нагрузку. Ниже — «Что стоит сделать» и быстрые действия.
 - **Своё окно (2.0.5):** ScanHub открывается в собственном окне без рамки браузера — кнопки окна в его тёмной шапке, размер и место запоминаются. Если движка WebView2 нет (Windows 10), откроется через Edge.
-- **Финальный вывод ИИ (2.0.9):** после проверки файла, глубокой и ультра проверки встроенный помощник сам читает итог всех сканеров, ищет файл в интернете (имя, SHA-256, что о нём пишут — со ссылками) и коротко говорит: «Можно открывать» или «Не открывай». Под выводом — чат: спроси, что это за файл, что делать дальше, или попроси помощника сделать это самому.
+- **Финальный вывод ИИ (2.0.9):** после проверки файла, глубокой и ультра проверки встроенный ИИ-агент сам читает итог всех сканеров, ищет файл в интернете (имя, SHA-256, что о нём пишут — со ссылками) и коротко говорит: «Можно открывать» или «Не открывай». Под выводом — чат: спроси, что это за файл, что делать дальше, или попроси агента сделать это самому.
 - **Второе мнение ИИ:** «Скопировать сводку для ИИ» после проверки файла (подпись, хэши, откуда скачан, каждый сканер с подробностями), после ультра проверки и «Полная сводка компьютера для ИИ» (28 разделов обо всём ПК) — вставь в Claude, ChatGPT или Gemini: ИИ ответит коротко («опасно или нет и что делать» в паре слов) и подробно, с фактами. Личное по умолчанию скрыто.
 - **Очистка оперативной памяти в один клик** прямо на главной — как Mem Reduct.
 - **Понятные разделы:** «Защита от вирусов», «Очистка и место», «Программы», «Скорость и игры», «Здоровье ПК», «Приватность», «Телефон» — всё сгруппировано по задачам, а не по устройству программы.
@@ -53,13 +53,13 @@
 - **Обновление в одну кнопку:** когда выходит новая версия, на главной появляется «Обновить» — ScanHub скачает её отсюда, сверит контрольную сумму и поставит поверх, ключи и история останутся.
 - **Стеклянный интерфейс с плавными анимациями (2.2):** меню сворачивается в полоску значков, цифры нагрузки плавно перетекают; если анимации выключены в Windows — без движения.
 - **Русский и английский интерфейс** — переключатель в самом начале ⚙ Настроек (*English interface: ⚙ Settings → Language, at the top*).
-- **ИИ-помощник (по желанию)** — первая строка бокового меню, открывается и с любой страницы по **Ctrl+K**. Кнопка «✦ Как решить» у любой находки (коротко: причина, шаги и кнопка автоматического решения, если ScanHub может сделать это сам — с подтверждением) и чат «Спроси про свой ПК»: помощник сам смотрит журналы Windows, сбои, датчики, место, защиту, браузеры, карантин и — если разрешишь — файлы и папки. Сам он ничего не меняет — только читает и советует. Если ScanHub может исправить проблему сам, у ответа появятся кнопки действий и **«✦ Сделай сам»**: помощник выполнит только эти действия по очереди и проверит результат — через те же проверки и окна UAC, что и кнопки ScanHub, с записью в «Что изменил ScanHub». Модель на выбор: бесплатный Gemini; **Claude, ChatGPT или Gemini по своей подписке** (ScanHub запускает официальные Claude Code, Codex или Antigravity от Google, в которые ты вошёл; в Antigravity можно выбрать модель — Gemini Hydrogen, Argon, Flash и другие из подписки — и уровень размышлений от Low до XHigh; — запросы идут в лимиты подписки; у агента нет командной строки — данные он берёт инструментами ScanHub, а справки может искать в интернете, это выключается в настройках помощника); по ключу API — Claude, OpenAI, OpenRouter, DeepSeek; или локально Ollama.
+- **Встроенный ИИ-агент (по желанию)** — первая строка бокового меню («ИИ-помощник»), открывается и с любой страницы по **Ctrl+K**. Кнопка «✦ Как решить» у любой находки (коротко: причина, шаги и кнопка автоматического решения, если ScanHub может сделать это сам — с подтверждением) и чат «Спроси про свой ПК»: агент сам смотрит журналы Windows, сбои, датчики, место, защиту, браузеры, карантин и — если разрешишь — файлы и папки, а также может сам запускать безопасные проверки прямо из чата (поиск майнеров, быстрая проверка Defender, поиск мусора, автозагрузка, здоровье ПК, комплектующие) и отвечать по их итогу. Сам он ничего в системе не меняет — только читает, проверяет и предлагает. Если ScanHub может исправить проблему сам, у ответа появятся кнопки действий и **«✦ Сделай сам»**: агент выполнит только одобренные действия по очереди и проверит результат — через те же проверки и окна UAC, что и кнопки ScanHub, с записью в «Что изменил ScanHub». Модель на выбор: бесплатный Gemini; **Claude, ChatGPT или Gemini по своей подписке** (ScanHub запускает официальные Claude Code, Codex или Antigravity от Google, в которые ты вошёл; в Antigravity можно выбрать модель — Gemini Hydrogen, Argon, Flash и другие из подписки — и уровень размышлений от Low до XHigh; запросы идут в лимиты подписки; у агента нет командной строки — данные он берёт инструментами ScanHub, а справки может искать в интернете, это выключается в настройках агента); по ключу API — Claude, OpenAI, OpenRouter, DeepSeek; или локально Ollama.
 
 ## Установка
 
 1. Windows 10 или 11, 64-бит.
-2. Скачай **[ScanHub-Windows.zip](../../releases/latest/download/ScanHub-Windows.zip)** (около 26 МБ) и распакуй в любую папку, например `D:\ScanHub`.
-3. Запусти **ScanHub.exe**. Окно откроется в Microsoft Edge (режим приложения). На главной будет кнопка «Создать ярлык» — для рабочего стола и «Пуска».
+2. Скачай **[ScanHub-Windows.zip](../../releases/latest/download/ScanHub-Windows.zip)** (около 32 МБ) и распакуй в любую папку, например `D:\ScanHub`.
+3. Запусти **ScanHub.exe** — ScanHub откроется в собственном окне (или через Microsoft Edge, если движка WebView2 нет). На главной будет кнопка «Создать ярлык» — для рабочего стола и «Пуска».
 4. На главной нажми **«Подготовить»** — ScanHub сам скачает с официальных сайтов недостающие сканеры и их базы (около 1 ГБ, 5–15 минут, один раз). Без этого работают только Defender и проверка подписи.
 
 **Если Windows пишет «Windows защитила ваш компьютер».** У ScanHub.exe нет цифровой подписи (она платная; для открытых проектов бывает бесплатная — через SignPath Foundation, это планируется), поэтому SmartScreen предупреждает о любой новой программе. Нажми **«Подробнее» → «Выполнить в любом случае»** — это нужно один раз. ScanHub.exe — маленькая запускалка: её исходный код в [`launcher/ScanHub.cs`](launcher/ScanHub.cs), она только открывает `scanhub.py` встроенным Python.
@@ -80,13 +80,13 @@
 | Сам файл | VirusTotal или Filescan | только по отдельной кнопке «Загрузить файл» с предупреждением |
 | Названия и версии пакетов npm/pip | OSV.dev (Google) | только в проверке «Пакеты npm и pip» |
 | Найденный ключ API (для проверки, действует ли он) | сервис этого ключа | только в режиме TruffleHog «Только действующие ключи» |
-| Данные, которые смотрит ИИ-помощник (журналы, сведения о файлах; содержимое текстовых файлов — только если ты это разрешил) — без имени пользователя, имени компьютера, почты и ключей | выбранный сервис: Google Gemini, Anthropic (Claude), OpenAI (ChatGPT), OpenRouter или DeepSeek — напрямую или через Claude Code / Codex / Antigravity | только если ты выбрал облачную модель и задал вопрос; с Ollama ничего не уходит |
+| Данные, которые смотрит ИИ-агент (журналы, сведения о файлах; содержимое текстовых файлов — только если ты это разрешил) — без имени пользователя, имени компьютера, почты и ключей | выбранный сервис: Google Gemini, Anthropic (Claude), OpenAI (ChatGPT), OpenRouter или DeepSeek — напрямую или через Claude Code / Codex / Antigravity | только если ты выбрал облачную модель и задал вопрос; с Ollama ничего не уходит |
 | Запросы обновлений | GitHub и официальные сайты сканеров | проверка обновлений и скачивание баз |
 | Ничего о телефоне — только загрузка инструментов: Google Platform Tools (если adb ещё не стоит) и список приложений-следилок | dl.google.com, GitHub | при проверке телефона; хэши приложений не из магазина — в VirusTotal, если ты ввёл ключ |
 | Анонимная отметка «ScanHub запущен сегодня»: случайный номер копии, версия, язык, номер сборки Windows | автору ScanHub (Cloudflare Worker) | раз в день, **только если ты согласился** (карточка на главной или ⚙ Настройки) |
 | Сообщение об ошибке или идея — только то, что ты увидел в окне перед отправкой; журнал ошибок ScanHub — по галочке | автору ScanHub в Telegram (через Cloudflare Worker) | по кнопке «Ошибка или идея?» → «Отправить» |
 | Номера твоих сообщений автору и секреты к ним — чтобы забрать его ответ | автору ScanHub (Cloudflare Worker) | раз в полчаса, пока ScanHub открыт, и только если ты писал автору |
-| Поисковые запросы помощника (название программы, код ошибки — без путей и имени) и страницы, которые он читает | DuckDuckGo или Bing, сайты из результатов; каталог winget | только если в настройках помощника включён интернет и помощнику нужна справка |
+| Поисковые запросы ИИ-агента (название программы, код ошибки — без путей и имени) и страницы, которые он читает | DuckDuckGo или Bing, сайты из результатов; каталог winget | только если в настройках агента включён интернет и агенту нужна справка |
 
 Больше ScanHub ничего никуда не отправляет: нет рекламы, аккаунтов и скрытой аналитики. Счётчик запусков работает, только если ты сам на него согласился, а отчёт об ошибке уходит, только когда ты сам нажмёшь «Отправить». История, журналы и настройки хранятся только на твоём компьютере в папке `data` (ключи API — зашифрованы Windows для твоей учётной записи). Очистить историю и журналы: ⚙ Настройки → «Очистить историю проверок и журналы».
 
@@ -127,12 +127,12 @@ ScanHub не заменяет постоянный антивирус — он �
 
 ## English
 
-**ScanHub** is a free, open-source toolbox for checking and maintaining a Windows 10/11 PC in one window: 30+ antivirus scanners and checks (Microsoft Defender, ClamAV, YARA, Kaspersky VRT, Dr.Web CureIt!, ESET, Malwarebytes, AdwCleaner, HiJackThis+…), junk cleanup, disk usage, program uninstall with leftovers, privacy and Windows security settings with one-click undo, crash and stability analysis, an internet-slowdown diagnosis and an optional AI assistant. Everything is **one-off**: nothing keeps running in the background.
+**ScanHub** is a free, open-source toolbox for checking and maintaining a Windows 10/11 PC in one window: 30+ antivirus scanners and checks (Microsoft Defender, ClamAV, YARA, Kaspersky VRT, Dr.Web CureIt!, ESET, Malwarebytes, AdwCleaner, HiJackThis+…), junk cleanup, disk usage, program uninstall with leftovers, privacy and Windows security settings with one-click undo, crash and stability analysis, an internet-slowdown diagnosis and an optional built-in AI agent. Everything is **one-off**: nothing keeps running in the background.
 
 ⭐ Found ScanHub useful? A star (the **Star** button at the top of this page) helps others find it.
 
 - **Install:** download [ScanHub-Windows.zip](../../releases/latest/download/ScanHub-Windows.zip), unpack anywhere, run `ScanHub.exe` (Python is bundled). SmartScreen may warn because the launcher is not code-signed — "More info" → "Run anyway".
-- **Language:** the interface is Russian by default; switch to English at the top of ⚙ Settings. The AI assistant then answers in English too.
+- **Language:** opens in English automatically on non-Russian Windows, or switch the language at the top of ⚙ Settings. The AI agent then answers in English too.
 - **Phone check:** Android over USB debugging — stalkerware, apps not from a store (checked on VirusTotal by hash), who has accessibility/device-admin/notification access, root, patch age, battery. Nothing is installed on the phone.
 - **Devices:** keyboard, mouse, microphone, speakers, camera, Bluetooth — status plus live tests in the window (mic level and playback, key tester with chatter detection, mouse buttons/double-click/polling rate).
 - **Privacy:** only file hashes go to online scanners (VirusTotal etc., with your own API keys); files are uploaded only when you press "Upload". No ads or accounts; an anonymous daily "ScanHub is running" counter (random copy id, version, language) is sent only if you opt in. Settings and history stay in the `data` folder on your PC.

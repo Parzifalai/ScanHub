@@ -6,12 +6,12 @@ The text of the newest version's section goes into the GitHub release descriptio
 
 ## 2.2.0
 
-**The AI assistant does things for you**
-- Ask in plain words — "check for miners", "what can I clean up?", "check startup" — and the assistant runs the ScanHub check itself (miner search, Defender quick scan, junk search, startup, PC health, hardware) and answers from the result. Anything that changes the PC (for example cleaning junk) it only proposes, and it runs only after you press "Do it for me".
+**Built-in AI agent that runs checks and fixes for you**
+- Ask in plain words — "check for miners", "what can I clean up?", "check startup" — and the AI agent runs the ScanHub check itself (miner search, Defender quick scan, junk search, startup, PC health, hardware) and answers from the result. Anything that changes the PC (for example cleaning junk) it only proposes, and it runs only after you press "Do it for me".
 - Photos and screenshots: attach a picture to the question with the button or just paste it with Ctrl+V (up to 4). Works with Gemini, Claude, ChatGPT, OpenRouter, Ollama, Claude Code, Codex and Antigravity; for models that can't see pictures the button is hidden.
 - Fast / Thorough switch above the input. Fast (the default) uses the same model with short thinking, fewer steps and no web search unless you ask for it, so simple questions take seconds. "How big is this program" is now one step: the program list shows each app's folder and size.
-- Opened from the menu or with **Ctrl+K**, the assistant takes the whole window like a section of its own: "How can I help?", the input in the middle, suggested questions below, the mode and the model as drop-down lists. The menu stays on the left, and a button hides it completely. "✦ How to fix" next to a finding still opens it as a side panel.
-- The chat no longer flickers or jumps to the bottom while the assistant is answering, and has a slim scrollbar. Settings open from the top with a clear "← Back to the chat" button; ⚙ again or Esc also gets you back.
+- Opened from the menu or with **Ctrl+K**, the agent fills the full panel next to the menu symmetrically from top to bottom: "How can I help?", the input in the middle, suggested questions below, the mode and the model as drop-down lists. The menu stays on the left, and a button hides it completely. "✦ How to fix" next to a finding still opens it as a side panel.
+- The chat no longer flickers or jumps to the bottom while the agent is answering, and has a slim scrollbar. Agent settings open from the top with a clear "← Back to the chat" button; ⚙ again or Esc also gets you back.
 
 **New look: frosted glass**
 - Panels are frosted glass over slowly drifting light, and the side menu floats as a separate card. It collapses into a strip of icons and remembers your choice; the highlight of the current section slides to the item you clicked.

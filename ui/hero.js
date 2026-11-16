@@ -231,7 +231,7 @@ const HOST = window.chrome?.webview;
 if (HOST) {
   document.body.classList.add("in-host");
   $("#wincaps").hidden = false;
-  const free = e => e.target.closest("header") && !e.target.closest("button, a, input, select, textarea, label, .seg, .wincaps");
+  const free = e => (e.target.closest("header") || (document.body.classList.contains("ai-full") && e.target.closest(".ai-head"))) && !e.target.closest("button, a, input, select, textarea, label, .seg, .wincaps");
   document.addEventListener("mousedown", e => {
     if (e.button !== 0 || !free(e)) return;
     e.preventDefault();

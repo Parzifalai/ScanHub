@@ -1548,7 +1548,7 @@ body{background:transparent}
 @keyframes bootOut{to{opacity:0;visibility:hidden}}
 body.boot-quick .boot{animation:bootOut .2s ease forwards}
 body.boot-quick .boot *{animation:none;stroke-dashoffset:0;transform:none;opacity:1}
-body.boot-full .layout{animation:layoutIn .75s var(--ease) .9s both}
+body.boot-full .layout{animation:layoutIn .75s var(--ease) .9s backwards}
 @keyframes layoutIn{from{opacity:0;filter:blur(14px);transform:scale(.985)}}
 
 /* ---------- каркас: меню — парящая стеклянная карточка, ширина плавно меняется при сворачивании */
@@ -1693,10 +1693,10 @@ body.side-mini main{max-width:1500px}
   background-color:rgba(150,160,255,.28)}
 .ai-body::-webkit-scrollbar-thumb:hover{background-color:rgba(170,175,255,.55)}
 
-/* ---------- 2.2 помощник на весь экран: остаются шапка окна (кнопки окна, режим) и разговор */
+/* ---------- 2.2 помощник на весь экран: симметричная карточка на всю высоту рядом с меню, кнопки окна в правом верхнем углу карты */
 body.ai-full.ai-open .side,body.ai-full.ai-open main{visibility:hidden}
-body.ai-full .ai-panel{left:12px;width:auto;top:calc(var(--hdr-h,57px) + 4px);z-index:30}
-@media (max-width:1179px){ body.ai-full .ai-panel{top:8px;left:8px;right:8px;bottom:8px} }
+body.ai-full .ai-panel{left:12px;right:12px;top:12px;bottom:12px;width:auto;z-index:30}
+@media (max-width:900px){ body.ai-full .ai-panel{top:8px;left:8px;right:8px;bottom:8px} }
 body.ai-full .ai-body > *,body.ai-full .ai-input .ai-box,body.ai-full .ai-ctx{max-width:880px;width:100%;margin-inline:auto}
 body.ai-full .ai-body{padding-inline:24px}
 #aiFull.on{color:#B9B6FF;background:rgba(110,115,255,.16)}
@@ -1742,10 +1742,13 @@ header::before{left:calc(-1 * var(--sw) - 2px)}
 body.ai-full.ai-open .side{visibility:visible}
 body.ai-full.ai-open main{visibility:hidden}
 @media (min-width:901px){
-  body.ai-full .ai-panel{left:calc(var(--sw) + 12px);right:12px;top:calc(var(--hdr-h,57px) + 4px);bottom:12px;width:auto;z-index:30}
+  body.ai-full .ai-panel{left:calc(var(--sw) + 12px);right:12px;top:12px;bottom:12px;width:auto;z-index:30}
   body.ai-full.side-hidden .ai-panel{left:12px}
   body.ai-full.ai-open.side-hidden .side{display:none}
   body.ai-full.ai-open.side-hidden .layout{grid-template-columns:0 minmax(0,1fr)}
+}
+@media (max-width:900px){
+  body.ai-full .ai-panel{top:8px;left:8px;right:8px;bottom:8px;width:auto}
 }
 #aiSideTgl{display:none}
 @media (min-width:901px){ body.ai-full #aiSideTgl{display:inline-grid} }
@@ -1756,6 +1759,7 @@ body.ai-full.ai-open .side .nav-main a.nav.on .ico{color:inherit}
 .side-ai.on{color:#fff;border-color:rgba(160,165,255,.55);background:linear-gradient(90deg,rgba(110,115,255,.32),rgba(110,115,255,.1))}
 
 /* пустой разговор: заголовок, поле и подсказки — по центру окна, ничего лишнего */
+.ai-panel.empty{padding:0;color:var(--text);text-align:initial}
 .ai-panel.empty .ai-head{border-bottom-color:transparent}
 .ai-panel.empty .ai-head .ai-mark,.ai-panel.empty .ai-title{visibility:hidden}
 .ai-panel.empty .ai-body{flex:0 0 auto;margin-top:auto;overflow:visible;padding-bottom:10px}
@@ -1797,12 +1801,23 @@ body.ai-full .ai-above{max-width:880px;margin:0 auto 8px;width:100%}
 .ai-pop .ai-pop-foot{margin-top:4px;border-top:1px solid var(--line);border-radius:0 0 9px 9px;color:var(--muted);font-size:12.5px}
 .ai-pop::-webkit-scrollbar{width:8px} .ai-pop::-webkit-scrollbar-thumb{border:2px solid transparent;background-clip:padding-box;border-radius:8px;background-color:rgba(150,160,255,.28)}
 
-/* ---------- 2.2 помощник на всё окно: меню скрыто — одна колонка (а не «нулевая» слева), шапка без лишнего */
+/* ---------- 2.2 помощник на всё окно: меню скрыто — одна колонка (а не «нулевая» слева), шапка не мешает карточке, кнопки окна встроены в её правый верхний угол */
 @media (min-width:901px){
   body.ai-full.ai-open.side-hidden .layout{grid-template-columns:minmax(0,1fr)}
   body.ai-full.ai-open.side-hidden header::before{left:0}
 }
-body.ai-full.ai-open header .seg,body.ai-full.ai-open header .dev-only{visibility:hidden}
+body.ai-full.ai-open .layout{animation:none}
+body.ai-full.ai-open header{pointer-events:none}
+body.ai-full.ai-open header::before{display:none}
+body.ai-full.ai-open header > :not(.wincaps){visibility:hidden}
+body.ai-full.in-host:has(#aiPanel:not([hidden]):not(.closing)) header{z-index:35;isolation:auto}
+body.ai-full.in-host:has(#aiPanel:not([hidden]):not(.closing)) .wincaps{position:fixed;top:13px;right:13px;margin:0;height:54px;z-index:35;pointer-events:auto;border-radius:0 21px 0 0;overflow:hidden;align-items:stretch}
+body.ai-full.in-host:has(#aiPanel:not([hidden]):not(.closing)) .wincaps::before{content:"";align-self:center;width:1px;height:20px;background:var(--glass-line);margin:0 4px 0 0}
+body.ai-full.in-host:has(#aiPanel:not([hidden]):not(.closing)) .wincaps button{width:44px;height:54px}
+body.ai-full.in-host .ai-head{padding-right:158px}
+@media (max-width:900px){
+  body.ai-full.in-host:has(#aiPanel:not([hidden]):not(.closing)) .wincaps{top:9px;right:9px}
+}
 /* выход из настроек помощника — заметной кнопкой сверху */
 .ai-back{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;padding:7px 14px 7px 10px;border-radius:10px;
   background:rgba(110,115,255,.14);border:1px solid rgba(160,165,255,.35);color:#DCDBFF;font:500 14px var(--din)}
