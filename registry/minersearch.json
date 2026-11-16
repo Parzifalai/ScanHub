@@ -19,7 +19,8 @@
       "target": "none",
       "gui": true,
       "args": [
-        "--scan-only"
+        "--scan-only",
+        "--no-review-interact"
       ]
     },
     {
