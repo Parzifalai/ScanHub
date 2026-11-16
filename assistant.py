@@ -2334,9 +2334,13 @@ def _agent(job, cfg, system, prompt, images=None):
                           url=HOOKS["url"](), job=job["id"], key=job["agent_key"], stop=lambda: bool(job.get("stop")),
                           max_turns=40 if job.get("allowed") else 12 if fast else 30,
                           web=bool(cfg.get("ai_web", True)) and not job.get("allowed") and not cfg.get("_no_web"),
-                          fast=fast, images=images or [])
+                          fast=fast, images=images or [], alive=lambda: len(job["steps"]))
     except agents.AgentError as e:
-        raise AIError(str(e))
+        msg = str(e)
+        done = [s for s in dict.fromkeys(job.get("steps") or []) if s][-8:]
+        if "мин" in msg and done:                # оборвали по времени — пусть человек видит, что агент успел
+            msg += ". Успел: " + "; ".join(done) + ". Спроси ещё раз покороче — например, только «проверь на майнеры»."
+        raise AIError(msg)
     finally:
         job["agent_key"] = None             # ключ одноразовый: после ответа инструменты больше не отвечают
 

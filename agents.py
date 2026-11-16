@@ -233,10 +233,13 @@ def _agy_model(model, fast):
     return model
 
 
-def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, timeout=900, max_turns=30, web=False, fast=False, images=()):
+def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, timeout=2700, max_turns=30, web=False, fast=False, images=(),
+        alive=None, idle=420):
     """Запустить агента на один ответ. Возвращает текст ответа. stop() — человек нажал «Остановить».
     web — разрешить поиск и чтение страниц в интернете (только для вопросов; для «Сделай сам» всегда выключено).
-    fast — режим «Быстро» (короткое размышление); images — [(mime, base64)] картинки к вопросу."""
+    fast — режим «Быстро» (короткое размышление); images — [(mime, base64)] картинки к вопросу.
+    2.4: alive() — счётчик шагов агента. Пока он растёт, агент работает (долгая «сильная проверка» — это нормально);
+    обрываем, только если idle секунд нет ни одного нового шага (завис) или прошло timeout секунд всего."""
     c = CLI[provider]
     exe = c["find"]()
     if not exe:
@@ -294,11 +297,22 @@ def run(provider, *, system, prompt, model, url, job, key, stop=lambda: False, t
             p.stdin.close()
         except OSError:
             pass
-        t0 = time.time()
+        t0 = last_t = time.time()
+        last_n = alive() if alive else 0
         while p.poll() is None:
-            if stop() or time.time() - t0 > timeout:
+            now = time.time()
+            if alive:
+                n = alive()
+                if n != last_n:
+                    last_n, last_t = n, now
+            hung = now - (last_t if alive else t0) > (idle if alive else timeout)
+            if stop() or hung or now - t0 > timeout:
                 subprocess.run(["taskkill", "/PID", str(p.pid), "/T", "/F"], capture_output=True, creationflags=NO_WINDOW)
-                raise AgentError("остановлено" if stop() else f"{c['name']} не ответил за {timeout // 60} мин")
+                if stop():
+                    raise AgentError("остановлено")
+                mins = max(1, round((now - t0) / 60))
+                raise AgentError(f"{c['name']} " + (f"работал {mins} мин и не закончил ответ — это предел на один ответ" if now - t0 > timeout
+                                                     else f"{round(idle / 60)} мин не делал ни одного шага и, похоже, завис (всего работал {mins} мин)"))
             time.sleep(0.3)
         time.sleep(0.2)
         text = (out[0] if out else b"").decode("utf-8", "replace")
