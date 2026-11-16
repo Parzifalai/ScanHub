@@ -90,8 +90,16 @@ def categories():
              safe=False, admin=True,
              desc="Части обновлений, которые Windows раздаёт другим компьютерам в сети. Удаление безопасно, Windows просто скачает нужное снова."),
         # ---- видеокарта и игры
+        dict(id="sysdump", grp="Windows", label="Снимки памяти после синих экранов", paths=[os.path.join(WINDIR, "Minidump"), os.path.join(WINDIR, "MEMORY.DMP")],
+             safe=True, admin=True,
+             desc="Когда Windows падает с синим экраном, она сохраняет снимок памяти (MEMORY.DMP бывает размером с оперативную память). "
+                  "Нужны только для разбора причины сбоя. Если синие экраны повторяются, сначала посмотри «Здоровье ПК → Вылеты»."),
+        dict(id="winold", grp="Windows", label="Предыдущая версия Windows (Windows.old)", winold=True,
+             paths=[os.path.join(os.environ.get("SystemDrive", "C:") + "\\", "Windows.old")], safe=False, admin=True,
+             desc="Копия старой Windows после большого обновления — нужна только чтобы откатиться назад в первые 10 дней. "
+                  "Удаляется встроенной «Очисткой диска Windows» (ScanHub запустит её сам, может занять несколько минут). После удаления откат станет невозможен."),
         dict(id="nv_shader", grp="Игры и видеокарта", label="Кэш шейдеров NVIDIA", paths=_g(LA + r"\NVIDIA\DXCache", LA + r"\NVIDIA\GLCache",
-             RA + r"\NVIDIA\ComputeCache", LA + r"\NVIDIA Corporation\NV_Cache"), safe=False,
+             RA + r"\NVIDIA\ComputeCache", LA + r"\NVIDIA Corporation\NV_Cache", PD + r"\NVIDIA Corporation\NV_Cache"), safe=False,
              desc="Шейдеры — маленькие программы для видеокарты, которые драйвер заранее компилирует для игр. Чистить стоит после обновления драйвера или если "
                   "в игре графические артефакты. Минус: первые запуски игр после очистки могут подтормаживать, пока кэш собирается заново."),
         dict(id="dx_shader", grp="Игры и видеокарта", label="Кэш шейдеров DirectX", paths=_g(LA + r"\D3DSCache"), safe=False,
@@ -116,6 +124,9 @@ def categories():
         dict(id="teams", grp="Программы", label="Microsoft Teams: кэш", paths=_g(LA + r"\Packages\MSTeams_*\LocalCache\Microsoft\MSTeams\EBWebView\Default\Cache",
              RA + r"\Microsoft\Teams\Cache", RA + r"\Microsoft\Teams\Service Worker\CacheStorage"), safe=True,
              desc="Кэш картинок и страниц Teams. Переписка хранится в облаке. Закрой Teams перед очисткой."),
+        dict(id="slack", grp="Программы", label="Slack: кэш", paths=_g(*[RA + "\\Slack\\" + x for x in ("Cache", "Code Cache", "GPUCache", r"Service Worker\CacheStorage")],
+             *[LA + r"\Packages\com.tinyspeck.slackdesktop_*\LocalCache\Roaming\Slack" + "\\" + x for x in ("Cache", "Code Cache", "GPUCache")]), safe=True,
+             desc="Кэш картинок и страниц Slack. Переписка хранится в облаке. Закрой Slack перед очисткой."),
         dict(id="spotify", grp="Программы", label="Spotify: кэш музыки", paths=_g(LA + r"\Spotify\Storage", LA + r"\Spotify\Data",
              LA + r"\Packages\SpotifyAB.SpotifyMusic_*\LocalCache\Spotify\Data"), safe=True,
              desc="Временно сохранённые треки для быстрого повтора. Скачанные для офлайна плейлисты — отдельно и не трогаются."),
@@ -140,8 +151,25 @@ def categories():
             C.append(dict(id="browser:" + name, grp="Браузеры", label=f"{name}: кэш", paths=paths, safe=True,
                           desc=("Временно сохранённые картинки и скрипты сайтов. Пароли, история, вкладки и вход на сайты не затрагиваются. "
                                 f"Сайты первый раз откроются чуть медленнее. Закрой {'Discord' if name == 'Discord' else 'браузер'} перед очисткой.")))
-    C = [c for c in C if c.get("always") or any(p and os.path.isdir(p) for p in c["paths"])]
+    C = [c for c in C if c.get("always") or any(p and os.path.exists(p) for p in c["paths"])]
     return C
+
+
+# программы, которые держат свой кэш открытым: если запущены — часть файлов пропустится, окно предупреждает заранее
+RUNNING = {"browser:Chrome": ("chrome.exe",), "browser:Edge": ("msedge.exe",), "browser:Яндекс Браузер": ("browser.exe",),
+           "browser:Brave": ("brave.exe",), "browser:Vivaldi": ("vivaldi.exe",), "browser:Chromium": ("chromium.exe",),
+           "browser:Opera": ("opera.exe", "opera_gx.exe"), "browser:Firefox": ("firefox.exe",), "browser:Discord": ("discord.exe", "discordptb.exe", "discordcanary.exe"),
+           "vscode": ("code.exe",), "teams": ("ms-teams.exe", "teams.exe"), "slack": ("slack.exe",), "spotify": ("spotify.exe",),
+           "telegram": ("telegram.exe",), "steam_web": ("steam.exe", "steamwebhelper.exe"), "epic": ("epicgameslauncher.exe",),
+           "gamecache": ("battle.net.exe", "eadesktop.exe", "upc.exe"), "chrome_ai": ("chrome.exe",)}
+
+
+def _running_names():
+    try:
+        import psutil
+        return {(p.info.get("name") or "").lower() for p in psutil.process_iter(["name"])}
+    except Exception:
+        return set()
 
 
 def wu_idle():
@@ -153,11 +181,104 @@ def wu_idle():
         return False
 
 
+# ================================================================ защита: что очистка не тронет никогда
+
+DOWNLOADS_GUID = "{374DE290-123F-4565-9164-39C4925E467B}"
+_PROT = {}
+
+
+def _shell_folder(name):
+    """Настоящее место папки пользователя (Документы, Загрузки…) — её могли перенести на другой диск или в OneDrive."""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders") as k:
+            return os.path.expandvars(winreg.QueryValueEx(k, name)[0])
+    except OSError:
+        return ""
+
+
+def downloads_dir():
+    return _shell_folder(DOWNLOADS_GUID) or os.path.join(HOME, "Downloads")
+
+
+def _norm(p):
+    return os.path.normcase(os.path.abspath(p)).rstrip("\\/")
+
+
+def _protected():
+    """(системные корни, личные папки). Системные нельзя чистить целиком и нельзя их родителей; внутри личных не чистится ничего."""
+    if not _PROT:
+        env = os.environ.get
+        roots = [HOME, WINDIR, os.path.join(WINDIR, "System32"), os.path.join(WINDIR, "SysWOW64"), os.path.join(WINDIR, "WinSxS"),
+                 env("ProgramFiles"), env("ProgramFiles(x86)"), env("ProgramW6432"), PD, LA, RA, os.path.dirname(LA)]
+        personal = [_shell_folder(n) for n in ("Personal", "Desktop", "My Pictures", "My Video", "My Music", DOWNLOADS_GUID)]
+        personal += [os.path.join(HOME, x) for x in ("Documents", "Desktop", "Pictures", "Videos", "Music", "Downloads", "OneDrive")]
+        personal += [env("OneDrive"), env("OneDriveConsumer"), env("OneDriveCommercial")]
+        _PROT["roots"] = {_norm(r) for r in roots if r}
+        _PROT["personal"] = {_norm(p) for p in personal if p}
+    return _PROT["roots"], _PROT["personal"]
+
+
+def guard(path):
+    """Можно ли чистить эту папку (или удалить этот файл) как мусор. Ссылка проверяется по тому, куда она ведёт."""
+    if not path:
+        return False
+    try:
+        real = _norm(os.path.realpath(path))
+    except (OSError, ValueError):
+        return False
+    if len(real) <= 3:                                    # корень диска
+        return False
+    roots, personal = _protected()
+    if any(real == r or r.startswith(real + "\\") for r in roots | personal):
+        return False                                      # сама защищённая папка или папка над ней
+    return not any(real.startswith(r + "\\") for r in personal)
+
+
+def _reparse(p):
+    """Ссылка на другую папку (junction, symlink, папка OneDrive «только в облаке»): внутрь не заходим никогда."""
+    try:
+        return bool(os.lstat(p).st_file_attributes & 0x400)   # FILE_ATTRIBUTE_REPARSE_POINT
+    except OSError:
+        return True
+
+
+def _walk(base, deadline=None):
+    """Обход без перехода по ссылкам: (папка, [файлы]) сверху вниз. deadline — время, после которого обход прекращается."""
+    stack = [base]
+    while stack:
+        root = stack.pop()
+        try:
+            it = list(os.scandir(root))
+        except OSError:
+            continue
+        files = []
+        for e in it:
+            try:
+                if e.is_dir(follow_symlinks=False):
+                    if not _reparse(e.path):
+                        stack.append(e.path)
+                else:
+                    files.append(e.name)
+            except OSError:
+                pass
+        yield root, files
+        if deadline and time.time() > deadline:
+            return
+
+
 def _sizes(path, older_hours, limit_s=12):
-    """Весь размер папки и та часть, которую можно удалить сейчас (файлы старше older_hours)."""
+    """Весь размер папки (или файла) и та часть, которую можно удалить сейчас (файлы старше older_hours)."""
     total = ready = 0
-    cutoff, t0 = time.time() - older_hours * 3600, time.time()
-    for root, dirs, files in os.walk(path, onerror=lambda e: None):
+    cutoff = time.time() - older_hours * 3600
+    if os.path.isfile(path):
+        try:
+            st = os.lstat(path)
+            return st.st_size, st.st_size if st.st_mtime < cutoff else 0
+        except OSError:
+            return 0, 0
+    if _reparse(path):
+        return 0, 0
+    for root, files in _walk(path, time.time() + limit_s):
         for f in files:
             try:
                 st = os.lstat(os.path.join(root, f))
@@ -166,23 +287,92 @@ def _sizes(path, older_hours, limit_s=12):
             total += st.st_size
             if st.st_mtime < cutoff:
                 ready += st.st_size
-        if time.time() - t0 > limit_s:
-            break
     return total, ready
 
 
 def junk_scan():
     cats = categories()
+    running = _running_names()
     for c in cats:
         hours = c.get("older_days", 1) * 24
-        sz = [_sizes(p, hours) for p in c["paths"] if p and os.path.isdir(p)]
+        sz = [_sizes(p, hours, 20 if c.get("winold") else 12) for p in c["paths"] if p and os.path.exists(p) and guard(p)]
         c["size_all"] = sum(s[0] for s in sz)
         c["size"] = sum(s[1] for s in sz)          # главное число — то, что удалится прямо сейчас
         c["fresh"] = c["size_all"] - c["size"]      # свежие файлы (моложе порога) — удалятся при следующей очистке
-    cats = [c for c in cats if c["size_all"] > 0 or c["id"] in ("temp", "wu") or c.get("always")]
+        if c.get("winold"):                         # Windows.old удаляется целиком, без порога по возрасту
+            c["size"], c["fresh"] = c["size_all"], 0
+        c["running"] = any(n in running for n in RUNNING.get(c["id"], ()))
+    cats = [c for c in cats if c["size_all"] > 0 or c["id"] in ("temp", "wu") or c.get("always") or c.get("winold")]
     rb = recycle_info()
     vol = shutil.disk_usage("C:\\")
-    return {"categories": cats, "recycle": rb, "c_free": vol.free, "c_total": vol.total}
+    return {"categories": cats, "recycle": rb, "c_free": vol.free, "c_total": vol.total, "finds": finds()}
+
+
+# ================================================================ находки среди своих файлов (решает человек, всё без галочки)
+
+INSTALLER_EXT = (".exe", ".msi", ".msix", ".msixbundle", ".appx", ".appxbundle")
+STEAM_REDIST = "228980"                      # Steamworks Common Redistributables — не игра
+
+
+def _touched(st):
+    return max(st.st_mtime, getattr(st, "st_birthtime", 0) or st.st_ctime)
+
+
+def _acf(path):
+    try:
+        txt = open(path, encoding="utf-8", errors="replace").read()
+    except OSError:
+        return {}
+    return {m.group(1): m.group(2) for m in re.finditer(r'^\s*"(\w+)"\s+"([^"]*)"', txt, re.M)}
+
+
+def steam_games(min_size=1 << 30, days=60):
+    """Игры Steam, в которые давно не играли: удаляет сам Steam (steam://uninstall/ID) — так он не потеряет учёт игры."""
+    out, cutoff = [], time.time() - days * 86400
+    for lib in _steam_libs():
+        for acf in glob.glob(os.path.join(lib, "steamapps", "appmanifest_*.acf")):
+            v = _acf(acf)
+            aid, name, idir, lp = v.get("appid"), v.get("name"), v.get("installdir"), v.get("LastPlayed")
+            if not aid or not aid.isdigit() or not name or not idir or lp is None or aid == STEAM_REDIST:
+                continue                     # нет даты последнего запуска — не гадаем
+            size = int(v.get("SizeOnDisk") or 0)
+            last = int(lp) if lp.isdigit() else 0
+            if size < min_size or (last and last > cutoff):
+                continue
+            out.append({"appid": aid, "name": name, "size": size, "last": last or None,
+                        "path": os.path.join(lib, "steamapps", "common", idir)})
+    return sorted(out, key=lambda g: -g["size"])
+
+
+def finds(limit_s=10):
+    """Старые установщики и большие давно не открытые файлы в Загрузках + давно не запускавшиеся игры Steam."""
+    dl, now = downloads_dir(), time.time()
+    inst, big = [], []
+    if os.path.isdir(dl):
+        dln = _norm(dl)
+        for root, files in _walk(dl, now + limit_s):
+            for f in files:
+                p = os.path.join(root, f)
+                try:
+                    st = os.lstat(p)
+                except OSError:
+                    continue
+                if st.st_file_attributes & 0x404:          # системные и ссылки — мимо
+                    continue
+                t, ext = _touched(st), os.path.splitext(f)[1].lower()
+                if ext in INSTALLER_EXT:
+                    # только файлы прямо в Загрузках: exe внутри распакованных папок — обычно портативные программы, а не установщики
+                    if _norm(root) == dln and now - t > 7 * 86400 and st.st_size >= 1 << 20:
+                        inst.append({"path": p, "name": f, "size": st.st_size, "when": t})
+                elif st.st_size >= 250 << 20 and now - max(t, st.st_atime) > 30 * 86400:
+                    big.append({"path": p, "name": f, "size": st.st_size, "when": max(t, st.st_atime)})
+    games = []
+    try:
+        games = steam_games()
+    except Exception:
+        pass
+    by = lambda x: -x["size"]
+    return {"installers": sorted(inst, key=by)[:100], "big": sorted(big, key=by)[:100], "games": games[:60], "downloads": dl}
 
 
 def clean_paths(paths, older_hours=24, progress=None):
@@ -190,9 +380,22 @@ def clean_paths(paths, older_hours=24, progress=None):
     progress(n, freed) — раз в ~2000 файлов, чтобы окно показывало, что работа идёт (в «Загрузках Windows Update» их сотни тысяч)."""
     freed, skipped, cutoff, n = 0, 0, time.time() - older_hours * 3600, 0
     for base in paths:
-        if not base or not os.path.isdir(base):
+        if not base or not guard(base):                   # защищённые папки не трогаются никогда, даже если их передали
             continue
-        for root, dirs, files in os.walk(base, topdown=False, onerror=lambda e: None):
+        if os.path.isfile(base):                          # отдельный файл (например, C:\Windows\MEMORY.DMP)
+            try:
+                st = os.lstat(base)
+                if st.st_mtime < cutoff:
+                    os.remove(base)
+                    freed += st.st_size
+            except OSError:
+                skipped += 1
+            continue
+        if not os.path.isdir(base) or _reparse(base):     # сама папка — ссылка на другое место: не идём по ней (как Roomy)
+            continue
+        seen = []
+        for root, files in _walk(base):                   # ссылки на другие папки пропускаются, а не обходятся
+            seen.append(root)
             for f in files:
                 p = os.path.join(root, f)
                 try:
@@ -205,11 +408,11 @@ def clean_paths(paths, older_hours=24, progress=None):
                             progress(n, freed)
                 except OSError:
                     skipped += 1
-            if root != base:
-                try:
-                    os.rmdir(root)
-                except OSError:
-                    pass
+        for root in sorted(seen[1:], key=len, reverse=True):    # пустые подпапки — снизу вверх, саму папку оставляем
+            try:
+                os.rmdir(root)
+            except OSError:
+                pass
     return freed, skipped
 
 
@@ -231,6 +434,8 @@ def junk_clean(ids, run_elevated, prog=None, expect=None):
         if not c:
             continue
         hours = c.get("older_days", 1) * 24
+        if c.get("winold"):
+            continue                                    # отдельно, в конце: его удаляет «Очистка диска Windows»
         if c.get("admin"):
             admin_paths.append({"paths": c["paths"], "hours": hours, "id": cid})
             continue
@@ -255,6 +460,13 @@ def junk_clean(ids, run_elevated, prog=None, expect=None):
                     errors.append(f"{a['id']}: {r.get('error')}")
         except PermissionError as e:
             errors.append(f"категории с правами администратора пропущены: {e}")
+    if "winold" in ids and "winold" in cats:
+        r = remove_windows_old(run_elevated, prog)
+        if r.get("ok"):
+            freed += r["freed"]
+            done.append("winold")
+        else:
+            errors.append(f"Windows.old: {r.get('error')}")
     if "recycle" in ids:
         rb = recycle_info()
         if empty_recycle():
@@ -263,6 +475,34 @@ def junk_clean(ids, run_elevated, prog=None, expect=None):
         else:
             errors.append("Корзину очистить не удалось")
     return {"freed": freed, "skipped": skipped, "done": done, "errors": errors}
+
+
+WINOLD_FLAG = "StateFlags0717"                 # свой номер набора для cleanmgr /sagerun — чужие наборы не трогаем
+
+
+def remove_windows_old(run_elevated, prog=lambda s: None):
+    """Windows.old удаляет сама «Очистка диска Windows» (у папки права TrustedInstaller — обычным удалением её не взять):
+    в её наборе 717 включается только «Предыдущие установки Windows», потом cleanmgr /sagerun:717 и флаг убирается."""
+    p = os.path.join(os.environ.get("SystemDrive", "C:") + "\\", "Windows.old")
+    if not os.path.isdir(p):
+        return {"ok": True, "freed": 0}
+    before = shutil.disk_usage(p[:3]).free
+    key = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
+    ops = [{"type": "reg_set", "root": "HKLM", "key": key + r"\Previous Installations", "name": WINOLD_FLAG, "kind": "dword", "value": 2,
+            "label": "Windows.old: готовлю «Очистку диска Windows»"},
+           {"type": "run", "cmd": [os.path.join(WINDIR, "System32", "cleanmgr.exe"), "/sagerun:717"], "timeout": 3600,
+            "label": "Windows.old: удаляет «Очистка диска Windows» — это может занять несколько минут"},
+           {"type": "reg_del", "root": "HKLM", "key": key + r"\Previous Installations", "name": WINOLD_FLAG}]
+    prog("Windows.old: жду подтверждения администратора (окно UAC)")
+    try:
+        res = run_elevated(ops, timeout=3700, on_progress=prog)
+    except PermissionError as e:
+        return {"ok": False, "error": f"нужны права администратора: {e}"}
+    if not all(r.get("ok") for r in res[:2]):
+        return {"ok": False, "error": next((r.get("error") for r in res if r.get("error")), "Очистка диска Windows не сработала")}
+    gone = not os.path.isdir(p)
+    return {"ok": gone, "freed": max(0, shutil.disk_usage(p[:3]).free - before),
+            "error": None if gone else "папка осталась — открой «Очистка диска Windows» → «Очистить системные файлы» → «Предыдущие установки Windows»"}
 
 
 # ================================================================ корзина

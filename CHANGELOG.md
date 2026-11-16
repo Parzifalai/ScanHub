@@ -4,6 +4,18 @@
 
 The text of the newest version's section goes into the GitHub release description, and ScanHub shows it in the “Update ScanHub” window.
 
+## 2.3.0
+
+**Deeper junk cleanup, with lessons from Roomy**
+- More places to clean: Brave, Vivaldi and Chromium caches; the graphics-card caches inside every Chromium browser (GPUCache, shader caches); Discord PTB and Canary; Slack; the NVIDIA shader cache in ProgramData; memory dumps after blue screens (MEMORY.DMP and Minidump).
+- Previous Windows version (Windows.old): ScanHub removes it in one click with Windows' own Disk Cleanup, under a single UAC prompt. It is never ticked by default, because after that you can't roll back.
+- "Your files — your call": old installers lying in Downloads, big files there that nobody has opened for over a month, and Steam games you haven't played in over two months. Nothing is ticked in advance; files go to the Recycle Bin, and a game is removed by Steam itself.
+- "Open right now" next to a cache: if Chrome, Telegram, Steam and others are running, ScanHub warns you before cleaning, since open apps keep part of their files.
+- Safer deleting: the cleanup never follows links to other folders (junctions, symlinks), and a cache folder that is itself a link is skipped. Your Documents, Desktop, Pictures, Videos, Music, Downloads, OneDrive, Windows and Program Files can't be cleaned even by mistake: the check runs again inside the admin process.
+
+**AI agent everywhere**
+- The app itself now says "AI agent" instead of "AI assistant": the menu, the panel, its settings, notifications, the verdict after a scan and the server messages.
+
 ## 2.2.0
 
 **Built-in AI agent that runs checks and fixes for you**

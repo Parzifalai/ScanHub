@@ -9,6 +9,7 @@ Apart from the WebView2 libraries (first section), ScanHub **does not contain or
 ## Included in ScanHub
 
 - **Microsoft WebView2 SDK** 1.0.4314.35 (Microsoft.Web.WebView2.Core.dll, Microsoft.Web.WebView2.WinForms.dll, WebView2Loader.dll in the `window` folder) — © Microsoft Corporation, BSD-3-Clause license (`window/LICENSE-WebView2.txt`). It gives the ScanHub window a frame without the Edge chrome; the WebView2 engine itself is part of Windows.
+- **Roomy** (github.com/krezio/roomy) — © 2026 krezio, MIT license. ScanHub contains no Roomy code, but its cleanup reuses Roomy's list of cache locations (Chromium-browser GPU and shader caches, Brave, Vivaldi, Slack, Discord PTB/Canary, blue-screen dumps), its rules for old installers, big untouched downloads and unplayed Steam games, and its safety rules (never follow junctions, hard-blocked personal and system folders), rewritten in Python. License: https://github.com/krezio/roomy/blob/main/LICENSE
 
 ## Programs (downloaded from official sites)
 

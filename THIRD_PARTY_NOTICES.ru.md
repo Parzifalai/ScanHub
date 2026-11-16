@@ -9,6 +9,7 @@
 ## Входит в ScanHub
 
 - **Microsoft WebView2 SDK** 1.0.4314.35 (Microsoft.Web.WebView2.Core.dll, Microsoft.Web.WebView2.WinForms.dll, WebView2Loader.dll в папке `window`) — © Microsoft Corporation, лицензия BSD-3-Clause (`window/LICENSE-WebView2.txt`). Окно ScanHub без рамки Edge; сам движок WebView2 — часть Windows.
+- **Roomy** (github.com/krezio/roomy) — © 2026 krezio, лицензия MIT. Кода Roomy в ScanHub нет, но очистка повторяет его список мест с кэшем (кэш видеокарты и шейдеров в браузерах на Chromium, Brave, Vivaldi, Slack, Discord PTB/Canary, снимки памяти после синих экранов), правила для старых установщиков, больших давно не открытых загрузок и игр Steam без запусков и правила безопасности (не ходить по ссылкам, жёсткий запрет на личные и системные папки) — переписано на Python. Лицензия: https://github.com/krezio/roomy/blob/main/LICENSE
 
 ## Программы (скачиваются с официальных сайтов)
 

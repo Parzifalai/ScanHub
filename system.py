@@ -435,15 +435,21 @@ def dir_size(path, limit_s=20):
 
 def _browser_caches():
     la, ra = os.environ.get("LOCALAPPDATA", ""), os.environ.get("APPDATA", "")
+    def chromium(ud):
+        # кэш страниц, скриптов и видеокарты в каждом профиле + общий кэш шейдеров браузера (так же чистит Roomy, MIT)
+        return [ud + "\\*\\" + x for x in ("Cache", "Code Cache", "GPUCache")] + [ud + "\\" + x for x in ("ShaderCache", "GrShaderCache", "GraphiteDawnCache")]
     pats = {
-        "Chrome": [la + r"\Google\Chrome\User Data\*\Cache", la + r"\Google\Chrome\User Data\*\Code Cache"],
-        "Edge": [la + r"\Microsoft\Edge\User Data\*\Cache", la + r"\Microsoft\Edge\User Data\*\Code Cache"],
-        "Яндекс Браузер": [la + r"\Yandex\YandexBrowser\User Data\*\Cache", la + r"\Yandex\YandexBrowser\User Data\*\Code Cache"],
-        "Opera": [la + r"\Opera Software\*\Cache"],
+        "Chrome": chromium(la + r"\Google\Chrome\User Data"),
+        "Edge": chromium(la + r"\Microsoft\Edge\User Data"),
+        "Яндекс Браузер": chromium(la + r"\Yandex\YandexBrowser\User Data"),
+        "Brave": chromium(la + r"\BraveSoftware\Brave-Browser\User Data"),
+        "Vivaldi": chromium(la + r"\Vivaldi\User Data"),
+        "Chromium": chromium(la + r"\Chromium\User Data"),
+        "Opera": [la + r"\Opera Software\*\Cache", ra + r"\Opera Software\*\GPUCache", ra + r"\Opera Software\*\ShaderCache"],
         "Firefox": [la + r"\Mozilla\Firefox\Profiles\*\cache2"],
-        "Discord": [ra + r"\discord\Cache", ra + r"\discord\Code Cache"],
+        "Discord": [ra + "\\" + d + "\\" + x for d in ("discord", "discordptb", "discordcanary") for x in ("Cache", "Code Cache", "GPUCache")],
     }
-    return {k: [p for pat in v for p in glob.glob(pat)] for k, v in pats.items()}
+    return {k: [p for pat in v for p in glob.glob(pat) if os.path.isdir(p)] for k, v in pats.items()}
 
 
 def cleanup_scan():

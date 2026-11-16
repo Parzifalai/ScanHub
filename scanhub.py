@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "2.2.0"
+VERSION = "2.3.0"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -1611,8 +1611,10 @@ def _only_found(name, args):
     elif name == "empty_remove":
         keep(a.get("paths", []), [f["path"] for f in (_last("empty") or {}).get("folders", [])], "пустая папка")
     elif name == "recycle":
+        fd = (_last("junk_scan") or {}).get("finds") or {}
         keep(a.get("paths", []), [f["path"] for f in (_last("disk_analyze") or {}).get("big", [])] +
-             [p for g in (_last("dups") or {}).get("groups", []) for p in g["paths"]], "файл")
+             [p for g in (_last("dups") or {}).get("groups", []) for p in g["paths"]] +
+             [f["path"] for k in ("installers", "big") for f in fd.get(k, [])], "файл")
     elif name == "appx_remove":
         keep(a.get("fulls", []), [x["full"] for x in (_last("appx") or [])], "приложение")
     elif name == "firewall_set":
@@ -3082,6 +3084,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     os.startfile(f"ms-windows-store://pdp/?PFN={what[6:]}")
                 elif what == "cleanmgr":
                     subprocess.Popen(["cleanmgr.exe", "/d", "C"])
+                elif what and what.startswith("steam_uninstall:") and what[16:].isdigit() and \
+                        what[16:] in {g["appid"] for g in ((_last("junk_scan") or {}).get("finds") or {}).get("games", [])}:
+                    os.startfile(f"steam://uninstall/{what[16:]}")      # окно удаления самого Steam: он сам спросит и уберёт игру
                 elif what == "winget_upgrade":
                     _winget_upgrade()
                 elif what in ("perfmon_rel", "eventvwr", "mdsched", "optionalfeatures"):

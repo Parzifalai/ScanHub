@@ -705,14 +705,41 @@ function pJunk(dev){
     ${res ? `<div class="note ${res.errors?.length ? "warn" : "info"}">Освобождено <b>${fmtB(res.freed)}</b>${res.skipped ? `, пропущено занятых файлов: ${res.skipped} (их держат открытые программы)` : ""}.${res.errors?.length ? "<br>" + res.errors.map(esc).join("<br>") : ""}
       ${res.freed < 1 << 20 ? `<br>Если освободилось мало — значит, в отмеченных папках только свежие файлы (моложе суток) или занятые открытыми программами. ScanHub их специально не трогает; они удалятся при следующей очистке.` : ""}</div>` : ""}
     ${groups.map(g => `<div class="grp">${g}</div><div class="rows">${all.filter(c => c.grp === g).map(c => `<label class="crow">${cb("junk", c.id, S.has(c.id))}
-        <span><b>${esc(c.label)}</b> ${c.admin ? adminChip : ""}${c.safe ? "" : ` <span class="chip-note">по желанию</span>`}${aiMark(RV, c.id)}<span class="sub">${esc(c.desc || "")}</span>
+        <span><b>${esc(c.label)}</b> ${c.admin ? adminChip : ""}${c.safe ? "" : ` <span class="chip-note">по желанию</span>`}${c.running ? ` <span class="chip-warn" title="Программа сейчас открыта и держит часть файлов — они пропустятся. Закрой её перед очисткой, чтобы освободить больше.">сейчас открыта</span>` : ""}${aiMark(RV, c.id)}<span class="sub">${esc(c.desc || "")}</span>
           ${c.fresh > 1 << 20 ? `<span class="sub" style="color:var(--muted)">ещё ${fmtB(c.fresh)} — свежие файлы (моложе ${c.older_days >= 2 ? c.older_days + " дн." : "суток"}): их программы могут использовать прямо сейчас, удалятся при следующей очистке</span>` : ""}
           ${dev ? `<span class="sub mono">${c.paths?.map(esc).join("<br>") || ""}</span>` : ""}</span>
         <span class="n">${c.always && !c.size ? "—" : fmtB(c.size)}</span></label>`).join("")}</div>`).join("")}
     <div class="stickybar"><span>Выбрано: <b>${fmtB(total)}</b></span><div class="grow"></div>
       <button class="primary" data-junk-go ${!S.size || run?.status === "running" ? "disabled" : ""}>Очистить выбранное</button>
       <button data-launch="cleanmgr">Очистка диска Windows</button></div>
-    <div class="sub">«Очистка диска Windows» умеет удалять ещё и старые обновления Windows и предыдущую версию системы (кнопка «Очистить системные файлы»).</div>`);
+    <div class="sub">«Очистка диска Windows» умеет удалять ещё и старые обновления Windows (кнопка «Очистить системные файлы»).</div>
+    ${junkFinds(r.finds)}`);
+}
+
+// ---------- находки среди своих файлов: ничего не отмечено заранее, файлы — в Корзину, игры — через сам Steam
+function junkFinds(f){
+  if (!f) return "";
+  const S = sel("jfind", TASK.junk_scan?.finished, []);
+  const when = t => t ? new Date(t * 1000).toLocaleDateString(LOC) : "";
+  const files = (list, verb) => `<table class="t small">${list.map(x => `<tr><td style="width:1%">${cb("jfind", x.path, S.has(x.path))}</td>
+      <td><span class="mono" title="${esc(x.path)}">${esc(x.name)}</span><span class="sub"> · ${verb} ${when(x.when)}</span></td>
+      <td class="n">${fmtB(x.size)}</td><td class="acts"><a data-open="${esc(x.path)}">папка</a></td></tr>`).join("")}</table>`;
+  const sum = list => fmtB(list.reduce((a, x) => a + x.size, 0));
+  const inst = f.installers || [], big = f.big || [], games = f.games || [];
+  if (!inst.length && !big.length && !games.length) return "";
+  const picked = [...inst, ...big].filter(x => S.has(x.path)).reduce((a, x) => a + x.size, 0);
+  return `<div class="grp" style="margin-top:22px">Твои файлы — решай сам</div>
+    ${explain("Это не мусор, а то, что ты, скорее всего, забыл: установщики, которые уже сделали своё дело, большие файлы, которые давно не открывались, и игры, в которые давно не играл. Ничего не отмечено заранее. Файлы уходят в Корзину — их можно вернуть; игру удаляет сам Steam, и её всегда можно скачать снова.")}
+    ${inst.length ? `<div class="grp">Старые установщики в Загрузках <span class="sub">· ${inst.length} · ${sum(inst)}</span></div>
+      <div class="sub">Программа уже установлена — установщик больше не нужен. Если понадобится, скачай свежий с официального сайта. Только файлы прямо в Загрузках старше недели.</div>${files(inst, "скачан")}` : ""}
+    ${big.length ? `<div class="grp">Большие файлы в Загрузках, которые давно не открывали <span class="sub">· ${big.length} · ${sum(big)}</span></div>
+      <div class="sub">Файлы от 250 МБ, которые не открывали и не меняли больше месяца: архивы, образы дисков, видео.</div>${files(big, "последний раз")}` : ""}
+    ${inst.length || big.length ? `<div class="row-tools"><button class="danger" data-sel-run="recycle" data-sel-name="jfind" data-sel-arg="paths" ${S.size ? "" : "disabled"}
+      data-confirm="Отправить отмеченные файлы в Корзину? Их можно будет восстановить из Корзины, а место освободится после её очистки.">Удалить отмеченные в Корзину${picked ? ` (${fmtB(picked)})` : ""}</button></div>${busyErr("recycle", "Удаляю…")}` : ""}
+    ${games.length ? `<div class="grp">Игры Steam, в которые не играли больше двух месяцев <span class="sub">· ${games.length} · ${sum(games)}</span></div>
+      <div class="sub">Удаляет сам Steam: откроется его окно с вопросом. Сохранения в облаке Steam останутся, игру можно скачать снова.</div>
+      <table class="t small">${games.map(g => `<tr><td><b>${esc(g.name)}</b><span class="sub"> · ${g.last ? "последний запуск " + when(g.last) : "ни разу не запускалась"}</span></td>
+        <td class="n">${fmtB(g.size)}</td><td class="acts"><button class="small" data-launch="steam_uninstall:${esc(g.appid)}">Удалить через Steam</button></td></tr>`).join("")}</table>` : ""}`;
 }
 
 // ============================================================ очистка: ярлыки, PATH, драйверы
@@ -1870,6 +1897,7 @@ function afterTask(name, args, t){
     for (const p of args.paths || []) for (const s of Object.values(SEL)) s.delete(p);
     const d = TASK.disk_analyze?.result; if (d) d.big = d.big.filter(f => !gone.has(f.path));
     const u = TASK.dups?.result; if (u) u.groups = u.groups.map(g => ({...g, paths: g.paths.filter(p => !gone.has(p))})).filter(g => g.paths.length > 1);
+    const jf = TASK.junk_scan?.result?.finds; if (jf) for (const k of ["installers", "big"]) jf[k] = (jf[k] || []).filter(f => !gone.has(f.path));
   }
   if (name === "quarantine") { ultraForget(args.files); for (const j of openJobs) if (j.found) j.found = j.found.filter(f => !(args.files || []).some(x => x.path === f.path)); renderSimpleResult() }
   redrawPanels(); renderNav();
@@ -2084,7 +2112,7 @@ document.addEventListener("change", async e => {
   if (x.dataset.sel) {
     const S = SEL[x.dataset.sel] ||= new Set();
     x.checked ? S.add(x.value) : S.delete(x.value);
-    if (["junk", "appx", "drv", "dups", "priv", "upd"].includes(x.dataset.sel)) redrawPanels();
+    if (["junk", "jfind", "appx", "drv", "dups", "priv", "upd"].includes(x.dataset.sel)) redrawPanels();
     return;
   }
   if (x.id === "rpOn") { store.set("rp", x.checked ? "1" : "0"); return redrawPanels() }
