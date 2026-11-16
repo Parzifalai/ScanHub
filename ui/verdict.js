@@ -1,7 +1,7 @@
 // ============================================================ «ФИНАЛЬНЫЙ ВЫВОД» ИИ ПОСЛЕ ПРОВЕРОК
-// После проверки файла, глубокой и ультра проверки встроенный помощник сам читает сводку (ту же, что «Сводка для ИИ»),
-// ScanHub ищет в интернете имя файла, его хэш и файлы с тревогами, и помощник коротко говорит: можно открывать или нет.
-// Под выводом — поле для вопроса: разговор продолжается в панели помощника справа, и помощник помнит эту проверку.
+// После проверки файла, глубокой и ультра проверки встроенный агент сам читает сводку (ту же, что «Сводка для ИИ»),
+// ScanHub ищет в интернете имя файла, его хэш и файлы с тревогами, и агент коротко говорит: можно открывать или нет.
+// Под выводом — поле для вопроса: разговор продолжается в панели агента справа, и агент помнит эту проверку.
 
 const VD = {};                 // ключ проверки → {status, job, steps, answer, error, scope, title, body}
 const VD_LOOK = {
@@ -24,7 +24,7 @@ function vdParse(ans){
   return {v: m?.[1] || null, lead: cut > 0 ? rest.slice(0, cut).trim() : rest, more: cut > 0 ? rest.slice(cut).trim() : ""};
 }
 
-// что сейчас делает помощник: шаги сервера → значок по смыслу
+// что сейчас делает агент: шаги сервера → значок по смыслу
 function vdStepIcon(s){
   s = String(s || "").toLowerCase();
   return /интернет|ищу|поиск/.test(s) ? "⌕" : /страниц|читаю/.test(s) ? "▤" : /журнал|сбо|событ/.test(s) ? "≡" : /думаю|вывод/.test(s) ? "✦" : "•";
@@ -44,22 +44,22 @@ function vdCard(key, body){
   if (!AI.cfg) { aiLoadCfg().then(() => vdPaint(key)); return `<section class="vd" data-vd="${esc(key)}"></section>` }
   if (!AI.cfg.enabled) return `<section class="vd vd-off" data-vd="${esc(key)}">
       <div class="vd-head"><span class="vd-mark" aria-hidden="true">✦</span><b>Финальный вывод</b></div>
-      <p class="vd-lead">Подключи ИИ-помощника — он сам прочитает итог всех сканеров, поищет этот файл в интернете и коротко скажет, можно ли открывать. Это бесплатно, например с ключом Google Gemini.</p>
-      <div class="vd-actions"><button class="small primary" data-vd-setup>Подключить помощника</button></div></section>`;
+      <p class="vd-lead">Подключи ИИ-агента — он сам прочитает итог всех сканеров, поищет этот файл в интернете и коротко скажет, можно ли открывать. Это бесплатно, например с ключом Google Gemini.</p>
+      <div class="vd-actions"><button class="small primary" data-vd-setup>Подключить агента</button></div></section>`;
   if (!d.status) {
     // сам — только после свежей проверки (старые итоги, открытые позже, — по кнопке) и если вывод не выключен в настройках
     if (AI.cfg.verdict === false || d.body?.auto === false) return `<section class="vd vd-idle" data-vd="${esc(key)}"><div class="vd-head"><span class="vd-mark" aria-hidden="true">✦</span><b>Финальный вывод</b>
-      <span class="grow"></span><button class="small" data-vd-run="${esc(key)}">Спросить помощника</button></div></section>`;
+      <span class="grow"></span><button class="small" data-vd-run="${esc(key)}">Спросить агента</button></div></section>`;
     setTimeout(() => vdRun(key), 0);
     d.status = "running"; d.steps = [];
     VD[key] = d;
   }
   const head = sub => `<div class="vd-head"><span class="vd-mark" aria-hidden="true">✦</span><b>Финальный вывод</b>${sub ? `<span class="sub">${sub}</span>` : ""}</div>`;
   if (d.status === "running") return `<section class="vd vd-run" data-vd="${esc(key)}" aria-live="polite">
-      ${head("помощник читает итог и ищет в интернете — обычно 20–60 секунд")}${vdTrace(d.steps, true)}</section>`;
+      ${head("агент читает итог и ищет в интернете — обычно 20–60 секунд")}${vdTrace(d.steps, true)}</section>`;
   if (d.status === "error") return `<section class="vd vd-err" data-vd="${esc(key)}">${head()}
-      <p class="vd-lead">Помощник не смог сделать вывод: ${esc(d.error || "ошибка")}.</p>
-      <div class="vd-actions"><button class="small" data-vd-redo="${esc(key)}">Попробовать ещё раз</button><button class="small" data-vd-gear>Настройки помощника</button></div></section>`;
+      <p class="vd-lead">Агент не смог сделать вывод: ${esc(d.error || "ошибка")}.</p>
+      <div class="vd-actions"><button class="small" data-vd-redo="${esc(key)}">Попробовать ещё раз</button><button class="small" data-vd-gear>Настройки агента</button></div></section>`;
   const p = vdParse(d.answer), L = VD_LOOK[p.v] || {cls: "warn", ico: "?", word: {check: "Не уверен", deep: "Не уверен", ultra: "Не уверен"}};
   const web = (d.steps || []).filter(s => /^ищу в интернете/.test(s)).length;
   return `<section class="vd vd-${L.cls}" data-vd="${esc(key)}">
@@ -67,9 +67,9 @@ function vdCard(key, body){
     <div class="vd-verdict"><span class="vd-ico" aria-hidden="true">${L.ico}</span><span class="vd-word">${L.word[scope]}</span></div>
     <div class="vd-lead">${aiMd(p.lead)}</div>
     ${p.more ? `<details class="vd-more"><summary>${scope === "check" ? "Что нашёл в интернете и почему так" : "Что сделать и почему так"}</summary><div class="vd-more-body">${aiMd(p.more)}</div></details>` : ""}
-    <form class="vd-ask" data-vd-ask="${esc(key)}"><input type="text" placeholder="${esc(VD_ASK_HINT[scope])}" aria-label="Вопрос помощнику про эту проверку" autocomplete="off">
+    <form class="vd-ask" data-vd-ask="${esc(key)}"><input type="text" placeholder="${esc(VD_ASK_HINT[scope])}" aria-label="Вопрос агенту про эту проверку" autocomplete="off">
       <button class="primary small" type="submit">Спросить</button></form>
-    <div class="vd-actions"><button class="small" data-vd-chat="${esc(key)}">Обсудить с помощником</button>
+    <div class="vd-actions"><button class="small" data-vd-chat="${esc(key)}">Обсудить с агентом</button>
       <button class="small" data-vd-other="${esc(key)}" title="Сводка этой проверки для Claude, ChatGPT или Gemini — второе мнение">Спросить другой ИИ</button>
       <button class="small ghost" data-vd-redo="${esc(key)}">Проверить заново</button></div></section>`;
 }
@@ -100,14 +100,14 @@ async function vdRun(key){
     vdPaint(key);
   }
   vdPaint(key);
-  if (d.scope === "check" && typeof renderSimpleResult === "function" && key === "check:" + simpleBatch) renderSimpleResult();   // верхний итог зависит от ответа помощника
+  if (d.scope === "check" && typeof renderSimpleResult === "function" && key === "check:" + simpleBatch) renderSimpleResult();   // верхний итог зависит от ответа агента
   if (d.status === "done") {
     const p = vdParse(d.answer), L = VD_LOOK[p.v];
     if (L && document.hidden) toast("Финальный вывод: " + L.word[d.scope], stripTags(p.lead).slice(0, 140), L.cls === "bad" ? "err" : L.cls === "warn" ? "warn" : "ok", 9000);
   }
 }
 
-// разговор об этой проверке: в панели помощника, с её сводкой и выводом в памяти
+// разговор об этой проверке: в панели агента, с её сводкой и выводом в памяти
 async function vdChat(key, question){
   const d = VD[key];
   if (!d?.job) return;

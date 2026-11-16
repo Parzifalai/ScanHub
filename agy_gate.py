@@ -40,7 +40,7 @@ def main():
     except Exception:
         ok = False
     sys.stdout.write(json.dumps({"decision": "allow" if ok else "deny",
-                                 "reason": "В ScanHub помощнику доступны только инструменты ScanHub" + (" и поиск в интернете" if opts.get("web") else "")
+                                 "reason": "В ScanHub агенту доступны только инструменты ScanHub" + (" и поиск в интернете" if opts.get("web") else "")
                                            + ". Ответь по-другому, без этого шага."}))   # только ASCII: кодировка консоли тут не UTF-8
 
 

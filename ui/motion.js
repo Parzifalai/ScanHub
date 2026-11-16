@@ -1,4 +1,4 @@
-// ============================================================ ДВИЖЕНИЕ 2.2: стекло, сворачиваемое меню, помощник по Ctrl+K
+// ============================================================ ДВИЖЕНИЕ 2.2: стекло, сворачиваемое меню, агент по Ctrl+K
 // Всё здесь — поверх готовых модулей: ничего не ломается, если файл не загрузился.
 // Правила: анимируются только transform / opacity / filter; всё короче секунды; «уменьшить движение» в Windows — без анимаций.
 const RM = matchMedia("(prefers-reduced-motion: reduce)");
@@ -113,7 +113,7 @@ for (const id of ["hStats", "resKpis"]) {
   if (el) new MutationObserver(() => tweenIn(el)).observe(el, {childList: true});   // только перерисовки, не свои же правки текста
 }
 
-// ---------- помощник: Ctrl+K открывает и ставит курсор в поле; закрытие — с короткой анимацией
+// ---------- агент: Ctrl+K открывает и ставит курсор в поле; закрытие — с короткой анимацией
 document.addEventListener("keydown", e => {
   if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || e.code !== "KeyK") return;
   e.preventDefault();
@@ -121,7 +121,7 @@ document.addEventListener("keydown", e => {
   if (typeof aiPanel !== "function") return;
   aiOpenFull();
 });
-// ---------- помощник открылся/закрылся: страница перестраивается под новую ширину за один раз, а блоки плавно
+// ---------- агент открылся/закрылся: страница перестраивается под новую ширину за один раз, а блоки плавно
 // доезжают со старых мест на новые (запомнили, где были → перестроили → каждый блок едет от старого места к новому).
 // Промежуточных раскладок нет — значит, нечему и перескакивать из двух колонок в одну на полпути.
 function flipMain(change){
@@ -141,7 +141,7 @@ function flipMain(change){
     e.animate([{transform: `translate(${dx}px,${dy}px)`}, {transform: "none"}], {duration: 460, easing: "cubic-bezier(.2,.8,.2,1)"});
   }
 }
-// 2.2: из меню и по Ctrl+K помощник открывается разделом на всё окно; «✦ Как решить» и другие кнопки на страницах —
+// 2.2: из меню и по Ctrl+K агент открывается разделом на всё окно; «✦ Как решить» и другие кнопки на страницах —
 // панелью сбоку, чтобы находка оставалась перед глазами
 let AI_FULL_REQ = false;
 if (typeof aiOpen === "function") {
@@ -162,12 +162,12 @@ function aiOpenFull(){
   document.body.classList.add("ai-full");
   aiOpen();
 }
-// переход в любой раздел меню закрывает помощника на всё окно — как переход между разделами
+// переход в любой раздел меню закрывает агента на всё окно — как переход между разделами
 document.addEventListener("click", e => {
   if (!document.body.classList.contains("ai-full") || !document.body.classList.contains("ai-open")) return;
   if (e.target.closest("#side a.nav, #side .brand, [data-go], [data-go-page]") && !e.target.closest("#aiPanel")) aiClose();
 }, true);
-// скрыть левое меню целиком (только когда помощник на всё окно) — кнопка слева в шапке помощника, запоминается
+// скрыть левое меню целиком (только когда агент на всё окно) — кнопка слева в шапке агента, запоминается
 function sideHidden(on){
   document.body.classList.toggle("side-hidden", on);
   store.set("sideHidden", on ? "1" : "");
@@ -190,7 +190,7 @@ if (typeof aiClose === "function") {
     setTimeout(() => { p.classList.remove("closing"); _aiClose() }, 190);
   };
 }
-// ---------- помощник на весь экран: только разговор, остальное окно прячется (кнопка ⤢ в шапке помощника, запоминается)
+// ---------- агент на весь экран: только разговор, остальное окно прячется (кнопка ⤢ в шапке агента, запоминается)
 function aiFull(on){
   document.body.classList.toggle("ai-full", on);
   const b = document.getElementById("aiFull");
@@ -210,6 +210,6 @@ renderNav();
 enterView(true, document.body.classList.contains("boot-full") ? 820 : 120);
 tweenIn(document.getElementById("hStats"));
 
-// подсветка строки помощника в меню, пока панель открыта
+// подсветка строки агента в меню, пока панель открыта
 new MutationObserver(() => document.getElementById("aiTop")?.classList.toggle("on", document.body.classList.contains("ai-open")))
   .observe(document.body, {attributes: true, attributeFilter: ["class"]});

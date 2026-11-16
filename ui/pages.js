@@ -28,7 +28,7 @@ const PAGES = [
 ];
 const COMPOSITE = {winsec: ["security", "firewall", "miners"], copies: ["dups", "empty"], hwdrv: ["hw", "drivers"]};
 const COMP_OF = Object.fromEntries(Object.entries(COMPOSITE).flatMap(([c, parts]) => parts.map(p => [p, c])));
-// старые адреса (из подсказок сервера, помощника, предупреждений, сохранённой вкладки) → новые места
+// старые адреса (из подсказок сервера, агента, предупреждений, сохранённой вкладки) → новые места
 const LEGACY = {ultra: ["scan", "ultra"], disk: ["clean", "disk"], res: ["speed", "res"]};
 const OLD_PANELS = {deep: ["scan", "deep"], apps: ["scan", "apps"], network: ["scan", "network"], cleanup: ["clean", "junk"],
   health: ["health", "health"], drivers: ["health", "hwdrv"], hw: ["health", "hwdrv"], protect: ["scan", "winsec"],
@@ -110,10 +110,10 @@ function renderNav(){
       <span class="ico">${icon(p.ico)}</span><span class="t">${esc(p.t)}</span>${badge[p.id] ? `<span class="cnt ${badge[p.id][1]}"${badge[p.id][2] ? ` title="${esc(badge[p.id][2])}"` : ""}>${badge[p.id][0]}</span>` : ""}</a>`;
   const vis = PAGES.filter(p => !p.dev || MODE === "dev");
   const mini = document.body.classList.contains("side-mini");
-  // 2.2: помощник — первая строка меню, как поиск; Ctrl+K открывает его с любой страницы
+  // 2.2: агент — первая строка меню, как поиск; Ctrl+K открывает его с любой страницы
   $("#side").innerHTML = `<div class="brand-row"><a class="brand" data-go="home" href="#" aria-label="ScanHub — на главную">${LOGO}<span>ScanHub</span></a>
       <button class="side-fold" data-side-fold title="${mini ? "Развернуть меню" : "Свернуть меню"}" aria-label="${mini ? "Развернуть меню" : "Свернуть меню"}" aria-expanded="${!mini}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/><path class="fold-chev" d="m15.5 10-2 2 2 2"/></svg></button></div>
-    <button class="side-ai" id="aiTop" title="ИИ-помощник: объяснит находки и ответит «почему у меня…» (Ctrl+K)"><span class="orb" aria-hidden="true"></span><span class="t">ИИ-помощник</span><kbd data-noi18n>Ctrl K</kbd></button>
+    <button class="side-ai" id="aiTop" title="ИИ-агент: объяснит находки и ответит «почему у меня…» (Ctrl+K)"><span class="orb" aria-hidden="true"></span><span class="t">ИИ-агент</span><kbd data-noi18n>Ctrl K</kbd></button>
     <div class="nav-main">${vis.filter(p => !p.foot).map(item).join("")}</div>
     <div class="nav-foot">${vis.filter(p => p.foot).map(item).join("")}
       ${footItem(`data-go-page="health:alerts" id="navAlerts"`, "bell", "Уведомления", alertsFresh() ? `<span class="cnt warn" title="Есть новые предупреждения">•</span>` : "")}
@@ -607,8 +607,8 @@ function renderSimpleResult(){
   const found = running ? [] : rows.flatMap(r => r.found || []);
   LAST_CHECK_SUM = running ? null : {jobs: b.jobs, target: b.target || "", excluded: (b.excluded || []).map(x => ({name: x.name, reason: x.reason})),
     verdict: {title: String(title).replace(/<[^>]+>/g, ""), text: String(text).replace(/<[^>]+>/g, ""), why: adv?.why || [], notes: adv?.notes || []}};
-  // Итог один — от ИИ-помощника. Пока он не ответил, предварительный итог сканеров не показываем;
-  // если помощник выключен или не смог — остаётся обычный итог.
+  // Итог один — от ИИ-агента. Пока он не ответил, предварительный итог сканеров не показываем;
+  // если агент выключен или не смог — остаётся обычный итог.
   const vdKey = "check:" + simpleBatch, vdSt = VD[vdKey]?.status;
   if (!running && !b.quick && LAST_CHECK_SUM && !AI.cfg) aiLoadCfg().then(() => renderSimpleResult());
   const aiGate = !running && !b.quick && !!LAST_CHECK_SUM && (!AI.cfg || (AI.cfg.enabled && AI.cfg.verdict !== false)) && vdSt !== "error";
@@ -625,7 +625,7 @@ function renderSimpleResult(){
   box.innerHTML = `<div class="result">
     <div class="big"><div class="icon ${headCls}">${headIcon}</div><div><h3>${aiDone ? "Итог проверки" : headTitle}</h3>${b.target ? `<div class="what">${esc(b.dropped ? b.label + " · проверена копия" : b.target)}</div>` : ""}</div>
       <div style="flex:1"></div>${running ? `<button class="small danger" data-stop-batch="${esc(simpleBatch)}">Остановить</button>` : `${aiBtn(title + (b.target ? " — " + b.target.split("\\").pop() : ""), [text, ...(adv?.why || []), ...(adv?.notes || []), ...rows.map(r => `${r.tool_name}: ${plain(r)}`)].join(" · "), {source: "Проверка файла"})}<button class="small" data-sum-check title="Полная сводка этой проверки — вставь в чат с ИИ (Claude, ChatGPT) и получи второе мнение">Скопировать сводку для ИИ</button><button class="small" id="sResClose">Скрыть</button>`}</div>
-    ${aiWait ? `<div class="sub">Сканеры закончили. Помощник читает их итог — вывод «можно запускать или нет» появится ниже.</div>`
+    ${aiWait ? `<div class="sub">Сканеры закончили. Агент читает их итог — вывод «можно запускать или нет» появится ниже.</div>`
       : aiDone ? "" : preHtml}
     ${b.dropped ? `<div class="sub">${esc(b.dropped)}</div>` : ""}
     ${running || b.quick || !LAST_CHECK_SUM ? "" : vdCard("check:" + simpleBatch, {scope: "check", ...LAST_CHECK_SUM,
@@ -1635,7 +1635,7 @@ function pCrash(dev){
   const miss = r.runtimes.filter(x => !x.ok && x.need);
   if (miss.length) parts.push(sec("Не хватает компонентов", `<div class="checks">${miss.map(x => row("warn", esc(x.name), esc(x.desc), x.winget ? `<button class="small primary" data-launch="winget_install:${esc(x.winget)}">Установить</button>` : "")).join("")}</div>`, "", "runtimes"));
   const tools = `<div class="wintools"><span class="sub">Ещё:</span>
-      <button class="small" data-ai-ask="Посмотри журналы Windows за последнюю неделю: есть ли что-то, на что стоит обратить внимание?" title="Помощник сам прочитает журналы и объяснит простыми словами">✦ Спросить помощника про журналы</button>
+      <button class="small" data-ai-ask="Посмотри журналы Windows за последнюю неделю: есть ли что-то, на что стоит обратить внимание?" title="Агент сам прочитает журналы и объяснит простыми словами">✦ Спросить агента про журналы</button>
       <button class="small" data-launch="perfmon_rel" title="График стабильности Windows по дням: что и когда ломалось">Монитор стабильности</button>
       <button class="small" data-launch="mdsched" data-confirm="Проверка памяти Windows попросит перезагрузить компьютер и займёт 10–20 минут. Открыть?" title="Проверка оперативной памяти при перезагрузке — если были синие экраны">Проверка памяти</button>
       <button class="small" data-go-page="health:runtimes" title="Visual C++, DirectX, .NET — без них не запускаются программы и игры">Компоненты для программ</button>

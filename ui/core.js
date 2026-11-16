@@ -220,12 +220,12 @@ function recsHtml(ids, {threat = false, title = "", extra = ""} = {}){
   return `<div class="recs-box${threat ? " threat" : ""}"><div class="recs-h">${esc(head)}</div><div class="sub" style="margin:2px 0 6px">${esc(lead)}</div>${body}${note}</div>`;
 }
 
-// HiJackThis+: подробный отчёт о точках перехвата системы — разбирает его помощник
+// HiJackThis+: подробный отчёт о точках перехвата системы — разбирает его агент
 function hjtTile(){
   const t = tool("hijackthis");
   if (!t) return "";
   const last = HISTORY.find(h => h.tool === "hijackthis" && h.mode_label && /отч/i.test(h.mode_label) && h.verdict?.[0] === "launched");
-  return `<div class="tile"><b>${esc(t.name)} — отчёт о системе</b><p>Показывает всё нестандартное в автозагрузке, браузерах, службах и сетевых настройках — там, где прячутся вирусы и рекламное ПО. Сам ничего не удаляет; отчёт разберёт помощник.</p>
+  return `<div class="tile"><b>${esc(t.name)} — отчёт о системе</b><p>Показывает всё нестандартное в автозагрузке, браузерах, службах и сетевых настройках — там, где прячутся вирусы и рекламное ПО. Сам ничего не удаляет; отчёт разберёт агент.</p>
     <div class="row">${t.ready ? `<button class="${last ? "" : "primary "}small" data-run="hijackthis" data-mode="log" title="Попросит права администратора — в окне будет «Python», это ScanHub">Создать отчёт</button>` : simpleTileButtons(t)}
       ${last ? `<button class="primary small" data-ai-ask="Разбери мой последний отчёт HiJackThis+: что в нём подозрительного и что с этим делать?">✦ Разобрать отчёт</button>` : ""}</div>
     ${last ? `<span class="sub">последний отчёт: ${esc(ago(last.started))}</span>` : ""}</div>`;

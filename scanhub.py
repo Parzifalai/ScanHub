@@ -1344,10 +1344,10 @@ def tools_view():
     return out
 
 
-assistant.HOOKS["tools"] = tools_view      # помощник видит список сканеров, не импортируя сервер
+assistant.HOOKS["tools"] = tools_view      # агент видит список сканеров, не импортируя сервер
 assistant.HOOKS["act"] = lambda action, arg: agent_action(action, arg)   # «Сделай сам»: действия из одобренного плана
 assistant.HOOKS["url"] = lambda: f"http://{HOST}:{PORT}"                  # адрес для инструментов агента (mcp_server.py)
-assistant.HOOKS["check"] = lambda kind: agent_check(kind)                 # 2.2: проверки, которые помощник запускает сам
+assistant.HOOKS["check"] = lambda kind: agent_check(kind)                 # 2.2: проверки, которые агент запускает сам
 
 
 def pick(kind):
@@ -1987,7 +1987,7 @@ CHANGE_TASKS = {
     "force_remove": "Удалена запись программы из списка установленных", "force_remove_many": "Удалены записи удалённых программ",
     "uninstall": "Удалена программа", "leftovers_remove": "Удалены остатки программы", "leftovers_delay": "Остатки удалятся при перезагрузке",
     "appx_remove": "Удалены встроенные приложения Windows", "junk_clean": "Очистка мусора и кэшей", "cleanup_run": "Очистка",
-    "empty_remove": "Удалены пустые папки", "recycle": "Файлы перемещены в Корзину", "ai_delete": "Удалено по проверке помощника", "drvstore_remove": "Удалены старые драйверы",
+    "empty_remove": "Удалены пустые папки", "recycle": "Файлы перемещены в Корзину", "ai_delete": "Удалено по проверке агента", "drvstore_remove": "Удалены старые драйверы",
     "shred": "Файлы уничтожены шредером", "restore_enable": "Включена защита системы", "restore_create": "Создана точка восстановления",
     "quarantine": "Файлы перемещены в карантин", "q_restore": "Файл возвращён из карантина", "q_delete": "Файл удалён из карантина навсегда",
     "app_links_create": "Созданы ярлыки ScanHub",
@@ -2295,7 +2295,7 @@ def agent_action(action, arg):
     if action == "disable_driver":
         return _wait_task("driver_disable", {"service": arg})
     if action == "quarantine":
-        return _wait_task("quarantine", {"files": [{"path": arg, "name": "по решению помощника", "engine": "помощник"}]})
+        return _wait_task("quarantine", {"files": [{"path": arg, "name": "по решению агента", "engine": "агент"}]})
     if action == "startup_off":
         TASKS["startup"] = {"name": "startup", "status": "done", "result": tweaks.startup_list(), "finished": now()}
         items = TASKS["startup"]["result"].get("items", [])
@@ -2327,7 +2327,7 @@ def agent_action(action, arg):
     return {"ok": False, "ошибка": "неизвестное действие"}
 
 
-# 2.2: проверки, которые помощник запускает сам по просьбе человека — только чтение, ничего не меняют
+# 2.2: проверки, которые агент запускает сам по просьбе человека — только чтение, ничего не меняют
 AGENT_CHECKS = {"miners": ("job", "minersearch", "scanonly"), "quick_scan": ("job", "defender", "quick"),
                 "junk": ("task", "junk_scan"), "startup": ("task", "startup"), "health": ("task", "health"), "hardware": ("task", "hwcheck")}
 _AGENT_RUNS = {}                 # вид проверки → id запущенного сканера: повторный вызов ждёт ту же, а не запускает вторую
@@ -3135,7 +3135,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     subprocess.Popen(["explorer", "/select,", path] if os.path.isfile(path) else ["explorer", path])
                 return self.send(200, {"ok": True})
             if p == "/api/ai/config":
-                # провайдер, модель и ключи помощника; ключи на диске — только зашифрованными
+                # провайдер, модель и ключи агента; ключи на диске — только зашифрованными
                 prov = str(body.get("provider", ""))
                 if prov and prov not in assistant.PROVIDERS:
                     return self.send(400, {"error": "неизвестный провайдер"})
@@ -3189,7 +3189,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 kind = body.get("kind") if body.get("kind") in ("explain", "solve", "act", "review", "verdict") else "chat"
                 cfg_ = config()
                 if not cfg_.get("ai_provider"):
-                    return self.send(400, {"error": "помощник не настроен"})
+                    return self.send(400, {"error": "агент не настроен"})
                 if kind == "verdict":
                     try:
                         body = {**body, **_verdict_payload(body)}

@@ -328,7 +328,7 @@ AGY_RULES = """
 
 
 def _agy_prepare(exe, scratch, *, system, model, mcp, web, timeout, images=()):
-    """Временная папка ответа = проект Antigravity с одним плагином «scanhub»: правила помощника, сервер инструментов
+    """Временная папка ответа = проект Antigravity с одним плагином «scanhub»: правила агента, сервер инструментов
     ScanHub и сторож (agy_gate.py), который до каждого шага разрешает только инструменты ScanHub и интернет.
     Общие настройки Antigravity пользователя не меняются."""
     plug = os.path.join(scratch, ".agents", "plugins", "scanhub")
@@ -388,17 +388,17 @@ def _agy_result(output):
             if e.get("event") == "result":
                 res = e.get("result") or {}
     if res is None:
-        raise AgentError("Antigravity не вернул ответ — проверь вход в настройках помощника и повтори вопрос.")
+        raise AgentError("Antigravity не вернул ответ — проверь вход в настройках агента и повтори вопрос.")
     _agy_forget(str(res.get("conversation_id") or ""))
     text = str(res.get("response") or "").strip()
     err = str(res.get("error") or "")
     if res.get("status") != "SUCCESS":
         if re.search(r"(?i)auth|log ?in|sign ?in|credential|401|403", err):
-            raise AgentError("Antigravity не вошёл в аккаунт — войди в настройках помощника.")
+            raise AgentError("Antigravity не вошёл в аккаунт — войди в настройках агента.")
         if re.search(r"(?i)quota|limit|exhaust|429|rate", err):
             raise AgentError("Лимит подписки Antigravity на эту модель сейчас исчерпан — попробуй позже или выбери другую модель (например, Flash).")
         if re.search(r"(?i)model", err):
-            raise AgentError("Antigravity не принял выбранную модель — нажми «Найти модели» в настройках помощника и выбери снова.")
+            raise AgentError("Antigravity не принял выбранную модель — нажми «Найти модели» в настройках агента и выбери снова.")
         if re.search(r"(?i)time ?limit|timed? ?out|deadline", err):
             raise AgentError("Antigravity не успел ответить — спроси точнее или выбери модель побыстрее.")
         raise AgentError("Antigravity не закончил ответ" + (f": {err[:200]}" if err else " — повтори вопрос."))
@@ -422,7 +422,7 @@ def _claude_result(output):
     text = (res.get("result") or "").strip() if isinstance(res.get("result"), str) else ""
     if res.get("is_error") or res.get("subtype") != "success":
         if re.search(r"(?i)log ?in|auth|credential|401|403", text):
-            raise AgentError("Claude Code не вошёл в аккаунт — войди в настройках помощника.")
+            raise AgentError("Claude Code не вошёл в аккаунт — войди в настройках агента.")
         if re.search(r"(?i)limit|usage|quota|429", text):
             raise AgentError("Лимит подписки Claude на сейчас исчерпан — попробуй позже или выбери другую модель.")
         if res.get("subtype") == "error_max_turns":

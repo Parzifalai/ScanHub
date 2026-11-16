@@ -45,7 +45,7 @@ async function bugReport(prefill = {}){
     ctx.kind = k;
     const idea = k === "idea";
     wrap.querySelectorAll("[data-bug-kind]").forEach(b => { b.classList.toggle("on", b.dataset.bugKind === k); b.setAttribute("aria-selected", b.dataset.bugKind === k) });
-    $w("#bugIc").innerHTML = icon(idea ? "idea" : "bug");             // лампочка — идея, жук — ошибка (✦ — это ИИ-помощник)
+    $w("#bugIc").innerHTML = icon(idea ? "idea" : "bug");             // лампочка — идея, жук — ошибка (✦ — это ИИ-агент)
     $w("#bugLead").textContent = idea ? "Чего не хватает в ScanHub, что неудобно или непонятно? Любая идея пригодится — автор читает всё. Ты увидишь сообщение целиком до отправки."
                                       : "Напиши, что пошло не так — отчёт уйдёт автору ScanHub. Ты увидишь его целиком до отправки.";
     $w("#bugTextH").textContent = idea ? "Что улучшить" : "Что случилось";

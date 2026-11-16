@@ -1,6 +1,6 @@
-// ============================================================ ИИ-помощник
+// ============================================================ ИИ-агент
 // «✦ Как решить» у находок ScanHub и чат «Спроси про свой ПК». Модель сама смотрит журналы через инструменты сервера,
-// которые только читают. Провайдер и модель меняются в настройках помощника (⚙ в его панели).
+// которые только читают. Провайдер и модель меняются в настройках агента (⚙ в его панели).
 const AI = {cfg: null, msgs: [], job: null, setup: false, models: [], modelsFor: "", note: "", busySetup: false, cli: {}};
 const aiPlan = src => { const seen = new Set();
   return [...String(src || "").matchAll(/\[\[действие:([a-z_]+)(?::([^\]]+))?\]\]/g)].map(m => ({id: m[1], arg: (m[2] || "").trim()}))
@@ -8,10 +8,10 @@ const aiPlan = src => { const seen = new Set();
 const stripTags = s => String(s ?? "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
 function aiBtn(title, text = "", extra = {}){
   const data = JSON.stringify({title: stripTags(title).slice(0, 300), text: stripTags(text).slice(0, 1800), ...extra});
-  return `<button class="small ai-btn" data-ai="${esc(data)}" title="Помощник посмотрит данные компьютера, коротко скажет, как решить, и предложит кнопку, если ScanHub может сделать это сам">✦ Как решить</button>`;
+  return `<button class="small ai-btn" data-ai="${esc(data)}" title="Агент посмотрит данные компьютера, коротко скажет, как решить, и предложит кнопку, если ScanHub может сделать это сам">✦ Как решить</button>`;
 }
 
-// кнопки, которые помощник может предложить в конце ответа: [[кнопка:ИМЯ]] → действие ScanHub (только из этого списка)
+// кнопки, которые агент может предложить в конце ответа: [[кнопка:ИМЯ]] → действие ScanHub (только из этого списка)
 const AI_BTN = {clean: ["Очистка мусора", "go", "clean:junk"], disk: ["Что занимает место", "go", "disk:disk"], updates: ["Обновления программ", "go", "apps:winget"],
   uninstall: ["Удаление программ", "go", "apps:uninst"], drivers: ["Драйверы", "go", "health:drivers"], crashes: ["Сбои и ошибки", "go", "health:crash"],
   hw: ["Комплектующие", "go", "health:hw"], startup: ["Автозагрузка", "go", "speed:boot"], noise: ["Почему шумит", "go", "speed:noise"],
@@ -20,7 +20,7 @@ const AI_BTN = {clean: ["Очистка мусора", "go", "clean:junk"], disk
   ultra: ["Ультра проверка", "go", "ultra"], scanners: ["Сканеры", "go", "tools"], sfc: ["Восстановить системные файлы", "launch", "sfc_repair"],
   wu: ["Windows Update", "launch", "wu"], wu_drivers: ["Драйверы из Windows Update", "launch", "wu_optional"], restore: ["Точки восстановления", "go", "privacy:restore"],
   runtimes: ["Компоненты для программ", "go", "health:runtimes"], game: ["Игровой режим", "go", "speed:game"], firewall: ["Брандмауэр", "go", "privacy:firewall"]};
-// действия, которые помощник может предложить: [[действие:ИМЯ:ПАРАМЕТР]] → ScanHub выполняет после подтверждения.
+// действия, которые агент может предложить: [[действие:ИМЯ:ПАРАМЕТР]] → ScanHub выполняет после подтверждения.
 // Сервер всё равно проверяет: в карантин — только найденное проверкой, драйвер — только уязвимый, программа — только из списка winget
 const AI_ACT = {
   update_program: {label: a => `Обновить ${a}`, ask: a => `Обновить программу ${a}? ScanHub скачает установщик, проверит его на вирусы и поставит.`},
@@ -51,7 +51,7 @@ async function aiDoAction(a){
     if (a.id === "wu_drivers") return api("/api/launch", {what: "wu_optional"});
     let name, args;
     if (a.id === "disable_driver") [name, args] = ["driver_disable", {service: a.arg.replace(/\.sys$/i, "").split("\\").pop()}];   // модель иногда пишет имя файла
-    if (a.id === "quarantine") [name, args] = ["quarantine", {files: [{path: a.arg, name: "по совету помощника", engine: "помощник"}]}];
+    if (a.id === "quarantine") [name, args] = ["quarantine", {files: [{path: a.arg, name: "по совету агента", engine: "агент"}]}];
     if (a.id === "security_on") [name, args] = ["security_apply", {ids: [a.arg]}];
     if (a.id === "restore_on") [name, args] = ["restore_enable", {}];
     if (a.id === "free_ram") [name, args] = ["mem_quick", {}];
@@ -103,16 +103,16 @@ function aiPanel(){
   let p = document.getElementById("aiPanel");
   if (p) return p;
   p = document.createElement("aside");
-  p.id = "aiPanel"; p.className = "ai-panel"; p.hidden = true; p.setAttribute("aria-label", "ИИ-помощник");
-  p.innerHTML = `<div class="ai-head"><button class="ai-ib" id="aiSideTgl" type="button" title="Скрыть меню" aria-label="Скрыть меню"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg></button><span class="ai-mark" aria-hidden="true">✦</span><div class="ai-title"><b>Помощник</b><span class="sub" id="aiModel"></span></div><span class="grow"></span>
-      <button class="ai-ib" id="aiNew" title="Новый разговор" aria-label="Новый разговор">＋</button><button class="ai-ib" id="aiGear" title="Модель и ключи" aria-label="Настройки помощника">⚙</button><button class="ai-ib${document.body.classList.contains("ai-full") ? " on" : ""}" id="aiFull" title="${document.body.classList.contains("ai-full") ? "Обычный размер" : "На весь экран"}" aria-label="На весь экран"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="fx-out" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button class="ai-ib" id="aiClose" title="Закрыть (Esc)" aria-label="Закрыть">✕</button></div>
+  p.id = "aiPanel"; p.className = "ai-panel"; p.hidden = true; p.setAttribute("aria-label", "ИИ-агент");
+  p.innerHTML = `<div class="ai-head"><button class="ai-ib" id="aiSideTgl" type="button" title="Скрыть меню" aria-label="Скрыть меню"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg></button><span class="ai-mark" aria-hidden="true">✦</span><div class="ai-title"><b>Агент</b><span class="sub" id="aiModel"></span></div><span class="grow"></span>
+      <button class="ai-ib" id="aiNew" title="Новый разговор" aria-label="Новый разговор">＋</button><button class="ai-ib" id="aiGear" title="Модель и ключи" aria-label="Настройки агента">⚙</button><button class="ai-ib${document.body.classList.contains("ai-full") ? " on" : ""}" id="aiFull" title="${document.body.classList.contains("ai-full") ? "Обычный размер" : "На весь экран"}" aria-label="На весь экран"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="fx-out" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button class="ai-ib" id="aiClose" title="Закрыть (Esc)" aria-label="Закрыть">✕</button></div>
     <div class="ai-ctx" id="aiCtx" hidden></div>
     <div class="ai-body" id="aiBody"></div>
     <form class="ai-input" id="aiForm"><div class="ai-above"><button class="ai-mode" id="aiModeBtn" type="button" aria-haspopup="menu" title="Как отвечать: быстро или точно"></button></div><div class="ai-box"><div class="ai-thumbs" id="aiThumbs" hidden></div><textarea id="aiText" rows="1" placeholder="Спроси или попроси: «проверь на майнеры», «что можно очистить?»" spellcheck="true"></textarea>
-      <div class="ai-box-row"><button class="ai-ib" id="aiAttach" type="button" title="Выбрать файл или папку на компьютере — помощник посмотрит сведения о нём" aria-label="Прикрепить файл или папку">⊕</button>
+      <div class="ai-box-row"><button class="ai-ib" id="aiAttach" type="button" title="Выбрать файл или папку на компьютере — агент посмотрит сведения о нём" aria-label="Прикрепить файл или папку">⊕</button>
       <button class="ai-ib" id="aiPhoto" type="button" title="Приложить фото или скриншот (или просто вставь его в поле — Ctrl+V)" aria-label="Приложить фото"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m21 16-5-5-8.5 8"/></svg></button>
       <input type="file" id="aiPhotoIn" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
-      <span class="grow"></span><button class="ai-model" id="aiModelBtn" type="button" aria-haspopup="menu" title="Модель помощника"></button>
+      <span class="grow"></span><button class="ai-model" id="aiModelBtn" type="button" aria-haspopup="menu" title="Модель агента"></button>
       <button class="ai-send" id="aiSend" aria-label="Отправить" title="Отправить — Enter (новая строка — Shift+Enter)">↑</button></div></div></form>
     <div class="ai-sugbar" id="aiSugBar" hidden></div>`;
   document.body.appendChild(p);
@@ -177,7 +177,7 @@ function aiSetupHtml(){
   const prov = c.providers.find(x => x.id === sel);
   return `<div class="ai-setup">
     ${c.enabled ? `<button class="ai-back" id="aiBack" type="button"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>К разговору</button>` : ""}
-    <p>Помощник объясняет находки ScanHub и отвечает на вопросы «почему у меня…», сам заглядывая в журналы Windows, сбои, драйверы и питание.
+    <p>Агент объясняет находки ScanHub и отвечает на вопросы «почему у меня…», сам заглядывая в журналы Windows, сбои, драйверы и питание.
       <b>Сам он ничего не меняет</b> — только читает, ищет справки в интернете и советует. Действия — по твоей кнопке: «⚡ …» у совета или «✦ Сделай сам», тогда он выполнит предложенное и проверит результат.</p>
     <div class="ai-provs">${c.providers.map(x => `<label class="ai-prov${x.id === sel ? " on" : ""}"><input type="radio" name="aiProv" value="${x.id}" ${x.id === sel ? "checked" : ""}>
       <span><b>${esc(x.name)}</b>${x.has_key ? ' <span class="chip-ok">ключ сохранён</span>' : ""}${x.id === sel ? `<span class="sub">${esc(x.hint)}</span>
@@ -189,7 +189,7 @@ function aiSetupHtml(){
         <div class="row"><select id="aiModelSel">${AI.modelsFor === prov.id && AI.models.length ? AI.models.map(m => `<option value="${esc(m)}" ${m === (AI.modelPick || c.model) ? "selected" : ""}>${esc(m === "auto" ? "лучшая модель подписки (рекомендую)" : m)}</option>`).join("") : `<option value="">${prov.needs_key && !prov.has_key ? "сначала вставь ключ" : "нажми «Найти модели»"}</option>`}</select>
         <button class="small" id="aiFindModels" type="button" ${AI.busySetup ? "disabled" : ""}>Найти модели</button></div></label>`}
       <div class="row-tools"><button class="primary" id="aiSave" type="button" ${AI.busySetup ? "disabled" : ""}>Сохранить и проверить</button>
-        ${c.enabled ? `<button id="aiOff" type="button">Выключить помощника</button>` : ""}</div>` : ""}
+        ${c.enabled ? `<button id="aiOff" type="button">Выключить агента</button>` : ""}</div>` : ""}
     ${AI.note ? `<div class="note ${AI.noteKind || "info"}">${esc(AI.note)}</div>` : ""}
     ${aiFilesHtml(c, prov)}
     ${aiWebHtml()}
@@ -245,9 +245,9 @@ function aiCliHtml(prov){
 function aiWebHtml(){
   return `<div class="ai-files"><b>Интернет</b>
     <label class="switch"><input type="checkbox" id="aiWeb" ${AI.cfg?.web !== false ? "checked" : ""}> Разрешить искать в интернете
-      <span class="sub">Помощник сможет узнать, что это за программа или ошибка, знают ли о проблеме другие, и найти официальный сайт, чтобы дать безопасную ссылку на скачивание. В запросы не попадают твои пути и имя. Для «Сделай сам» поиск всегда выключен.</span></label>
+      <span class="sub">Агент сможет узнать, что это за программа или ошибка, знают ли о проблеме другие, и найти официальный сайт, чтобы дать безопасную ссылку на скачивание. В запросы не попадают твои пути и имя. Для «Сделай сам» поиск всегда выключен.</span></label>
     <label class="switch"><input type="checkbox" id="aiVerdict" ${AI.cfg?.verdict !== false ? "checked" : ""}> Финальный вывод после проверок
-      <span class="sub">После проверки файла, глубокой и ультра проверки помощник сам прочитает итог, поищет файлы в интернете и коротко скажет: можно открывать или нет. Под выводом — чат, чтобы обсудить, что делать.</span></label></div>`;
+      <span class="sub">После проверки файла, глубокой и ультра проверки агент сам прочитает итог, поищет файлы в интернете и коротко скажет: можно открывать или нет. Под выводом — чат, чтобы обсудить, что делать.</span></label></div>`;
 }
 async function aiCliCheck(id, action){
   try { AI.cli[id] = await api("/api/ai/cli", {provider: id, ...(action ? {action} : {})}) } catch (e) { AI.cli[id] = {installed: false, connected: false, message: e.message} }
@@ -265,7 +265,7 @@ function aiFilesHtml(c, prov){
   return `<div class="ai-files"><b>Файлы на компьютере</b>
     <div class="ai-provs">${AI_FILES.map(([id, name, hint]) => `<label class="ai-prov${id === cur ? " on" : ""}"><input type="radio" name="aiFiles" value="${id}" ${id === cur ? "checked" : ""}>
       <span><b>${esc(name)}</b><span class="sub">${esc(hint)}</span></span></label>`).join("")}</div>
-    <div class="sub">Помощник ничего не удаляет, не запускает и не отправляет — только смотрит.${prov?.cloud || (!prov && c.providers?.find(x => x.id === c.provider)?.cloud) ? " С облачной моделью прочитанный текст уходит в неё — без имени пользователя, почты и ключей." : ""}</div></div>`;
+    <div class="sub">Агент ничего не удаляет, не запускает и не отправляет — только смотрит.${prov?.cloud || (!prov && c.providers?.find(x => x.id === c.provider)?.cloud) ? " С облачной моделью прочитанный текст уходит в неё — без имени пользователя, почты и ключей." : ""}</div></div>`;
 }
 async function aiFindModels(keyIn){
   const prov = AI.pick || AI.cfg?.provider;
@@ -292,9 +292,9 @@ async function aiSave(){
     const t = await api("/api/ai/test", {});
     if (t.ok && t.switched) {
       AI.cfg = t.cfg; AI.modelPick = t.switched; AI.setup = false;
-      toast("ИИ-помощник подключён", `${t.was} сейчас перегружена — выбрана ${t.switched}`, "info", 8000);
+      toast("ИИ-агент подключён", `${t.was} сейчас перегружена — выбрана ${t.switched}`, "info", 8000);
     }
-    else if (t.ok) { AI.note = ""; AI.setup = false; toast("ИИ-помощник подключён", `${aiProviderName(prov)} · ${prov === "antigravity" ? aiAgyName(model) + " " + aiAgyLvl(aiAgySplit(model).lvl) : model}`) }
+    else if (t.ok) { AI.note = ""; AI.setup = false; toast("ИИ-агент подключён", `${aiProviderName(prov)} · ${prov === "antigravity" ? aiAgyName(model) + " " + aiAgyLvl(aiAgySplit(model).lvl) : model}`) }
     else { AI.note = "Не получилось: " + t.error; AI.noteKind = "warn" }
   } catch (e) { AI.note = e.message; AI.noteKind = "warn" }
   AI.busySetup = false; aiRender();
@@ -308,16 +308,16 @@ function aiChatHtml(){
   const j = AI.job;
   const msgs = AI.msgs.map(m => m.role === "user"
     ? `<div class="ai-msg ai-u">${m.imgs?.length ? `<div class="ai-u-imgs">${m.imgs.map(s => `<img src="${s}" alt="картинка к вопросу">`).join("")}</div>` : ""}${esc(m.show || m.content)}</div>`
-    : m.role === "error" ? `<div class="ai-msg ai-err">${esc(m.content)} <a data-ai-gear>Настройки помощника</a></div>`
-    : `<div class="ai-msg ai-a">${aiMd(m.content)}${!m.act && aiPlan(m.content).length ? `<div class="ai-do"><button class="primary small" data-ai-do="${AI.msgs.indexOf(m)}" title="Помощник сам выполнит эти действия по очереди и проверит результат">✦ Сделай сам</button><span class="sub">${aiPlan(m.content).length > 1 ? `выполнит ${aiPlan(m.content).length} действия по очереди и проверит` : "выполнит и проверит"}; системные — с окном UAC</span></div>` : ""}${aiActions(m.content) || aiButtons(m.content) ? `<div class="row-tools ai-btns">${m.act ? "" : aiActions(m.content)}${aiButtons(m.content)}</div>` : ""}${m.finding ? `<div class="sub"><a data-ai-more="${esc(JSON.stringify(m.finding))}">Подробнее — что это и насколько серьёзно</a></div>` : ""}${m.cached ? `<div class="sub">ответ из памяти · <a data-ai-fresh="${esc(m.cached)}">спросить заново</a></div>` : ""}</div>`).join("");
-  // пока помощник отвечает — видно, что именно он сейчас смотрит (интернет, журналы, страницы)
+    : m.role === "error" ? `<div class="ai-msg ai-err">${esc(m.content)} <a data-ai-gear>Настройки агента</a></div>`
+    : `<div class="ai-msg ai-a">${aiMd(m.content)}${!m.act && aiPlan(m.content).length ? `<div class="ai-do"><button class="primary small" data-ai-do="${AI.msgs.indexOf(m)}" title="Агент сам выполнит эти действия по очереди и проверит результат">✦ Сделай сам</button><span class="sub">${aiPlan(m.content).length > 1 ? `выполнит ${aiPlan(m.content).length} действия по очереди и проверит` : "выполнит и проверит"}; системные — с окном UAC</span></div>` : ""}${aiActions(m.content) || aiButtons(m.content) ? `<div class="row-tools ai-btns">${m.act ? "" : aiActions(m.content)}${aiButtons(m.content)}</div>` : ""}${m.finding ? `<div class="sub"><a data-ai-more="${esc(JSON.stringify(m.finding))}">Подробнее — что это и насколько серьёзно</a></div>` : ""}${m.cached ? `<div class="sub">ответ из памяти · <a data-ai-fresh="${esc(m.cached)}">спросить заново</a></div>` : ""}</div>`).join("");
+  // пока агент отвечает — видно, что именно он сейчас смотрит (интернет, журналы, страницы)
   const run = j && j.status === "running" ? `<div class="ai-msg ai-a ai-run" aria-live="polite">${vdTrace(j.steps, true)}
       <button class="small ghost" id="aiStop" type="button">Остановить</button></div>` : "";
   const empty = !AI.msgs.length && !run && document.body.classList.contains("ai-full") && !AI.ctx
     ? `<div class="ai-hero"><span class="orb" aria-hidden="true"></span><h2>Чем помочь?</h2></div>`
-    : !AI.msgs.length && !run ? `<div class="ai-empty"><p>Спроси что угодно про этот компьютер — помощник сам посмотрит журналы Windows, сбои, драйверы,
+    : !AI.msgs.length && !run ? `<div class="ai-empty"><p>Спроси что угодно про этот компьютер — агент сам посмотрит журналы Windows, сбои, драйверы,
       питание, датчики, место, защиту, браузеры и то, что уже нашёл ScanHub, а при необходимости поищет в интернете${AI.cfg?.files === "off" ? "" : ", а ещё файлы и папки (кнопка ⊕ или просто напиши путь)"}.
-      Или нажми «✦ Как решить» у любой находки — помощник коротко скажет, что делать, и предложит кнопку, если ScanHub может сделать это сам.</p><div class="ai-sug">${AI_SUGGEST.map(s => `<button class="small" data-ai-ask="${esc(s)}" type="button">${esc(s)}</button>`).join("")}</div></div>` : "";
+      Или нажми «✦ Как решить» у любой находки — агент коротко скажет, что делать, и предложит кнопку, если ScanHub может сделать это сам.</p><div class="ai-sug">${AI_SUGGEST.map(s => `<button class="small" data-ai-ask="${esc(s)}" type="button">${esc(s)}</button>`).join("")}</div></div>` : "";
   // в разговоре о проверке — подсказки по её теме, пока человек ещё ничего не спросил
   const ctxSug = AI.ctx && !run && !AI.msgs.some(m => m.role === "user") ? `<div class="ai-sug ai-sug-ctx">${(AI_CTX_SUGGEST[AI.ctx.scope] || AI_CTX_SUGGEST.check)
       .map(s => `<button class="small" data-ai-ask="${esc(s)}" type="button">${esc(s)}</button>`).join("")}</div>` : "";
@@ -347,17 +347,17 @@ async function aiStart(body, userMsg, finding = null){
   }
   const j = AI.job; AI.job = null;
   if (j.status === "done") AI.msgs.push({role: "assistant", content: j.answer, cached: j.cached ? JSON.stringify(body.finding || null) : null, finding, act: body.kind === "act"});
-  else AI.msgs.push({role: "error", content: "Помощник не ответил: " + (j.error || "ошибка")});
+  else AI.msgs.push({role: "error", content: "Агент не ответил: " + (j.error || "ошибка")});
   if (body.kind === "act") { try { redrawPanels() } catch {} }
   aiRender();
-  if (aiPanel().hidden && j.status === "done") toast("ИИ-помощник ответил", "открой панель помощника", "info", 6000, () => aiOpen());
+  if (aiPanel().hidden && j.status === "done") toast("ИИ-агент ответил", "открой панель агента", "info", 6000, () => aiOpen());
 }
 async function aiDoIt(idx){
   const m = AI.msgs[idx], plan = aiPlan(m?.content);
   if (!plan.length) return;
-  if (!await modal({title: "Сделать это самому помощнику?", icon: "✦", ok: "Сделай сам", cancel: "Отмена",
-      html: `<p>Помощник выполнит по очереди только эти действия и проверит результат:</p><ul class="mdl-list">${plan.map(a => `<li>${esc(AI_ACT[a.id].label(a.arg))}</li>`).join("")}</ul>
-        <p class="sub">Каждое действие идёт через те же проверки, что и кнопки ScanHub: только найденное проверкой, окно UAC для системных, и всё попадает в «Приватность → Что изменил ScanHub» — там же можно отменить. Ничего сверх списка помощник сделать не может.</p>`})) return;
+  if (!await modal({title: "Сделать это самому агенту?", icon: "✦", ok: "Сделай сам", cancel: "Отмена",
+      html: `<p>Агент выполнит по очереди только эти действия и проверит результат:</p><ul class="mdl-list">${plan.map(a => `<li>${esc(AI_ACT[a.id].label(a.arg))}</li>`).join("")}</ul>
+        <p class="sub">Каждое действие идёт через те же проверки, что и кнопки ScanHub: только найденное проверкой, окно UAC для системных, и всё попадает в «Приватность → Что изменил ScanHub» — там же можно отменить. Ничего сверх списка агент сделать не может.</p>`})) return;
   aiStart({kind: "act", plan, context: m.content}, {role: "user", content: "Сделай сам", show: "✦ Сделай сам: " + plan.map(a => AI_ACT[a.id].label(a.arg)).join(", ")});
 }
 function aiAsk(text, imgs = []){
@@ -429,7 +429,7 @@ document.addEventListener("click", async e => {
   const mp = t.closest("[data-ai-model-pick]");
   if (mp) {
     e.preventDefault(); aiPopClose();
-    try { AI.cfg = await api("/api/ai/config", {model: mp.dataset.aiModelPick}); aiRender(); toast("Модель помощника", aiModelShort(), "ok", 3000) }
+    try { AI.cfg = await api("/api/ai/config", {model: mp.dataset.aiModelPick}); aiRender(); toast("Модель агента", aiModelShort(), "ok", 3000) }
     catch (err) { toast("Не сохранилось", err.message, "warn") }
     return;
   }
@@ -437,7 +437,7 @@ document.addEventListener("click", async e => {
   else if (t.closest("[data-ai-speed],[data-ai-gear]")) setTimeout(aiPopClose, 0);
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && document.getElementById("aiPop")) { e.stopPropagation(); aiPopClose() } }, true);
-// «Другой сервис и ключи…» обрабатывает общий обработчик помощника (он останавливает событие) — список закрываем заранее
+// «Другой сервис и ключи…» обрабатывает общий обработчик агента (он останавливает событие) — список закрываем заранее
 document.addEventListener("click", e => { if (e.target.closest("#aiPop [data-ai-gear]")) setTimeout(aiPopClose, 0) }, true);
 
 // ---------- 2.2: фото и скриншоты — кнопкой или вставкой (Ctrl+V); большие уменьшаются до 1600 точек, чтобы ответ шёл быстрее
@@ -450,7 +450,7 @@ function aiThumbs(){
 }
 function aiAddImage(file){
   if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) return;
-  if (AI.cfg?.vision === false) return toast("Эта модель не видит картинки", "опиши словами или выбери в ⚙ помощника Gemini, Claude или ChatGPT", "info", 7000);
+  if (AI.cfg?.vision === false) return toast("Эта модель не видит картинки", "опиши словами или выбери в ⚙ агента Gemini, Claude или ChatGPT", "info", 7000);
   if (AI.imgs.length >= 4) return toast("Не больше 4 картинок к одному вопросу", "", "info");
   const url = URL.createObjectURL(file), img = new Image();
   img.onload = () => {
@@ -491,7 +491,7 @@ function aiExplain(f, fresh = false, kind = "solve"){
   aiStart({kind, finding: f, fresh}, {role: "user", content, show: `${kind === "solve" ? "Как решить" : "Подробнее"}: ${f.title}`}, kind === "solve" ? f : null);
 }
 
-// ---------- «✦ Есть ли тут важное?» перед удалением: помощник оценивает каждый пункт списка
+// ---------- «✦ Есть ли тут важное?» перед удалением: агент оценивает каждый пункт списка
 // REVIEW[area] = {status, steps, answer, job, rows: [{id, label, path, size, v, why, extra}], marks: {id: row}, hidden}
 // items — [{id, label, path?, size, note}]; path есть у настоящих файлов и папок — их можно удалить окном «Проверить и удалить»
 const REVIEW = (() => { try { return JSON.parse(sessionStorage.getItem("scanhub.review") || "{}") } catch { return {} } })(), REVIEW_ITEMS = {};
@@ -508,32 +508,32 @@ function aiReviewBtn(area, items, label = "✦ Есть ли тут важное
   const r = REVIEW[area];
   if (!items.length) return "";
   return `<button class="small ai-btn" data-ai-review="${esc(area)}" ${r?.status === "running" ? "disabled" : ""}
-    title="Помощник посмотрит каждый пункт: чей он, запущен ли, что внутри, а если непонятно — поищет в интернете. Скажет, что можно удалять смело, а что лучше оставить">${r?.status === "running" ? "✦ Помощник смотрит…" : esc(label)}</button>`;
+    title="Агент посмотрит каждый пункт: чей он, запущен ли, что внутри, а если непонятно — поищет в интернете. Скажет, что можно удалять смело, а что лучше оставить">${r?.status === "running" ? "✦ Агент смотрит…" : esc(label)}</button>`;
 }
 function rvList(rows, area){
-  return `<ul class="rv-list">${rows.map(r => `<li><b>${esc(rvName(r))}</b>${rvSize(r) ? ` <span class="sub-inline">${rvSize(r)}</span>` : ""}${r.extra ? ` <span class="chip-note" title="Этого не было в списке — помощник нашёл сам, когда смотрел папки">нашёл помощник</span>` : ""}
+  return `<ul class="rv-list">${rows.map(r => `<li><b>${esc(rvName(r))}</b>${rvSize(r) ? ` <span class="sub-inline">${rvSize(r)}</span>` : ""}${r.extra ? ` <span class="chip-note" title="Этого не было в списке — агент нашёл сам, когда смотрел папки">нашёл агент</span>` : ""}
     — ${esc(r.why || "")}${r.path ? ` <a data-open="${esc(r.path)}" title="${esc(r.path)}">папка</a>` : ""}</li>`).join("")}</ul>`;
 }
 function aiReviewBox(area){
   const r = REVIEW[area];
   if (!r) return "";
   if (r.status === "running") return `<div class="note info ai-review"><div class="spin" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:-2px"></div>
-    Помощник проверяет пункты — смотрит, чьи они, что внутри, и при необходимости ищет в интернете. Это 20–90 секунд.${r.steps?.length ? `<div class="sub">${esc(r.steps[r.steps.length - 1])}</div>` : ""}</div>`;
-  if (r.status === "error") return `<div class="note warn ai-review">Помощник не смог проверить: ${esc(r.error || "ошибка")} <a data-ai-gear>Настройки помощника</a> · <a data-ai-review-close="${esc(area)}">Закрыть</a></div>`;
+    Агент проверяет пункты — смотрит, чьи они, что внутри, и при необходимости ищет в интернете. Это 20–90 секунд.${r.steps?.length ? `<div class="sub">${esc(r.steps[r.steps.length - 1])}</div>` : ""}</div>`;
+  if (r.status === "error") return `<div class="note warn ai-review">Агент не смог проверить: ${esc(r.error || "ошибка")} <a data-ai-gear>Настройки агента</a> · <a data-ai-review-close="${esc(area)}">Закрыть</a></div>`;
   const g = {ok: [], check: [], keep: []};
   r.rows.forEach(x => g[x.v]?.push(x));
   const sum = rows => rows.filter(x => !rvNested(x, rows)).reduce((a, x) => a + (x.size || 0), 0);
   const counts = `можно удалить — <b>${g.ok.length}</b>${sum(g.ok) ? ` (${fmtB(sum(g.ok))})` : ""}, сначала посмотри — <b>${g.check.length}</b>, не удаляй — <b>${g.keep.length}</b>`;
-  if (r.hidden) return `<div class="note info ai-review rv-min"><b>✦ Оценка помощника:</b> ${counts}. <a data-ai-review-show="${esc(area)}">Показать</a> · <a data-ai-review-close="${esc(area)}">Убрать</a></div>`;
+  if (r.hidden) return `<div class="note info ai-review rv-min"><b>✦ Оценка агента:</b> ${counts}. <a data-ai-review-show="${esc(area)}">Показать</a> · <a data-ai-review-close="${esc(area)}">Убрать</a></div>`;
   const canDel = r.rows.some(x => x.path && x.v !== "keep");
-  return `<div class="note info ai-review"><div class="rv-head"><span><b>✦ Помощник посмотрел:</b> ${counts}.</span>
+  return `<div class="note info ai-review"><div class="rv-head"><span><b>✦ Агент посмотрел:</b> ${counts}.</span>
       <span class="grow"></span><a data-ai-review-hide="${esc(area)}">Свернуть</a></div>
     ${aiMd(r.answer)}
     ${g.ok.length ? `<div class="rv-g rv-ok"><b>Можно удалить</b> — ${g.ok.length}${sum(g.ok) ? `, освободится ${fmtB(sum(g.ok))}` : ""}${rvList(g.ok)}</div>` : ""}
     ${g.check.length ? `<div class="rv-g rv-check"><b>Сначала посмотри</b> — ${g.check.length}${rvList(g.check)}</div>` : ""}
     ${g.keep.length ? `<details class="rv-g rv-keep"><summary><b>Не удаляй</b> — ${g.keep.length} (нажми, чтобы увидеть почему)</summary>${rvList(g.keep)}</details>` : ""}
     <div class="row-tools">${canDel ? `<button class="small primary" data-ai-review-del="${esc(area)}">✦ Проверить и удалить с помощью ИИ</button>` : g.ok.length ? `<span class="sub">Безопасное уже отмечено галочками — нажми кнопку удаления этого раздела ниже.</span>` : ""}
-      <button class="small" data-ai-review-chat="${esc(area)}" title="Открыть помощника с этой оценкой — можно спросить подробнее про любой пункт">✦ Продолжить разговор</button></div></div>`;
+      <button class="small" data-ai-review-chat="${esc(area)}" title="Открыть агента с этой оценкой — можно спросить подробнее про любой пункт">✦ Продолжить разговор</button></div></div>`;
 }
 function aiMark(area, id){
   const m = REVIEW[area]?.status === "done" && REVIEW[area].marks[id];
@@ -554,7 +554,7 @@ async function aiReview(area){
   const items = REVIEW_ITEMS[area] || [];
   if (!items.length) return;
   if (!AI.cfg) await aiLoadCfg();
-  if (!AI.cfg?.enabled) { toast("Сначала подключи ИИ-помощника", "это бесплатно — например, ключ Google Gemini", "info", 7000); return aiOpen(true) }
+  if (!AI.cfg?.enabled) { toast("Сначала подключи ИИ-агента", "это бесплатно — например, ключ Google Gemini", "info", 7000); return aiOpen(true) }
   const it = items.slice(0, 60);
   REVIEW[area] = {status: "running", steps: [], rows: [], marks: {}};
   redrawPanels();
@@ -572,10 +572,10 @@ async function aiReview(area){
   // сразу показываем: безопасное отмечаем, «не удаляй» снимаем (что отмечено — видно до нажатия «Удалить»)
   const set = REVIEW_SEL[area] && SEL[REVIEW_SEL[area]];
   if (set) for (const x of rv.rows) { if (x.id == null) continue; if (x.v === "ok" && !String(x.id).startsWith("d:")) set.add(x.id); if (x.v === "keep") set.delete(x.id) }
-  if (!rv.rows.length) rv.answer += "\n\n(Помощник не поставил оценки пунктам — нажми ещё раз или выбери другую модель.)";
+  if (!rv.rows.length) rv.answer += "\n\n(Агент не поставил оценки пунктам — нажми ещё раз или выбери другую модель.)";
   rvToChat(area);
   rvSave(); redrawPanels();
-  toast("Помощник проверил список", "оценка — над списком, метки — у каждого пункта", "info", 5000);
+  toast("Агент проверил список", "оценка — над списком, метки — у каждого пункта", "info", 5000);
 }
 // в разговор — целиком, с оценкой каждого пункта: так «Продолжить разговор» знает, о чём речь (и после перезагрузки окна)
 function rvToChat(area){
@@ -589,11 +589,11 @@ function rvToChat(area){
 const REVIEW_SEL = {"Мусор и кэши": "junk", "Место на диске": "big", "Дубликаты": "dups", "Остатки программы": "left", "Пустые папки": "empty",
   "Битые ярлыки": "lnk", "Старые драйверы": "drv"};
 
-// быстрый вопрос помощнику без панели: ответ — строкой (для «Что это?» в окне удаления)
+// быстрый вопрос агенту без панели: ответ — строкой (для «Что это?» в окне удаления)
 async function aiQuick(question){
   const r = await api("/api/ai/ask", {kind: "chat", messages: [{role: "user", content: question}]});
   const j = await aiPoll(r.id);
-  if (j.status !== "done") throw new Error(j.error || "помощник не ответил");
+  if (j.status !== "done") throw new Error(j.error || "агент не ответил");
   return j.answer;
 }
 
@@ -620,7 +620,7 @@ async function aiReviewDelete(area){
   };
   wrap.innerHTML = `<div class="mdl xwide rvd" role="dialog" aria-modal="true" aria-labelledby="rvdT">
     <div class="mdl-top"><span class="mdl-ic">✦</span><h3 id="rvdT">Проверить и удалить с помощью ИИ</h3></div>
-    <p>Отмечено то, что помощник считает безопасным. «Сначала посмотри» — не отмечено: нажми на путь, чтобы открыть папку, или «✦ Что это?», чтобы помощник рассказал подробнее.${keep ? ` Ещё ${keep} пунктов помощник советует не трогать — их здесь нет.` : ""}</p>
+    <p>Отмечено то, что агент считает безопасным. «Сначала посмотри» — не отмечено: нажми на путь, чтобы открыть папку, или «✦ Что это?», чтобы агент рассказал подробнее.${keep ? ` Ещё ${keep} пунктов агент советует не трогать — их здесь нет.` : ""}</p>
     <div class="rvd-list">${rows.map(row).join("")}</div>
     <div class="rvd-mode"><label><input type="radio" name="rvdMode" value="recycle" checked> В Корзину <span class="sub">— можно вернуть; место освободится после очистки Корзины (очень большие папки Windows может удалить сразу)</span></label>
       <label><input type="radio" name="rvdMode" value="permanent"> Удалить навсегда <span class="sub">— место освободится сразу, вернуть нельзя</span></label></div>
@@ -686,7 +686,7 @@ async function aiReviewDelete(area){
     if (b.dataset.rvdWhat) {
       const i = +b.dataset.rvdWhat, x = rows[i], box = wrap.querySelector(`#rvdWhat${i}`);
       if (!box.hidden && box.dataset.done) { box.hidden = true; return }
-      box.hidden = false; box.innerHTML = `<span class="sub">Помощник смотрит…</span>`; b.disabled = true;
+      box.hidden = false; box.innerHTML = `<span class="sub">Агент смотрит…</span>`; b.disabled = true;
       try {
         box.innerHTML = aiMd(await aiQuick(`Что это и можно ли это удалить: «${x.path}»${rvSize(x) ? ` (${rvSize(x)})` : ""}? Посмотри сведения о файле или папке${AI.cfg?.web ? ", при необходимости найди в интернете" : ""}. Ответь коротко: что это, чьё, что будет, если удалить, и вывод — удалять или нет.`));
         box.dataset.done = "1";
@@ -702,7 +702,7 @@ document.addEventListener("click", async e => {
   if (!l) return;
   e.preventDefault(); e.stopPropagation();
   const url = l.dataset.aiLink;
-  if (!await ask(`Открыть ссылку в браузере?\n${url}\n\nЕё дал ИИ-помощник — проверь, что адрес похож на сайт программы.`)) return;
+  if (!await ask(`Открыть ссылку в браузере?\n${url}\n\nЕё дал ИИ-агент — проверь, что адрес похож на сайт программы.`)) return;
   api("/api/link", {url, ai: true}).catch(err => toast("Не открылось", err.message, "warn"));
 }, true);
 document.addEventListener("click", async e => {
@@ -750,7 +750,7 @@ document.addEventListener("click", async e => {
   if (a.dataset.aiLaunch) return api("/api/launch", {what: a.dataset.aiLaunch}).catch(err => toast("Не удалось открыть", err.message, "bad"));
   if (a.id === "aiFindModels") return aiFindModels();
   if (a.id === "aiAttach") {
-    if (AI.cfg?.files === "off") { toast("Помощник не смотрит файлы", "включи это в ⚙ → «Файлы на компьютере»", "info", 6000); return }
+    if (AI.cfg?.files === "off") { toast("Агент не смотрит файлы", "включи это в ⚙ → «Файлы на компьютере»", "info", 6000); return }
     const r = await api("/api/pick", {kind: "file"}).catch(() => ({}));
     if (!r.path) return;
     const t = $("#aiText");
@@ -759,7 +759,7 @@ document.addEventListener("click", async e => {
   }
   if (a.id === "aiSave") return aiSave();
   if (a.id === "aiBack") { AI.setup = false; AI.note = ""; return aiRender() }
-  if (a.id === "aiOff") { AI.cfg = await api("/api/ai/config", {provider: "", model: ""}); AI.setup = true; AI.pick = ""; toast("ИИ-помощник выключен", ""); return aiRender() }
+  if (a.id === "aiOff") { AI.cfg = await api("/api/ai/config", {provider: "", model: ""}); AI.setup = true; AI.pick = ""; toast("ИИ-агент выключен", ""); return aiRender() }
 }, true);
 document.addEventListener("change", e => {
   if (e.target.name === "aiProv") { AI.pick = e.target.value; AI.note = ""; AI.keyDraft = ""; aiRender();
