@@ -1828,3 +1828,57 @@ body.ai-full.in-host .ai-head{padding-right:158px}
 /* значок в шапке агента — тот же живой шар, что в меню */
 .ai-mark.orb{width:30px;height:30px;border-radius:50%;display:block;background:var(--orb);
   box-shadow:0 0 14px rgba(120,120,255,.55),inset 0 -3px 6px rgba(10,20,80,.55)}
+
+/* ---------- 2.4: история чатов агента — колонка слева на всё окно, список поверх разговора панелью сбоку */
+.ai-panel{--hw:260px}
+.ai-hist{display:flex;flex-direction:column;min-height:0;background:rgba(6,10,26,.42)}
+.ai-hist[hidden]{display:none}
+.ai-panel.hist-col{padding-left:var(--hw)}
+.ai-panel.hist-col .ai-hist{position:absolute;left:0;top:0;bottom:0;width:var(--hw);border-right:1px solid var(--glass-line);animation:histIn .32s var(--ease) both}
+.ai-panel.hist-pop .ai-hist{position:absolute;left:0;right:0;top:55px;bottom:0;z-index:5;background:linear-gradient(180deg,rgba(14,20,52,.97),rgba(8,12,32,.98));
+  border-top:1px solid var(--glass-line);animation:histDrop .22s var(--ease) both}
+@keyframes histIn{from{opacity:0;transform:translateX(-14px)}}
+@keyframes histDrop{from{opacity:0;transform:translateY(-8px)}}
+.ai-panel.hist-col .ai-hist-x{display:none}
+.ai-hist-top{display:flex;align-items:center;gap:6px;padding:12px 10px 8px 16px;min-height:54px}
+.ai-hist-top b{font-size:15px}
+.ai-hist-q{display:flex;align-items:center;gap:8px;margin:0 10px 8px;padding:0 10px;height:34px;border-radius:10px;border:1px solid var(--line2);
+  background:rgba(5,9,22,.45);color:var(--dim)}
+.ai-hist-q:focus-within{border-color:rgba(160,165,255,.55);color:var(--muted)}
+.ai-hist-q input{flex:1;min-width:0;border:0;background:transparent;color:var(--text);font:inherit;font-size:13px;outline:none;padding:0}
+.ai-hist-list{flex:1;min-height:0;overflow:auto;padding:2px 6px 14px}
+.ai-hist-list::-webkit-scrollbar{width:8px}
+.ai-hist-list::-webkit-scrollbar-thumb{border:2px solid transparent;background-clip:padding-box;border-radius:8px;background-color:rgba(150,160,255,.25)}
+.ai-hist-g{font-size:11.5px;color:var(--dim);padding:12px 10px 4px;font-weight:600}
+.ai-hist-it{position:relative;display:flex;align-items:center;border-radius:10px}
+.ai-hist-it:hover,.ai-hist-it:focus-within{background:rgba(120,125,255,.09)}
+.ai-hist-it.on{background:rgba(110,115,255,.17);box-shadow:inset 0 0 0 1px rgba(160,165,255,.22)}
+.ai-hist-open{flex:1;min-width:0;display:flex;align-items:center;gap:6px;text-align:left;background:transparent;border:0;color:var(--muted);
+  font:inherit;font-size:13.5px;padding:8px 10px;border-radius:10px;cursor:pointer}
+.ai-hist-it.on .ai-hist-open,.ai-hist-open:hover{color:var(--text)}
+.ai-hist-open .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ai-hist-ctx{color:#A9A6FF;font-size:12px;flex:none}
+.ai-hist-acts{display:none;gap:0;padding-right:4px;flex:none}
+.ai-hist-it:hover .ai-hist-acts,.ai-hist-it:focus-within .ai-hist-acts{display:flex}
+.ai-hist-acts .ai-ib{width:26px;height:26px}
+.ai-hist-acts .ai-ib.on{color:#A9A6FF}
+.ai-hist-ren{flex:1;min-width:0;margin:3px;padding:5px 8px;border-radius:8px;border:1px solid rgba(160,165,255,.55);background:rgba(5,9,22,.6);color:var(--text);font:inherit;font-size:13.5px;outline:none}
+.ai-hist-it.edit .ai-hist-acts{display:none}
+.ai-hist-empty{color:var(--dim);font-size:13px;line-height:1.5;padding:10px 12px;margin:0}
+#aiHistBtn.on{color:var(--text);background:rgba(110,115,255,.16);border-color:rgba(160,165,255,.28)}
+.ai-memnote{margin-top:8px;font-size:12px;color:#A9A6FF;opacity:.9}
+.ai-mem-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
+.ai-mem-list li{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 10px;border-radius:9px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.ai-mem-list li > span:first-child{flex:1;min-width:0;font-size:13px}
+.ai-mem-list li .sub{font-size:11.5px;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.ai-hist{animation:none!important}}
+.ai-panel.hist-col #aiNew{display:none}
+.ai-code{margin:6px 0;border:1px solid var(--line2);border-radius:12px;overflow:hidden;background:rgba(4,7,18,.6)}
+.ai-code-h{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 4px 12px;font-size:11.5px;color:var(--dim);border-bottom:1px solid var(--line)}
+.ai-copy{font-size:11.5px;padding:3px 9px;border-radius:7px;background:transparent;border:1px solid var(--line2);color:var(--muted)}
+.ai-copy:hover{color:var(--text);border-color:rgba(160,165,255,.5)}
+.ai-code pre{margin:0;padding:10px 12px;overflow:auto;max-height:420px;font:12.5px/1.5 Consolas,"Cascadia Mono",monospace;color:#DDE3FF;white-space:pre}
+.ai-tbl{overflow:auto;margin:6px 0}
+.ai-tbl table{border-collapse:collapse;font-size:13px;min-width:60%}
+.ai-tbl th,.ai-tbl td{border:1px solid var(--line2);padding:5px 9px;text-align:left;vertical-align:top}
+.ai-tbl th{background:rgba(110,115,255,.1);font-weight:600}

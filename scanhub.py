@@ -62,6 +62,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import atomtraits
 import hwcheck
 import services
+import chats
 
 try:
     import metrics
@@ -2798,6 +2799,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if u.path == "/api/ai/job":
             j = assistant.view(q.get("id"))
             return self.send(200, j) if j else self.send(404, {"error": "нет такого запроса"})
+        if u.path == "/api/ai/chats":                # 2.4: история чатов агента (только на этом ПК)
+            return self.send(200, {"chats": chats.listing(q.get("q", ""))})
+        if u.path == "/api/ai/chat":
+            try:
+                return self.send(200, chats.get(q.get("id")))
+            except ValueError as e:
+                return self.send(404, {"error": str(e)})
+        if u.path == "/api/ai/memory":
+            return self.send(200, {"memory": chats.memory(), "on": config().get("ai_memory", True)})
         if u.path == "/api/version":
             return self.send(200, {"ui": ui_version()})
         if u.path == "/api/pending":                 # файл из меню «Проверить в ScanHub»
@@ -3235,6 +3245,33 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     return self.send(200, agents.status(prov))
                 except agents.AgentError as e:
                     return self.send(200, {"installed": False, "connected": False, "message": str(e)})
+            if p == "/api/ai/chat":
+                # сохранить разговор; если он о проверке — вместе со сводкой проверки (чтобы продолжить и после перезапуска)
+                try:
+                    ctx, extra = body.get("ctx") if isinstance(body.get("ctx"), dict) else None, None
+                    base = assistant.JOBS.get(str((ctx or {}).get("job") or ""))
+                    if base and base.get("context"):
+                        extra = {"context": base["context"], "answer": base.get("answer") or ""}
+                    return self.send(200, chats.save(body.get("id"), body.get("msgs"), title=body.get("title"), ctx=ctx,
+                                                     ctx_text=extra, auto_title=body.get("auto_title")))
+                except ValueError as e:
+                    return self.send(400, {"error": str(e)})
+            if p == "/api/ai/chat_edit":
+                try:
+                    return self.send(200, chats.rename(body.get("id"), title=body.get("title"), pin=body.get("pin")))
+                except ValueError as e:
+                    return self.send(400, {"error": str(e)})
+            if p == "/api/ai/chat_del":
+                return self.send(200, {"deleted": chats.delete(body.get("id"), everything=body.get("all") is True)})
+            if p == "/api/ai/memory":
+                # забыть одну заметку, все или выключить/включить память
+                if "on" in body:
+                    with lock:
+                        c = load_json(CONFIG_FILE, {})
+                        c["ai_memory"] = bool(body["on"])
+                        save_json(CONFIG_FILE, c)
+                n = chats.forget(body.get("id"), everything=body.get("all") is True) if (body.get("id") or body.get("all")) else 0
+                return self.send(200, {"memory": chats.memory(), "on": config().get("ai_memory", True), "forgot": n})
             if p == "/api/ai/stop":
                 j = assistant.JOBS.get(body.get("id"))
                 if j:
@@ -3279,7 +3316,7 @@ STATIC = {"/logo.svg": "image/svg+xml", "/logo-small.svg": "image/svg+xml", "/ic
           "/app.css": "text/css; charset=utf-8", "/core.js": "text/javascript; charset=utf-8",
           "/res.js": "text/javascript; charset=utf-8", "/panels.js": "text/javascript; charset=utf-8",
           "/pages.js": "text/javascript; charset=utf-8", "/ultra.js": "text/javascript; charset=utf-8", "/fix.js": "text/javascript; charset=utf-8",
-          "/ai.js": "text/javascript; charset=utf-8", "/bug.js": "text/javascript; charset=utf-8",
+          "/ai.js": "text/javascript; charset=utf-8", "/chats.js": "text/javascript; charset=utf-8", "/bug.js": "text/javascript; charset=utf-8",
           "/history.js": "text/javascript; charset=utf-8", "/i18n.js": "text/javascript; charset=utf-8",
           "/devices.js": "text/javascript; charset=utf-8", "/phone.js": "text/javascript; charset=utf-8", "/setup.js": "text/javascript; charset=utf-8", "/game.js": "text/javascript; charset=utf-8", "/hero.js": "text/javascript; charset=utf-8", "/summary.js": "text/javascript; charset=utf-8", "/verdict.js": "text/javascript; charset=utf-8",
           "/motion.js": "text/javascript; charset=utf-8",

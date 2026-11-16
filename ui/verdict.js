@@ -113,6 +113,7 @@ async function vdChat(key, question){
   if (!d?.job) return;
   if (AI.ctx?.job !== d.job) {
     const p = vdParse(d.answer), L = VD_LOOK[p.v];
+    AI.chatId = null; AI.chatTitle = "";
     AI.ctx = {job: d.job, title: d.body?.title || {check: "проверка файла", deep: "глубокая проверка", ultra: "ультра проверка"}[d.scope], scope: d.scope};
     AI.msgs = [{role: "assistant", content: (L ? `**${L.word[d.scope]}.** ` : "") + String(d.answer || "").replace(/\[\[вывод:[^\]]*\]\]/g, "").trim(), verdict: true}];
   }

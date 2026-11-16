@@ -81,13 +81,35 @@ function aiMd(src){
   // ссылки: [текст](https://…) и голые https://… — открываются в браузере после подтверждения
   const links = s => s.replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g, '<a data-ai-link="$2" title="$2">$1</a>')
     .replace(/(^|[\s(])(https:\/\/[^\s<)]+?)(?=[.,;:!?]?(?:\s|$|\)|<))/g, '$1<a data-ai-link="$2">$2</a>');
-  const inline = s => links(esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>"));
+  // `код` прячем до замены жирного и курсива — внутри кода звёздочки остаются как есть
+  const inline = s => { const codes = [];
+    let h = esc(s).replace(/`([^`]+)`/g, (_, c) => `\u0000${codes.push(c) - 1}\u0000`)
+      .replace(/\$\\(?:rightarrow|to)\$/g, "→").replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[\s(])\*([^*\s][^*]*?)\*(?=[\s.,;:!?)]|$)/g, "$1<i>$2</i>");
+    return links(h).replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codes[+i]}</code>`) };
   const out = [], lines = String(src || "").replace(/\r/g, "").split("\n");
   let list = null;
   const close = () => { if (list) { out.push(`</${list}>`); list = null } };
-  for (const raw of lines) {
-    const l = raw.trimEnd();
+  // 2.4: блоки кода ```…``` (с кнопкой «Копировать»), таблицы | a | b |, разделители --- (их просто пропускаем)
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trimEnd();
     let m;
+    if ((m = l.match(/^\s*```\s*([\w#+.-]*)\s*$/))) {
+      close();
+      const code = [];
+      for (i++; i < lines.length && !/^\s*```\s*$/.test(lines[i]); i++) code.push(lines[i]);
+      out.push(`<div class="ai-code"><div class="ai-code-h"><span>${esc(m[1] || "код")}</span><button type="button" class="ai-copy" data-ai-copy>Копировать</button></div><pre><code>${esc(code.join("\n"))}</code></pre></div>`);
+      continue;
+    }
+    if (/^\s*\|.*\|\s*$/.test(l) && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] || "")) {
+      close();
+      const cells = r => r.trim().replace(/^\||\|$/g, "").split("|").map(c => inline(c.trim()));
+      const head = cells(l), rows = [];
+      for (i += 2; i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i]); i++) rows.push(cells(lines[i]));
+      i--;
+      out.push(`<div class="ai-tbl"><table><thead><tr>${head.map(c => `<th>${c}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+      continue;
+    }
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)) { close(); continue }
     if ((m = l.match(/^\s*\d+[.)]\s+(.*)/))) { if (list !== "ol") { close(); out.push("<ol>"); list = "ol" } out.push(`<li>${inline(m[1])}</li>`) }
     else if ((m = l.match(/^\s*[-*•]\s+(.*)/))) { if (list !== "ul") { close(); out.push("<ul>"); list = "ul" } out.push(`<li>${inline(m[1])}</li>`) }
     else if ((m = l.match(/^#{1,4}\s+(.*)/))) { close(); out.push(`<p><b>${inline(m[1])}</b></p>`) }
@@ -126,6 +148,7 @@ async function aiOpen(setup){
   if (!AI.cfg) await aiLoadCfg();
   if (setup || !AI.cfg?.enabled) AI.setup = true;
   aiRender();
+  if (typeof aiChatsLoad === "function") aiChatsLoad();
   if (!AI.setup) setTimeout(() => $("#aiText")?.focus(), 50);
 }
 function aiClose(){ aiPanel().hidden = true; document.body.classList.remove("ai-open") }
@@ -145,6 +168,7 @@ function aiRender(){
   p.querySelector("#aiModelBtn").innerHTML = `<span>${esc(aiModelShort())}</span><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
   p.querySelector("#aiModelBtn").hidden = !AI.cfg?.enabled;
   p.querySelector("#aiPhoto").hidden = AI.cfg?.vision === false;
+  if (typeof aiHistPaint === "function") aiHistPaint();
   // 2.2: пустой разговор на всё окно — только заголовок, поле по центру и подсказки под ним (как в чат-программах)
   const full = document.body.classList.contains("ai-full"), empty = !AI.setup && !AI.msgs.length && AI.job?.status !== "running";
   p.classList.toggle("empty", full && empty);
@@ -193,6 +217,7 @@ function aiSetupHtml(){
     ${AI.note ? `<div class="note ${AI.noteKind || "info"}">${esc(AI.note)}</div>` : ""}
     ${aiFilesHtml(c, prov)}
     ${aiWebHtml()}
+    ${typeof aiMemHtml === "function" ? aiMemHtml() : ""}
     ${prov?.cloud ? `<div class="sub">Перед отправкой ScanHub убирает имя пользователя, имя компьютера, личные пути, почту и ключи.${prov.needs_key ? " Ключ хранится на этом компьютере зашифрованным." : ""}</div>` : ""}
   </div>`;
 }
@@ -309,7 +334,7 @@ function aiChatHtml(){
   const msgs = AI.msgs.map(m => m.role === "user"
     ? `<div class="ai-msg ai-u">${m.imgs?.length ? `<div class="ai-u-imgs">${m.imgs.map(s => `<img src="${s}" alt="картинка к вопросу">`).join("")}</div>` : ""}${esc(m.show || m.content)}</div>`
     : m.role === "error" ? `<div class="ai-msg ai-err">${esc(m.content)} <a data-ai-gear>Настройки агента</a></div>`
-    : `<div class="ai-msg ai-a">${aiMd(m.content)}${!m.act && aiPlan(m.content).length ? `<div class="ai-do"><button class="primary small" data-ai-do="${AI.msgs.indexOf(m)}" title="Агент сам выполнит эти действия по очереди и проверит результат">✦ Сделай сам</button><span class="sub">${aiPlan(m.content).length > 1 ? `выполнит ${aiPlan(m.content).length} действия по очереди и проверит` : "выполнит и проверит"}; системные — с окном UAC</span></div>` : ""}${aiActions(m.content) || aiButtons(m.content) ? `<div class="row-tools ai-btns">${m.act ? "" : aiActions(m.content)}${aiButtons(m.content)}</div>` : ""}${m.finding ? `<div class="sub"><a data-ai-more="${esc(JSON.stringify(m.finding))}">Подробнее — что это и насколько серьёзно</a></div>` : ""}${m.cached ? `<div class="sub">ответ из памяти · <a data-ai-fresh="${esc(m.cached)}">спросить заново</a></div>` : ""}</div>`).join("");
+    : `<div class="ai-msg ai-a">${aiMd(m.content)}${!m.act && aiPlan(m.content).length ? `<div class="ai-do"><button class="primary small" data-ai-do="${AI.msgs.indexOf(m)}" title="Агент сам выполнит эти действия по очереди и проверит результат">✦ Сделай сам</button><span class="sub">${aiPlan(m.content).length > 1 ? `выполнит ${aiPlan(m.content).length} действия по очереди и проверит` : "выполнит и проверит"}; системные — с окном UAC</span></div>` : ""}${aiActions(m.content) || aiButtons(m.content) ? `<div class="row-tools ai-btns">${m.act ? "" : aiActions(m.content)}${aiButtons(m.content)}</div>` : ""}${m.finding ? `<div class="sub"><a data-ai-more="${esc(JSON.stringify(m.finding))}">Подробнее — что это и насколько серьёзно</a></div>` : ""}${m.cached ? `<div class="sub">ответ из памяти · <a data-ai-fresh="${esc(m.cached)}">спросить заново</a></div>` : ""}${m.mem?.length ? `<div class="ai-memnote" title="Заметки агента — их видно и можно удалить в ⚙ → «Память агента»">✦ ${m.mem.map(t => esc(/^забыл: /.test(t) ? "Забыл: " + t.slice(7) : "Запомнил: " + t)).join(" · ")}</div>` : ""}</div>`).join("");
   // пока агент отвечает — видно, что именно он сейчас смотрит (интернет, журналы, страницы)
   const run = j && j.status === "running" ? `<div class="ai-msg ai-a ai-run" aria-live="polite">${vdTrace(j.steps, true)}
       <button class="small ghost" id="aiStop" type="button">Остановить</button></div>` : "";
@@ -330,8 +355,11 @@ const AI_CTX_SUGGEST = {
 async function aiStart(body, userMsg, finding = null){
   if (!AI.cfg?.enabled) { AI.setup = true; return aiRender() }
   if (AI.job?.status === "running") return;
-  if (userMsg) AI.msgs.push(userMsg);
+  if (userMsg) AI.msgs.push({...userMsg, t: new Date().toISOString()});
+  // 2.4: номер чата — для памяти и поиска по прошлым разговорам; первый вопрос — агент заодно придумает название
+  body = {...body, chat_id: AI.chatId || "", ...(!AI.chatTitle && AI.msgs.filter(m => m.role === "user").length === 1 ? {want_title: true} : {})};
   AI.job = {status: "running", steps: []}; aiRender();
+  if (typeof aiSaveChat === "function") aiSaveChat();
   try {
     const r = await api("/api/ai/ask", body);
     AI.job = {id: r.id, status: "running", steps: []};
@@ -346,8 +374,11 @@ async function aiStart(body, userMsg, finding = null){
     if (!aiPanel().hidden) aiRender();
   }
   const j = AI.job; AI.job = null;
-  if (j.status === "done") AI.msgs.push({role: "assistant", content: j.answer, cached: j.cached ? JSON.stringify(body.finding || null) : null, finding, act: body.kind === "act"});
+  if (j.status === "done") AI.msgs.push({role: "assistant", content: j.answer, cached: j.cached ? JSON.stringify(body.finding || null) : null, finding, act: body.kind === "act",
+                                         ...(j.mem?.length ? {mem: j.mem} : {}), t: new Date().toISOString()});
   else AI.msgs.push({role: "error", content: "Агент не ответил: " + (j.error || "ошибка")});
+  if (j.mem?.length) AI.mem = null;                     // в настройках — свежий список заметок
+  if (typeof aiSaveChat === "function") aiSaveChat(j.title || (body.kind === "solve" || body.kind === "explain" ? body.finding?.title : ""));
   if (body.kind === "act") { try { redrawPanels() } catch {} }
   aiRender();
   if (aiPanel().hidden && j.status === "done") toast("ИИ-агент ответил", "открой панель агента", "info", 6000, () => aiOpen());
@@ -721,7 +752,7 @@ document.addEventListener("click", async e => {
   const a = e.target.closest("[data-ai],[data-ai-ask],[data-ai-gear],[data-ai-fresh],[data-ai-launch],[data-ai-act],[data-ai-more],[data-ai-do],[data-ai-cli-login],[data-ai-cli-check],[data-ai-ctx-off],#aiTop,#aiClose,#aiGear,#aiNew,#aiStop,#aiFindModels,#aiSave,#aiOff,#aiBack,#aiAttach");
   if (!a) return;
   e.preventDefault(); e.stopPropagation();
-  if (a.hasAttribute("data-ai-ctx-off")) { if (AI.job?.status !== "running") { AI.ctx = null; AI.msgs = []; aiRender() } return }
+  if (a.hasAttribute("data-ai-ctx-off")) { if (AI.job?.status !== "running") aiChatNew(); return }
   if (a.dataset.ai) { try { return aiExplain(JSON.parse(a.dataset.ai)) } catch { return } }
   if (a.dataset.aiAsk) { await aiOpen(); return aiAsk(a.dataset.aiAsk) }
   if (a.hasAttribute("data-ai-fresh")) { try { const f = JSON.parse(a.dataset.aiFresh); if (f) return aiExplain(f, true) } catch {} return }
@@ -730,7 +761,7 @@ document.addEventListener("click", async e => {
     if (AI.cfg?.providers?.find(p => p.id === AI.pick)?.cli) aiCliCheck(AI.pick); return }
   if (a.id === "aiTop") return typeof aiOpenFull === "function" ? aiOpenFull() : aiPanel().hidden ? aiOpen() : aiClose();   // 2.2: из меню — сразу на всё окно
   if (a.id === "aiClose") return aiClose();
-  if (a.id === "aiNew") { if (AI.job?.status !== "running") { AI.msgs = []; AI.ctx = null; aiRender() } return }
+  if (a.id === "aiNew") return aiChatNew();
   if (a.id === "aiStop") { if (AI.job?.id) api("/api/ai/stop", {id: AI.job.id}).catch(() => {}); return }
   if (a.dataset.aiAct) { try { return aiDoAction(JSON.parse(a.dataset.aiAct)) } catch { return } }
   if (a.hasAttribute("data-ai-do")) return aiDoIt(+a.dataset.aiDo);
