@@ -9624,5 +9624,21 @@
 "Brave: кэш": "Brave: cache",
 "Vivaldi: кэш": "Vivaldi: cache",
 "Chromium: кэш": "Chromium: cache",
-"Всё подряд: вирусы, мусор, здоровье, сбои. В конце — итог и что сделать": "Everything in a row: viruses, junk, health, crashes. Then a summary and what to do"
+"Всё подряд: вирусы, мусор, здоровье, сбои. В конце — итог и что сделать": "Everything in a row: viruses, junk, health, crashes. Then a summary and what to do",
+"перенос в Корзину": "moving to the Recycle Bin",
+"надёжное удаление": "secure delete",
+"удаление программы": "uninstalling a program",
+"удаление приложения": "removing an app",
+"проверка системных файлов": "system file check",
+"проверка сети": "network check",
+"загрузка Platform Tools": "downloading Platform Tools",
+"удаление приложения с телефона": "removing an app from the phone",
+"создание точки восстановления": "creating a restore point",
+"перенос в карантин": "moving to quarantine",
+"установка антивируса": "installing an antivirus",
+"подготовка сканера": "preparing a scanner",
+"запись загрузки Windows": "recording Windows startup",
+"удаление по совету агента": "deleting on the agent's advice",
+"оптимизация диска": "disk optimization",
+"фоновая задача": "background task"
 }

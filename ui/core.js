@@ -783,7 +783,7 @@ async function quitScanHub(viaWindow){
   try {
     let {code, j} = await quit(false);
     if (code === 409) {
-      const what = [...(j.jobs || []), ...(j.tasks || []).map(t => "задача " + t)];
+      const what = [...new Set([...(j.jobs || []), ...(j.tasks || [])])];
       if (!await modal({title: "Идёт проверка — остановить и закрыть ScanHub?", danger: true, icon: "!", ok: "Остановить и закрыть", cancel: "Не закрывать",
                         body: "Если закрыть сейчас, эти проверки оборвутся.",
                         list: what.slice(0, 8)})) return;

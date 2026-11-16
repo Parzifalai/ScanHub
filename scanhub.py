@@ -2995,7 +2995,18 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 # «Выйти»: выключить сервер сразу, а не через 2 минуты после закрытия окна.
                 # Если что-то идёт — без force только сообщаем, что именно (окно спросит, останавливать ли)
                 run = [j for j in list(jobs.values()) if j["status"] == "running"]
-                tasks = [n for n, t in list(TASKS.items()) if t.get("status") == "running"]
+                # только чтение сведений (телефон, железо, сводки, поиск мусора) выходу не мешает — оборвать его безопасно
+                quiet = {"check_summary", "pc_summary", "ultra_summary", "deep_summary", "runtimes", "app_links", "health_history",
+                         "browsers", "quarantine_list", "noise", "hardware", "devices", "phone_status", "phone_last", "hwcheck",
+                         "changes", "diag", "junk_scan", "disk_analyze", "dups", "empty", "media", "file_why", "fixplan"}
+                titles = {"junk_clean": "очистка мусора", "cleanup_run": "очистка", "recycle": "перенос в Корзину", "shred": "надёжное удаление",
+                          "uninstall": "удаление программы", "force_remove": "удаление программы", "force_remove_many": "удаление программ",
+                          "appx_remove": "удаление приложения", "winget": "обновление программ", "sysfiles": "проверка системных файлов",
+                          "net_diag": "проверка сети", "phone_scan": "проверка телефона", "phone_install": "загрузка Platform Tools",
+                          "phone_uninstall": "удаление приложения с телефона", "restore_create": "создание точки восстановления",
+                          "quarantine": "перенос в карантин", "extra_install": "установка антивируса", "prepare": "подготовка сканера",
+                          "boot_trace": "запись загрузки Windows", "ai_delete": "удаление по совету агента", "trim": "оптимизация диска"}
+                tasks = [titles.get(n, "фоновая задача") for n, t in list(TASKS.items()) if t.get("status") == "running" and n not in quiet]
                 if (run or tasks) and not body.get("force"):
                     return self.send(409, {"error": "busy", "jobs": [j.get("tool_name") or j["tool"] for j in run], "tasks": tasks})
                 for j in run:
