@@ -113,6 +113,7 @@ function renderHero(){
         <button class="round" id="heroMore" aria-label="Другие проверки" aria-haspopup="true" aria-expanded="false">${icon("more")}</button>
         <div class="hero-menu" id="heroMenu" hidden>
           <button data-act="quick">${icon("quick")}<span><b>Быстрая проверка</b><span>Defender: память, автозагрузка и системные папки. 2–5 минут</span></span></button>
+          <button data-ultra-new>${icon("ultra")}<span><b>Ультра проверка</b><span>Всё подряд: вирусы, мусор, здоровье, сбои. В конце — итог и что сделать</span></span></button>
           <button data-go-page="scan:deep">${icon("deep")}<span><b>Глубокая проверка</b><span>Все сканеры по очереди. 15–40 минут</span></span></button>
           <button data-act="pick">${icon("file")}<span><b>Проверить файл или папку</b><span>Скачанную программу, «Загрузки», флешку</span></span></button>
           <button data-sum-pc>${icon("health")}<span><b>Сводка ПК для ИИ</b><span>Всё о компьютере одним текстом — для оценки в Claude или ChatGPT</span></span></button>
@@ -167,7 +168,7 @@ function heroTilt(wrap){
 document.addEventListener("click", e => {
   const more = e.target.closest("#heroMore"), menu = $("#heroMenu");
   if (more) { menu.hidden = !menu.hidden; more.setAttribute("aria-expanded", String(!menu.hidden)); return }
-  if (menu && !menu.hidden && !e.target.closest("#heroMenu")) { menu.hidden = true; $("#heroMore")?.setAttribute("aria-expanded", "false") }
+  if (menu && !menu.hidden && (!e.target.closest("#heroMenu") || e.target.closest("#heroMenu button"))) { menu.hidden = true; $("#heroMore")?.setAttribute("aria-expanded", "false") }
   if (e.target.closest("[data-hero-todo]")) $("#todo")?.scrollIntoView({behavior: "smooth", block: "start"});
   const qm = e.target.closest("#qaMore");
   if (qm) { const m = $("#quickMore"); m.hidden = !m.hidden; qm.textContent = m.hidden ? "Все быстрые действия" : "Свернуть"; qm.setAttribute("aria-expanded", String(!m.hidden)) }
