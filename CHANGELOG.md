@@ -4,6 +4,24 @@
 
 The text of the newest version's section goes into the GitHub release description, and ScanHub shows it in the “Update ScanHub” window.
 
+## 2.4.0
+
+**Chat history and a memory for the AI agent**
+- Every conversation with the agent is saved on this computer until you delete it. Click "History" in the agent's header: in full-window mode the chats open as a list on the left (search, pin, rename, delete), in the side panel — on top of the conversation. The agent names each chat itself.
+- The agent remembers important things between conversations: what computer you have, what was already fixed and how it went, what you asked it to remember. It can also look up past conversations ("what did you suggest last time?"). You can see and delete its notes, or turn memory off, in the agent settings.
+- Live scenes while the agent works: a radar for miner search, a beam over files for antivirus checks, waves for the network, a fan and thermometer for hardware, scrolling logs, a globe for web searches — plus elapsed time and the step number. The list of what it is doing stays as it was.
+
+**A smarter, steadier agent**
+- New skills: printers and the print queue, Windows services that failed, Task Scheduler tasks. It knows today's date, helps with any question (not only ScanHub findings), writes scripts in code blocks with a "Copy" button, and shows tables.
+- More honest: it tells what it saw in the data from what it guesses, and never says something is done if it didn't do it. Steps are always phrased informally.
+- A long "thorough check" through a subscription (Antigravity, Claude Code, Codex) is no longer cut off after 15 minutes: the agent stops only if it makes no new step for 7 minutes (45 minutes at most), and then says what it managed to check.
+- On a free Gemini key it no longer gives up at the rate limit: it waits a few seconds or answers through another model of the same service.
+- Miner search ("Find only") no longer stops at MinerSearch's "choose an action" window, so the agent doesn't hang waiting for it. When an anti-miner flags ScanHub's own sensor task (a hidden console), the agent says it's a false alarm.
+
+**Small things**
+- ScanHub always opens on the home page; the last page is only kept while the window is open.
+- The agent's header shows the same living orb as the menu.
+
 ## 2.3.1
 
 **Small fixes**
