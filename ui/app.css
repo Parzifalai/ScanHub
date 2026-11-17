@@ -1966,3 +1966,27 @@ body.ai-full.in-host .ai-head{padding-right:158px}
 .vd-run .ai-scene{margin-top:12px}
 @media (max-width:520px){.ai-scene{gap:10px}.sc-art{width:96px;height:58px}}
 @media (prefers-reduced-motion:reduce){.ai-scene *,.ai-scene{animation:none!important}}
+
+/* ---- Охотник за майнерами: крупный итог, карточки находок с фактами, «что не проверено» с выходом */
+.hhead{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap}
+.hverdict{display:flex;gap:14px;align-items:center;min-width:0;flex:1 1 360px}
+.hverdict h3{margin:0;font-size:22px;line-height:1.25}
+.hv-ic{flex:none;width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:24px;font-weight:700;background:var(--panel3);color:var(--muted)}
+.hv-ok .hv-ic{background:var(--ok-bg);color:var(--ok)} .hv-warn .hv-ic{background:var(--warn-bg);color:var(--warn)} .hv-bad .hv-ic{background:var(--bad-bg);color:var(--bad)}
+.hv-bad h3{color:var(--bad)}
+.hv-meta{margin-top:4px;color:var(--dim)}
+.hlist{display:grid;gap:10px}
+.hf{background:var(--panel2);border:1px solid var(--line);border-left:3px solid #5B8CFF;border-radius:12px;padding:14px 16px;display:grid;gap:8px}
+.hf-threat{border-left-color:var(--bad)} .hf-suspicious{border-left-color:var(--warn)}
+.hf header{display:flex;gap:10px;align-items:center}
+.hf h4{margin:0;font-size:15px;flex:1;min-width:0}
+.hf-lvl{font-size:12px;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:1px 8px}
+.hf p{margin:0;color:var(--muted);line-height:1.5}
+.hf-facts{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:0;padding:10px 12px;background:rgba(5,9,20,.35);border-radius:8px}
+.hf-facts dt{color:var(--dim);font-size:13px} .hf-facts dd{margin:0;overflow-wrap:anywhere;font-size:13px}
+.hf-why{font-size:13px;color:var(--muted)} .hf-todo{font-size:14px;line-height:1.5}
+.hnc-box{margin-top:14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;display:grid;gap:8px}
+.hnc{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;color:var(--muted);font-size:13px}
+.hlayers{margin-top:14px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.hhow{margin-top:12px} .hhow summary{cursor:pointer;color:var(--muted);font-size:13px} .hhow .explain{margin-top:8px}

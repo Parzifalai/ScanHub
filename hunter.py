@@ -895,6 +895,7 @@ class Ent:
         self.sig = None            # {"status","signer"}
         self.no_sig = False        # подпись ничего не значит (системная оболочка)
         self.when = ""
+        self.hosts = []            # сайты из команды (до обрезки — для ответа «откуда скачивалось»)
         self.title = ""
         self.note = ""
 
@@ -955,6 +956,62 @@ TODO = {
     "suspicious": "Что делать: если не знаешь, что это, — проверь онлайн или отключи. Если знаешь и ставил сам — ничего.",
     "info": "Что делать: ничего, это просто к сведению.",
 }
+# совет точнее общего — для находок, где решает «это был ты или нет»
+TODO_CAT = {
+    ("clickfix", "info"): "Если эту команду вводил ты сам (например, по инструкции к программе, которой доверяешь) — всё в порядке, "
+                          "нажми «Это был я». Если не помнишь — запусти глубокую проверку и смени пароли в браузере: так часто ставят воришек паролей.",
+    ("clickfix", "suspicious"): "Если команду вводил не ты или ты сделал это по просьбе сайта («подтверди, что ты не робот») — "
+                                "сразу смени пароли от почты и банка с другого устройства и запусти глубокую и ультра проверку.",
+    ("clickfix", "threat"): "Смени пароли от почты, банка и соцсетей с другого устройства (телефона), выйди из всех сеансов, "
+                            "затем запусти ультра проверку — она найдёт то, что успело поставиться.",
+}
+HOST_RE = re.compile(r"(?=https?://([^/\s'\"|;]+)([^\s'\"|;]*))", re.I)   # с заглядыванием: ловит и адрес внутри адреса
+
+
+def cmd_hosts(cmd):
+    """Сайты из команды по порядку: «aizaozao.com», «raw.githubusercontent.com/автор/проект»."""
+    out = []
+    for host, rest in HOST_RE.findall(cmd or ""):
+        h = host.lower()
+        if h in ("raw.githubusercontent.com", "github.com", "gist.githubusercontent.com"):
+            h += "/" + "/".join([x for x in rest.split("/") if x][:2])
+        if h not in out:
+            out.append(h)
+    return out[:4]
+
+
+# ---------------------------------------------------------------- «это был я»: скрытые человеком находки
+IGNORE_FILE = os.path.join(DATA, "hunter_ignore.json")
+
+
+def load_ignored():
+    try:
+        with open(IGNORE_FILE, encoding="utf-8") as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def set_ignored(d):
+    os.makedirs(DATA, exist_ok=True)
+    tmp = IGNORE_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(d, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, IGNORE_FILE)
+
+
+def summarize(found, stopped=False):
+    """Вердикт и строка итога по списку находок."""
+    n = {lv: sum(1 for f in found if f["level"] == lv) for lv in ("threat", "suspicious", "info")}
+    verdict = "threat" if n["threat"] else "suspicious" if n["suspicious"] else "info" if n["info"] else "clean"
+    label = (f"найдено опасного: {n['threat']}" + (f", подозрительного: {n['suspicious']}" if n["suspicious"] else "") if n["threat"] else
+             f"подозрительного: {n['suspicious']} — стоит посмотреть" if n["suspicious"] else
+             f"опасного не найдено; к сведению: {n['info']}" if n["info"] else
+             "скрытых майнеров, следов стилеров и вредоносного автозапуска не найдено")
+    if stopped:
+        label = "проверка остановлена; " + label
+    return verdict, label, n
 
 
 def finding_id(category, key):
@@ -983,7 +1040,7 @@ def build_finding(ent):
         why += " В пользу программы: " + "; ".join(neg) + (f" ({ent.sig['signer']})" if ent.sig and ent.sig.get("signer") else "") + "."
     if ent.when:
         why += f" Примерная дата: {ent.when}."
-    why += " " + TODO[level]
+    why += " " + ("Что делать: " + TODO_CAT[(cat, level)] if (cat, level) in TODO_CAT else TODO[level])
     evidence = []
     for c in pos + [c for c in ent.signals if W[c][0] < 0]:
         ev = "; ".join(ent.signals[c])
@@ -1017,6 +1074,10 @@ def build_finding(ent):
             actions.append({"kind": "online_check", "target": ent.path, "label": "Проверить файл онлайн"})
         actions.append({"kind": "open_folder", "target": ent.path, "label": "Показать в папке"})
     return {"id": finding_id(cat, ent.key), "level": level, "score": score, "category": cat, "title": title, "why": why,
+            "lead": WHY_LEAD[(cat, level)] + (" " + ent.note if ent.note else ""), "reasons": reasons,
+            "pros": neg + ([ent.sig["signer"]] if neg and ent.sig and ent.sig.get("signer") else []),
+            "todo": TODO_CAT.get((cat, level)) or TODO[level].replace("Что делать: ", "").capitalize(),
+            "cmd": mask_secrets(ent.cmd, 300) if ent.cmd else "", "hosts": ent.hosts or cmd_hosts(ent.cmd), "when": ent.when,
             "evidence": evidence, "path": ent.path or "", "pid": ent.pids[0] if ent.pids else None, "actions": actions}
 
 
@@ -1230,6 +1291,7 @@ class Hunter:
         e = self.ent(f"t:{source}:{hashlib.sha1(cmd.encode('utf-8', 'replace')).hexdigest()[:16]}", "trace")
         e.name = "окно «Выполнить» (Win+R)" if source == "runmru" else "история PowerShell"
         e.cmd, e.when, e.no_sig = shown, when, True
+        e.hosts = cmd_hosts(cmd)
         for code, ev in sigs:
             e.add(code, ev)
         return e
@@ -2331,14 +2393,13 @@ def scan(mode="quick", emit=print, stopped=lambda: False, admin_out=None, autoru
 
     found = layer("findings", h.findings) or []
     h.save_cache()
-    n = {lv: sum(1 for f in found if f["level"] == lv) for lv in ("threat", "suspicious", "info")}
-    verdict = "threat" if n["threat"] else "suspicious" if n["suspicious"] else "info" if n["info"] else "clean"
-    label = (f"найдено опасного: {n['threat']}" + (f", подозрительного: {n['suspicious']}" if n["suspicious"] else "") if n["threat"] else
-             f"подозрительного: {n['suspicious']} — стоит посмотреть" if n["suspicious"] else
-             f"опасного не найдено; к сведению: {n['info']}" if n["info"] else
-             "скрытых майнеров, следов стилеров и вредоносного автозапуска не найдено")
-    if stopped():
-        label = "проверка остановлена; " + label
+    # «это был я»: скрытое человеком не показываем, пока находка не стала серьёзнее, чем когда её скрыли
+    ign = load_ignored()
+    rank = {"info": 0, "suspicious": 1, "threat": 2}
+    hidden = [f for f in found if f["id"] in ign and rank[f["level"]] <= rank.get(ign[f["id"]].get("level"), 0)]
+    found = [f for f in found if f not in hidden]
+    st["hidden"] = [{"id": f["id"], "title": f["title"]} for f in hidden]
+    verdict, label, n = summarize(found, stopped())
     st.update(counts=n, entities=len(h.ents), stopped=bool(stopped()), psutil=bool(psutil))
     took = round(time.time() - t_start, 1)
     emit(f"  готово за {took} с: {label}")

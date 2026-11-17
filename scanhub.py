@@ -1833,7 +1833,9 @@ def _task_fn(name, args):
         "q_restore": lambda: {"path": yarascan.q_restore(args["id"]), "items": yarascan.q_list()},
         "q_delete": lambda: {"ok": yarascan.q_delete(args["id"]), "items": yarascan.q_list()},
         # ---- свой сканер майнеров и закрепления
-        "hunter": lambda: _hunter(args.get("mode"), prog, args.get("_cancel")),
+        "hunter": lambda: _hunter(args.get("mode"), prog, args.get("_cancel"), bool(args.get("admin")), run_el),
+        "hunter_ignore": lambda: _hunter_ignore(str(args.get("id", ""))),
+        "hunter_unignore": _hunter_unignore,
         "hunter_kill": lambda: _hunter_kill(int(args.get("pid") or 0)),
         "hunter_task_set": lambda: _hunter_task_set(str(args.get("task", "")), bool(args.get("enable")), run_el),
     }
@@ -2013,15 +2015,46 @@ def _hunter_link(r):
             a["startup_id"] = sid
 
 
-def _hunter(mode, prog, cancel):
+def _hunter(mode, prog, cancel, admin=False, run_el=None):
     import hunter
     def emit(s):
         s = str(s).strip()
         if s:
             prog(s[:160])
-    r = hunter.scan("deep" if mode == "deep" else "quick", emit=emit, stopped=cancel or (lambda: False))
+    admin_out = None
+    if admin and run_el:                # исключения Защитника читаются только администратором — одно окно UAC
+        prog("читаю исключения Защитника Windows — подтверди окно UAC")
+        res = run_el([{"type": "run", "cmd": ["powershell", "-NoProfile", "-Command", deepscan.DEFENDER_PREFS], "timeout": 120}])
+        admin_out = res[0].get("out", "") if res and res[0].get("ok") else None
+        if admin_out is None:
+            raise RuntimeError("окно UAC отменено — исключения Защитника не проверены")
+    r = hunter.scan("deep" if mode == "deep" else "quick", emit=emit, stopped=cancel or (lambda: False), admin_out=admin_out)
+    r["mode"] = "deep" if mode == "deep" else "quick"
+    r["at"] = now()
     _hunter_link(r)
     return r
+
+
+def _hunter_ignore(fid):
+    """«Это был я»: скрыть находку из последней проверки (вернётся, если станет серьёзнее)."""
+    import hunter
+    last = _last("hunter") or {}
+    f = next((x for x in last.get("findings", []) if x["id"] == fid), None)
+    if not f:
+        raise RuntimeError("этой находки нет в последней проверке")
+    d = hunter.load_ignored()
+    d[fid] = {"title": f["title"], "level": f["level"], "at": now()}
+    hunter.set_ignored(d)
+    last["findings"] = [x for x in last["findings"] if x["id"] != fid]
+    last.setdefault("stats", {}).setdefault("hidden", []).append({"id": fid, "title": f["title"]})
+    last["verdict"], last["label"], _ = hunter.summarize(last["findings"])
+    return last
+
+
+def _hunter_unignore():
+    import hunter
+    hunter.set_ignored({})
+    return {"ok": True}
 
 
 def _hunter_kill(pid):

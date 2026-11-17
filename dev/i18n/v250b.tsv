@@ -1,0 +1,35 @@
+Больше не покажу её в итогах, а если она станет серьёзнее — покажу снова. Вернуть скрытое можно внизу этой страницы.	I won't show it in results any more, but if it gets more serious I'll show it again. You can bring hidden items back at the bottom of this page.
+Быстрая · 20 с	Quick · 20 s
+Глубокая проверка: диск, код программ, поведение — 2–4 минуты.	Deep check: disk, program code, behaviour — 2–4 minutes.
+Если команду вводил не ты или ты сделал это по просьбе сайта («подтверди, что ты не робот») — сразу смени пароли от почты и банка с другого устройства и запусти глубокую и ультра проверку.	If you didn't type this command, or you did it because a site asked you to ("prove you're not a robot"), change your email and bank passwords from another device right away and run the deep and ultra checks.
+Если эту команду вводил ты сам (например, по инструкции к программе, которой доверяешь) — всё в порядке, нажми «Это был я». Если не помнишь — запусти глубокую проверку и смени пароли в браузере: так часто ставят воришек паролей.	If you typed this command yourself (for example, following instructions for a program you trust), it's fine: press "That was me". If you don't remember it, run the deep check and change the passwords saved in your browser: this is a common way to install password stealers.
+Есть	There is
+Есть что проверить:	Worth checking:
+Как это работает	How it works
+Команда	Command
+Команда:	Command:
+Майнеров и вирусов не найдено	No miners or viruses found
+Найдено угроз:	Threats found:
+Нет скрытых майнеров, подделок под Windows, вредоносного автозапуска и следов опасных команд.	No hidden miners, fake Windows programs, malicious startup entries or traces of dangerous commands.
+Ниже — что это и что нажать. Всё, что сделает ScanHub, можно вернуть.	Below: what it is and what to press. Anything ScanHub does can be undone.
+Одна странность — ещё не угроза: «опасно» ставится, только когда сходятся несколько улик. Всё, что ты сделаешь кнопками, отменяется в «Приватность → Что изменил ScanHub».	One odd thing is not a threat yet: "dangerous" is shown only when several pieces of evidence agree. Anything you do with the buttons can be undone in "Privacy → What ScanHub changed".
+Откуда скачивала	Downloaded from
+Откуда:	From:
+Подтверди окно UAC, потом проверка пойдёт как обычно…	Confirm the UAC window, then the check continues as usual…
+Показывать снова	Show again
+Проверить с правами администратора	Check with admin rights
+Процессы, автозагрузка, код программ, следы команд — около 20 секунд.	Processes, startup, program code, command traces — about 20 seconds.
+Свой сканер ScanHub: находит скрытые майнеры и следы вирусов. Ничего не скачивает и ничего не удаляет сам.	ScanHub's own scanner: finds hidden miners and traces of viruses. It downloads nothing and deletes nothing by itself.
+Скрыто тобой («Это был я»):	Hidden by you ("That was me"):
+Смени пароли от почты, банка и соцсетей с другого устройства (телефона), выйди из всех сеансов, затем запусти ультра проверку — она найдёт то, что успело поставиться.	Change your email, bank and social media passwords from another device (your phone), sign out of all sessions, then run the ultra check: it will find whatever got installed.
+Часть автозапуска (вход в Windows, перехват запуска, WMI-подписки) одной кнопкой не отключается — это системные места, ошибка там ломает Windows. Нажми «Как решить» у находки: агент подскажет безопасный способ.	Some startup entries (Windows sign-in, launch hijacks, WMI subscriptions) can't be turned off with one button: these are system places, and a mistake there breaks Windows. Press "How to fix" on the finding and the agent will suggest a safe way.
+Что не удалось проверить	What couldn't be checked
+Это был я — скрыть	That was me — hide
+Это ещё не угроза. Посмотри ниже: если это твоё — нажми «Это был я».	This isn't a threat yet. Look below: if it's yours, press "That was me".
+к сведению — глянь ниже, это был ты?	for your information — look below, was it you?
+момента	things
+один момент	one thing
+окно UAC отменено — исключения Защитника не проверены	the UAC window was cancelled — Defender exclusions were not checked
+с правами администратора	with admin rights
+читаю исключения Защитника Windows — подтверди окно UAC	reading Windows Defender exclusions — confirm the UAC window
+этой находки нет в последней проверке	this finding isn't in the latest check
