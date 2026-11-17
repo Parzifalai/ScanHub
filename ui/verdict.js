@@ -29,11 +29,11 @@ function vdStepIcon(s){
   s = String(s || "").toLowerCase();
   return /интернет|ищу|поиск/.test(s) ? "⌕" : /страниц|читаю/.test(s) ? "▤" : /журнал|сбо|событ/.test(s) ? "≡" : /думаю|вывод/.test(s) ? "✦" : "•";
 }
-function vdTrace(steps, live, t0){
+function vdTrace(steps, live, t0, stop = ""){
   const st = (steps || []).filter(Boolean);
-  const scene = live && typeof aiScene === "function" ? aiScene(st, t0) : "";
-  if (!st.length) return scene + `<ol class="vd-trace"><li class="cur"><span class="vd-si">✦</span>читаю итог проверки…</li></ol>`;
-  return scene + `<ol class="vd-trace">${st.slice(-6).map((s, i, a) => `<li class="${live && i === a.length - 1 ? "cur" : ""}"><span class="vd-si">${vdStepIcon(s)}</span>${esc(s)}</li>`).join("")}</ol>`;
+  if (live && typeof aiRun === "function") return aiRun(st, t0, stop, stop ? "думаю…" : "читаю итог проверки…");
+  if (!st.length) return `<ol class="vd-trace"><li class="cur"><span class="vd-si">✦</span>читаю итог проверки…</li></ol>`;
+  return `<ol class="vd-trace">${st.slice(-6).map(s => `<li><span class="vd-si">${vdStepIcon(s)}</span>${esc(s)}</li>`).join("")}</ol>` + stop;
 }
 
 // карточка; key — какая проверка, body — что передать серверу ({scope, jobs, verdict, target, excluded} / {scope, deep} / {scope})

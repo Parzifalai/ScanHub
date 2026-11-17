@@ -1,6 +1,6 @@
 // ============================================================ 2.4: живые сценки, пока агент работает
 // Над списком «что сейчас делаю» — маленькая сцена по смыслу текущего шага (радар для майнеров, луч по файлам для антивируса,
-// волны для сети…), время работы и число шагов. Список шагов не меняется.
+// волны для сети…), время работы и число шагов.
 // Перерисовка окна каждую секунду не перезапускает анимацию: у всех циклов период делит 60 с, а сдвиг фазы (--ph) считается
 // от общих часов — новая разметка продолжает движение с того же места.
 const SCENE_RULES = [
@@ -55,13 +55,27 @@ const SCENE_SVG = {
     <g class="sc-orbit o1"><circle cx="90" cy="36" r="2.6" class="sc-sat"/></g><g class="sc-orbit o2"><circle cx="30" cy="36" r="2.2" class="sc-sat"/></g>`,
 };
 const SCENE_LAST = {};               // какая сцена была у этого ответа (чат и карточка вывода — отдельно)
-function aiScene(steps, t0){
-  const st = (steps || []).filter(Boolean), cur = st[st.length - 1] || "", k = sceneKind(cur);
+// 2.5: «лента шагов» — сценка, время и «Остановить» сверху, под ними полоска хода и шаги: пройденные с галочкой, текущий светится.
+// Одинаковые шаги подряд склеиваются в один с «×2». Видно не больше 6 последних, остальные — строкой «раньше ещё N».
+const RUN_LAST = {};
+function aiRunGroup(st){
+  return st.reduce((a, s) => (a.length && a[a.length - 1].s === s ? a[a.length - 1].n++ : a.push({s, n: 1}), a), []);
+}
+function aiRun(steps, t0, stop = "", first = "думаю…"){
+  const st = (steps || []).filter(Boolean), g = aiRunGroup(st.length ? st : [first]);
+  const cur = g[g.length - 1], k = sceneKind(st.length ? cur.s : "");
   const fresh = SCENE_LAST[t0] !== k; SCENE_LAST[t0] = k;
-  const ph = -((Date.now() / 1000) % 60);
-  return `<div class="ai-scene sc-${k}${fresh ? " sc-in" : ""}" style="--ph:${ph.toFixed(2)}s" aria-hidden="true">
-    <svg viewBox="0 0 120 72" class="sc-art">${SCENE_SVG[k]}</svg>
-    <div class="sc-txt"><b>${esc(SCENE_NAME[k])}</b><span class="sc-meta"><span class="ai-clock" data-t0="${t0 || Date.now()}">${sceneClock(t0)}</span> · шаг ${Math.max(1, st.length)}</span></div></div>`;
+  const step = RUN_LAST[t0] !== g.length; RUN_LAST[t0] = g.length;
+  const ph = -((Date.now() / 1000) % 60), shown = g.slice(-6), hid = g.length - shown.length;
+  const x = n => n > 1 ? ` <span class="agr-x">×${n}</span>` : "";
+  return `<div class="agr">
+    <div class="agr-h${fresh ? " sc-in" : ""}" style="--ph:${ph.toFixed(2)}s"><svg viewBox="0 0 120 72" class="sc-art" aria-hidden="true">${SCENE_SVG[k]}</svg>
+      <div class="agr-t"><b>${esc(SCENE_NAME[k])}</b><span class="sc-meta"><span class="ai-clock" data-t0="${t0 || Date.now()}">${sceneClock(t0)}</span> · шаг ${g.length}</span></div>${stop}</div>
+    <div class="agr-bar" aria-hidden="true"></div>
+    ${hid ? `<div class="agr-more">раньше ещё: ${hid}</div>` : ""}
+    <ol class="agr-list">${shown.map((it, i) => i === shown.length - 1
+      ? `<li class="cur${step ? " in" : ""}"><span class="agr-dot" aria-hidden="true"></span><span>${esc(it.s)}${x(it.n)}</span></li>`
+      : `<li><span class="agr-dot" aria-hidden="true">✓</span><span>${esc(it.s)}${x(it.n)}</span></li>`).join("")}</ol></div>`;
 }
 function sceneClock(t0){
   const s = Math.max(0, Math.floor((Date.now() - (t0 || Date.now())) / 1000));

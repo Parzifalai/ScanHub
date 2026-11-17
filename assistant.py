@@ -1427,7 +1427,9 @@ def _step_label(name, args):
         return f"запускаю {CHECK_LABEL.get(str((args or {}).get('kind')), 'проверку')}"
     label = STEP_TEXT.get(name, name)
     if (args or {}).get(ARG_LABEL.get(name, "")):
-        label += f" {str(args[ARG_LABEL[name]])[:90]}"
+        v = str(args[ARG_LABEL[name]])[:90]
+        # 2.5: слова поиска — в кавычках, чтобы не читались как часть фразы («вспоминаю прошлые разговоры «майнер»»)
+        label += f" «{v}»" if ARG_LABEL[name] in ("query", "search") or name == "find_files" else f" {v}"
     return label
 
 

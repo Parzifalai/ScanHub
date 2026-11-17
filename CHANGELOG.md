@@ -15,6 +15,10 @@ The text of the newest version's section goes into the GitHub release descriptio
 - It never deletes anything by itself: each finding has “Stop process”, “Disable task”, “Disable startup”, “Quarantine” and “Check file online” buttons, and changes show up in “What ScanHub changed” with an undo.
 - Built into the deep and ultra checks (next to MinerSearch), and the AI agent runs it for “check for miners” in 20 seconds instead of 1–5 minutes.
 
+**Agent: clearer about what it's doing**
+- While the agent works you see a step timeline: a scene, the elapsed time and a "Stop" button on top, finished steps with a tick below, and the current step glowing. Repeated steps no longer show twice — they merge into "×2". The chat and the "Final verdict" after checks both look like this.
+- The words the agent searches for are now shown in quotes.
+
 **Fixes**
 - The “PC is busy while you're away” alert no longer goes silent after about 25 days of Windows uptime without a restart.
 
