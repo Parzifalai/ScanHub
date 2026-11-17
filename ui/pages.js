@@ -5,7 +5,7 @@ const PAGES = [
   {id: "home", ico: "home", t: "Главная"},
   {id: "scan", ico: "scan", t: "Защита от вирусов",
    intro: "Проверки файлов и всего компьютера, карантин, расширения браузеров и встроенная защита Windows. Находки ScanHub перепроверяет по цифровой подписи и VirusTotal, чтобы не пугать ложными тревогами.",
-   tabs: [["check", "Проверка"], ["ultra", "Ультра проверка"], ["deep", "Глубокая проверка"], ["apps", "Проверить программу"], ["quar", "Карантин"],
+   tabs: [["check", "Проверка"], ["ultra", "Ультра проверка"], ["deep", "Глубокая проверка"], ["hunter", "Охотник за майнерами"], ["apps", "Проверить программу"], ["quar", "Карантин"],
           ["browsers", "Браузеры"], ["winsec", "Защита Windows"], ["network", "Сеть", "dev"]]},
   {id: "clean", ico: "clean", t: "Очистка и место",
    intro: "Что можно удалить без вреда и что занимает место. У каждого пункта написано, что это и что будет после очистки; удалённое из «Места» уходит в Корзину.",
@@ -1181,6 +1181,65 @@ function pBrowsers(dev){
     ${TASK.ext_open?.result && TASK.ext_open.status !== "running" ? `<div class="note info">Открыл ${esc(TASK.ext_open.result.opened)}: на странице расширения нажми <b>«Удалить»</b> и подтверди. Потом вернись сюда и нажми «Проверить снова».</div>` : ""}
     ${r && !dev ? `<label class="switch"><input type="checkbox" id="brAll" ${store.get("brall") === "1" ? "checked" : ""}> показать все расширения</label>` : ""}`);
 }
+// ---- свой сканер ScanHub: майнеры, маскировка, ClickFix, закрепление (hunter.py)
+const HDONE = new Set();                 // какие кнопки находок уже нажаты в этот раз
+const hKey = (name, args) => name + JSON.stringify(args);
+const H_LAYERS = [["процессы", ["processes", "processes_list"]], ["код программ", ["fingerprint_running", "fingerprint_autoruns", "fingerprint_disk"]],
+  ["папки пользователя", ["disk"]], ["автозагрузка", ["persistence", "registry"]], ["следы ClickFix", ["traces"]], ["защита Windows", ["defense"]],
+  ["сеть", ["network_score", "intel"]], ["поведение майнеров", ["physics"]]];
+function hunterBtn(f, a){
+  const done = (name, args, label, extra = "") => {
+    const ok = HDONE.has(hKey(name, args));
+    return `<button class="small${!ok && f.level === "threat" && name !== "recycle" ? " danger" : ""}" data-task-run="${name}" data-args="${attr(args)}"${ok ? " disabled" : ""}${extra}>${ok ? "✓ " : ""}${esc(label)}</button>`;
+  };
+  const what = f.path ? f.path.split("\\").pop() : f.title;
+  switch (a.kind) {
+    case "kill": return done("hunter_kill", {pid: a.target}, a.label, ` data-confirm="${esc(`Остановить процесс ${what} (PID ${a.target})? Если это твоя программа, несохранённое в ней пропадёт. Майнер с автозапуском вернётся после перезагрузки — отключи и его.`)}"`);
+    case "disable_task": return done("hunter_task_set", {task: a.target, enable: false}, a.label, ` data-confirm="${esc(`Отключить задачу Планировщика «${a.target}»? Она перестанет запускаться. Вернуть можно в «Приватность → Что изменил ScanHub».`)}"`);
+    case "disable_autorun": return a.startup_id ? done("startup_set", {id: a.startup_id, enable: false}, a.label) : "";
+    case "quarantine": return done("quarantine", {files: [{path: a.target, name: f.title, engine: "ScanHub"}]}, a.label,
+      ` data-confirm="${esc(`Убрать ${what} в карантин? Файл перестанет запускаться. Если это ложная тревога — верни его в «Защита от вирусов → Карантин».`)}"`);
+    case "recycle": return done("recycle", {paths: [a.target]}, a.label, ` data-confirm="${esc(`Переместить ${what} в Корзину? Достать можно из Корзины Windows.`)}"`);
+    case "online_check": return `<button class="small" data-scan-exe="${esc(a.target)}" title="Проверить файл всеми установленными антивирусами и онлайн">${esc(a.label)}</button>`;
+    case "open_folder": return `<button class="small" data-open="${esc(a.target)}">${esc(a.label)}</button>`;
+  }
+  return "";
+}
+function pHunter(dev){
+  const t = TASK.hunter, r = t?.status === "running" ? null : t?.result, st = r?.stats || {};
+  const run = t?.status === "running";
+  const ic = {threat: ["threat", "!"], suspicious: ["suspicious", "?"], info: ["running", "i"]};
+  const lvl = {threat: "опасно", suspicious: "подозрительно", info: "к сведению"};
+  const F = (r?.findings || []).slice().sort((a, b) => b.score - a.score);
+  const manual = F.some(f => f.level !== "info" && f.actions.some(a => a.kind === "disable_autorun" && !a.startup_id));
+  const errs = st.errors || {};
+  const layers = H_LAYERS.map(([name, keys]) => {
+    const bad = keys.some(k => errs[k]), ran = keys.some(k => k in (st.layers || {}));
+    return `<span class="${bad ? "chip-warn" : ran ? "chip-ok" : "chip-note"}"${bad ? ` title="${esc(keys.map(k => errs[k]).filter(Boolean).join("; "))}"` : ""}>${bad ? "!" : ran ? "✓" : "–"} ${name}</span>`;
+  }).join(" ");
+  return pnl(`${head("Охотник за майнерами", r ? `${esc(r.label)} · ${r.took} с · ${st.mode === "deep" || t?.args?.mode === "deep" ? "глубокая" : "быстрая"} проверка` : "свой сканер ScanHub — ничего не скачивает и ничего не удаляет сам",
+      `<button class="primary" data-task-run="hunter" data-args="${attr({mode: "quick"})}"${run ? " disabled" : ""}>Быстрая проверка · 20 с</button>
+       <button data-task-run="hunter" data-args="${attr({mode: "deep"})}"${run ? " disabled" : ""}>Глубокая · 2–4 мин</button>`)}
+    ${explain("Ищет то, что прячется: майнеры (даже переименованные в <b>svchost.exe</b> — узнаёт по коду внутри файла), программы, которые выдают себя за системные, " +
+      "следы <b>ClickFix</b> — когда сайт просит «нажми Win+R и вставь команду», скрытый автозапуск, выключенную защиту и связь с майнинг-пулами. " +
+      "Глубокая проверка ещё и следит за поведением: майнер грузит процессор ровно и без окна, а когда открывают Диспетчер задач — затихает. ScanHub ненадолго «открывает» его и смотрит, кто притих. " +
+      "Одна странность — ещё не угроза: «опасно» ставится, только когда сходятся несколько улик. Всё, что ты сделаешь кнопками ниже, отменяется.")}
+    ${busyErr("hunter", t?.args?.mode === "deep" ? "Глубокая проверка: диск, код программ, поведение… 2–4 минуты" : "Проверяю процессы, автозагрузку, код программ…")}
+    ${["hunter_kill", "hunter_task_set", "startup_set", "quarantine", "recycle"].map(n => busyErr(n, n === "hunter_task_set" ? "Отключаю задачу… может появиться окно UAC" : "Выполняю…")).join("")}
+    ${r && !F.length ? `<div class="note info">Ничего подозрительного не нашёл. 👍 Майнеров, подмены системных программ, скрытого автозапуска и следов ClickFix нет.</div>` : ""}
+    ${F.length ? `<div class="checks">${F.map(f => `<div class="check"><span class="ic ic-${ic[f.level][0]}">${ic[f.level][1]}</span>
+      <span><b>${esc(f.title)}</b> <span class="sub-inline">${lvl[f.level]}</span>
+        <span class="sub">${esc(f.why)}</span>
+        ${f.path ? `<span class="sub mono">${esc(dev ? f.path : pathShort(f.path))}</span>` : ""}
+        ${dev && f.evidence?.length ? `<details><summary class="sub">улики (${f.evidence.length}) · очки ${f.score}</summary><span class="sub mono">${f.evidence.map(esc).join("<br>")}</span></details>` : ""}
+        <div class="row-tools" style="margin-top:6px">${f.actions.map(a => hunterBtn(f, a)).join("")}
+          ${aiBtn(f.title, `Находка встроенного сканера ScanHub (${lvl[f.level]}): ${f.why}${f.path ? " Файл: " + f.path : ""}. Улики: ${(f.evidence || []).join(" | ")}. Опасно ли это и что делать?`, {source: "Защита от вирусов · Охотник за майнерами"})}</div></span>
+      <span></span></div>`).join("")}</div>` : ""}
+    ${manual ? `<div class="note warn">Часть автозапуска (вход в Windows, перехват запуска, WMI-подписки) одной кнопкой не отключается — это системные места, ошибка там ломает Windows. Нажми «Спросить агента» у находки: он подскажет безопасный способ. Или запусти глубокую проверку и сторонние сканеры (Dr.Web CureIt, KVRT).</div>` : ""}
+    ${(st.not_checked || []).length ? `<div class="note warn"><b>Не проверено:</b> ${st.not_checked.map(esc).join("; ")}</div>` : ""}
+    ${r ? `<div class="sub" style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">Что проверено: ${layers}</div>` : ""}
+    ${r && dev ? `<details><summary class="sub">время слоёв</summary><span class="sub mono">${esc(Object.entries(st.layers || {}).map(([k, v]) => `${k} ${v}s`).join(" · "))}</span></details>` : ""}`);
+}
 function pCtx(dev){
   const t = TASK.ctx, r = t?.result;
   return pnl(`${head("Контекстное меню", r ? `пунктов от программ: ${r.items.length}` : "", `<button data-task-run="ctx">Обновить</button>`)}
@@ -1736,7 +1795,7 @@ function sumPcCard(){
 // ============================================================ панели: реестр, подготовка, перерисовка
 function panelHtml(name, dev){
   if (COMPOSITE[name]) return COMPOSITE[name].map(n => panelHtml(n, dev)).filter(Boolean).join("");
-  const f = {deep: pDeep, apps: pApps, quar: pQuar, network: pNetwork, junk: pJunk, shortcuts: pShortcuts, drvstore: pDrvStore, envpath: pEnvPath,
+  const f = {deep: pDeep, hunter: pHunter, apps: pApps, quar: pQuar, network: pNetwork, junk: pJunk, shortcuts: pShortcuts, drvstore: pDrvStore, envpath: pEnvPath,
     disk: pDisk, dups: pDups, empty: pEmpty, uninst: pUninst, debloat: pDebloat, winget: pWinget, boot: pBoot, game: pGame, memory: pMemory,
     noise: pNoise, privacy: pPrivacy, security: pSecurity, browsers: pBrowsers, ctx: pCtx, firewall: pFirewall, restore: pRestore, miners: pProtect, shred: pShred, changes: pChanges,
     health: d => sumPcCard() + pHealth(d), drivers: pDrivers, hw: pHw, history: pHistory, net: pNet, crash: pCrash, runtimes: pRuntimes, alerts: pAlerts, ultra: pUltra, devices: pDevices, phone: pPhone}[name];
@@ -1755,7 +1814,7 @@ function prepPanel(name){
   if (name === "ultra") { ULTRA.seen = true; if (!ULTRA.polling) loadUltra() }
   [].concat(auto || []).forEach(n => ensureTask(n));
   if (["envpath", "drvstore", "privacy", "security", "ctx", "uninst"].includes(name)) ensureTask("restore");
-  const manual = {health: ["health", "sysfiles", "firewall"], autoruns: ["autoruns"], boot: ["autoruns", "boot_trace"], drivers: ["driver_updates"], noise: ["noise"],
+  const manual = {hunter: ["hunter"], health: ["health", "sysfiles", "firewall"], autoruns: ["autoruns"], boot: ["autoruns", "boot_trace"], drivers: ["driver_updates"], noise: ["noise"],
     disk: ["disk_analyze"], dups: ["dups"], empty: ["empty"], shred: ["shred"]}[name] || [];
   manual.forEach(async n => {
     if (TASK[n]) return;
@@ -1864,6 +1923,8 @@ document.addEventListener("click", async e => {
 function afterTask(name, args, t){
   const r = t?.result;
   const again = n => runTask(n, undefined, true);
+  if (["hunter_kill", "hunter_task_set", "startup_set", "quarantine", "recycle"].includes(name) && t?.status === "done") HDONE.add(hKey(name, args));
+  if (name === "hunter") HDONE.clear();
   if (name === "hosts_set") again("hosts");
   if (name === "upd_ignore" && r?.apps && TASK.winget) TASK.winget.result = r;
   if (name === "watch_set") again("watch");

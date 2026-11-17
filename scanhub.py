@@ -1615,7 +1615,8 @@ def _only_found(name, args):
         fd = (_last("junk_scan") or {}).get("finds") or {}
         keep(a.get("paths", []), [f["path"] for f in (_last("disk_analyze") or {}).get("big", [])] +
              [p for g in (_last("dups") or {}).get("groups", []) for p in g["paths"]] +
-             [f["path"] for k in ("installers", "big") for f in fd.get(k, [])], "файл")
+             [f["path"] for k in ("installers", "big") for f in fd.get(k, [])] +
+             [x["target"] for x in _hunter_actions("recycle")], "файл")
     elif name == "appx_remove":
         keep(a.get("fulls", []), [x["full"] for x in (_last("appx") or [])], "приложение")
     elif name == "firewall_set":
@@ -1638,7 +1639,14 @@ def _only_found(name, args):
         found = {f["path"] for j in list(jobs.values()) for f in (j.get("found") or [])}
         found |= {f["path"] for j in list(jobs.values()) for s in (j.get("steps") or []) for f in (s.get("files") or [])}
         found |= {f["path"] for i in (load_json(ULTRA_FILE, None) or {}).get("todo", []) for f in (i.get("files") or [])}
+        found |= {x["target"] for x in _hunter_actions("quarantine")}
         keep([f.get("path") for f in a.get("files", [])], found, "файл для карантина")
+    elif name == "hunter_task_set":
+        if a.get("enable"):                        # включить обратно — только то, что отключил сам ScanHub
+            allowed = [(r.get("args") or {}).get("task") for r in load_json(CHANGES_FILE, []) if r.get("task") == name]
+        else:
+            allowed = [x["target"] for x in _hunter_actions("disable_task")]
+        keep([a.get("task")], allowed, "задача Планировщика")
     return a
 
 
@@ -1824,6 +1832,10 @@ def _task_fn(name, args):
         "quarantine": lambda: _quarantine(list(args.get("files", []))),
         "q_restore": lambda: {"path": yarascan.q_restore(args["id"]), "items": yarascan.q_list()},
         "q_delete": lambda: {"ok": yarascan.q_delete(args["id"]), "items": yarascan.q_list()},
+        # ---- свой сканер майнеров и закрепления
+        "hunter": lambda: _hunter(args.get("mode"), prog, args.get("_cancel")),
+        "hunter_kill": lambda: _hunter_kill(int(args.get("pid") or 0)),
+        "hunter_task_set": lambda: _hunter_task_set(str(args.get("task", "")), bool(args.get("enable")), run_el),
     }
     if name in lazy:
         return lazy[name]
@@ -1971,6 +1983,77 @@ def _quarantine(files):
     return {"moved": len(done), "errors": errors, "items": yarascan.q_list()}
 
 
+# ---------------------------------------------------------------- свой сканер майнеров и закрепления (hunter.py)
+
+def _hunter_actions(kind):
+    """Цели действий одного вида из последней проверки сканера — только над ними сервер что-то делает."""
+    return [a for f in (_last("hunter") or {}).get("findings", []) for a in f.get("actions", []) if a.get("kind") == kind]
+
+
+def _hunter_link(r):
+    """Автозапуск из реестра и папок отключается тем же отменяемым переключателем, что в «Программы → Автозагрузка»:
+    находим запись в его списке и запоминаем её id в действии."""
+    acts = [a for f in r.get("findings", []) for a in f.get("actions", []) if a.get("kind") == "disable_autorun"]
+    if not acts:
+        return
+    st = tweaks.startup_list()
+    TASKS["startup"] = {"name": "startup", "status": "done", "result": st, "finished": now()}
+    ids = {i["id"] for i in st.get("items", [])}
+    pdata = os.environ.get("ProgramData", r"C:\ProgramData").lower()
+    for a in acts:
+        t = a.get("target") or {}
+        where, name = str(t.get("where") or ""), str(t.get("name") or "")
+        sid = None
+        if t.get("kind") == "Реестр" and where[:4] in ("HKCU", "HKLM"):
+            sub = "Run32" if "wow6432" in where.lower() else "Run" if where.lower().endswith("\\run") else None
+            sid = sub and f"{where[:4]}|{sub}|{name}"
+        elif t.get("kind") == "Папка автозагрузки":
+            sid = f"{'HKLM' if where.lower().startswith(pdata) else 'HKCU'}|StartupFolder|{name}"
+        if sid in ids:
+            a["startup_id"] = sid
+
+
+def _hunter(mode, prog, cancel):
+    import hunter
+    def emit(s):
+        s = str(s).strip()
+        if s:
+            prog(s[:160])
+    r = hunter.scan("deep" if mode == "deep" else "quick", emit=emit, stopped=cancel or (lambda: False))
+    _hunter_link(r)
+    return r
+
+
+def _hunter_kill(pid):
+    """Остановить процесс из находки сканера: только тот pid, что он нашёл, и только если это всё ещё тот же файл."""
+    act = next((a for a in _hunter_actions("kill") if a.get("target") == pid), None)
+    if not act:
+        raise RuntimeError("этого процесса нет в последней проверке — запусти проверку ещё раз")
+    want = next((f.get("path") for f in _last("hunter")["findings"] if act in f.get("actions", [])), "")
+    import psutil
+    try:
+        p = psutil.Process(pid)
+        if want and os.path.normcase(p.exe() or "") != os.path.normcase(want):
+            raise RuntimeError("процесс уже завершился, а его номер занял другой — ничего не трогаю")
+        p.kill()
+    except psutil.NoSuchProcess:
+        return {"ok": True, "already": True}
+    except psutil.AccessDenied:
+        raise RuntimeError("Windows не даёт остановить этот процесс без прав администратора — отключи его автозапуск и перезагрузи ПК")
+    return {"ok": True}
+
+
+def _hunter_task_set(tn, enable, run_el):
+    """Отключить или включить задачу Планировщика (сначала без прав администратора, не вышло — через UAC)."""
+    cmd = ["schtasks", "/Change", "/TN", tn, "/ENABLE" if enable else "/DISABLE"]
+    r = subprocess.run(cmd, capture_output=True, timeout=60, creationflags=0x08000000)
+    if r.returncode != 0:
+        res = run_el([{"type": "run", "cmd": cmd, "timeout": 60}])
+        if not (res and res[0].get("ok") and res[0].get("code") == 0):
+            raise RuntimeError("не получилось — окно UAC отменено или такой задачи уже нет")
+    return {"ok": True}
+
+
 
 # ---------------------------------------------------------------- журнал изменений: что ScanHub поменял и как вернуть
 
@@ -1993,7 +2076,7 @@ CHANGE_TASKS = {
     "empty_remove": "Удалены пустые папки", "recycle": "Файлы перемещены в Корзину", "ai_delete": "Удалено по проверке агента", "drvstore_remove": "Удалены старые драйверы",
     "shred": "Файлы уничтожены шредером", "restore_enable": "Включена защита системы", "restore_create": "Создана точка восстановления",
     "quarantine": "Файлы перемещены в карантин", "q_restore": "Файл возвращён из карантина", "q_delete": "Файл удалён из карантина навсегда",
-    "app_links_create": "Созданы ярлыки ScanHub",
+    "app_links_create": "Созданы ярлыки ScanHub", "hunter_task_set": "Задача Планировщика",
 }
 _flip = lambda a: not a.get("enable")
 UNDO = {
@@ -2008,6 +2091,7 @@ UNDO = {
     "watch_set": ("watch_set", lambda a, r: {"enable": _flip(a)}, None),
     "memclean_set": ("memclean_set", lambda a, r: {"enable": _flip(a)}, None),
     "sensors_set": ("sensors_set", lambda a, r: {"enable": _flip(a)}, None),
+    "hunter_task_set": ("hunter_task_set", lambda a, r: {"task": a.get("task"), "enable": _flip(a)}, None),
     "envpath_fix": ("@path", None, None), "shortcuts_remove": ("@shortcuts", None, None),
     "force_remove": ("@reg", None, None), "force_remove_many": ("@reg", None, None), "leftovers_remove": ("@reg", None, None),
 }
@@ -2040,6 +2124,8 @@ def _change_keys(name, a):
         return ["game"]
     if name in ("driver_disable", "driver_restore"):
         return [f"drv:{a.get('service')}"]
+    if name == "hunter_task_set":
+        return [f"task:{a.get('task')}"]
     if name in ("hosts_set", "watch_set", "memclean_set", "sensors_set"):
         return [name]
     return []
@@ -2070,6 +2156,8 @@ def _change_items(name, a, r):
             return [("включено: " if a.get("enable") else "выключено: ") + x for x in find("firewall", a.get("ids") or [a.get("id")], "name", "title", "display")]
         if name in ("driver_disable", "driver_restore"):
             return [str(a.get("service"))]
+        if name == "hunter_task_set":
+            return [("включена: " if a.get("enable") else "отключена: ") + str(a.get("task"))]
         if name in ("phone_uninstall", "phone_a11y_off"):
             return [str(a.get("pkg", ""))]
         if name == "device_fix":
@@ -2331,7 +2419,8 @@ def agent_action(action, arg):
 
 
 # 2.2: проверки, которые агент запускает сам по просьбе человека — только чтение, ничего не меняют
-AGENT_CHECKS = {"miners": ("job", "minersearch", "scanonly"), "quick_scan": ("job", "defender", "quick"),
+AGENT_CHECKS = {"hunter": ("task", "hunter", {"mode": "quick"}), "hunter_deep": ("task", "hunter", {"mode": "deep"}),
+                "miners": ("job", "minersearch", "scanonly"), "quick_scan": ("job", "defender", "quick"),
                 "junk": ("task", "junk_scan"), "startup": ("task", "startup"), "health": ("task", "health"), "hardware": ("task", "hwcheck")}
 _AGENT_RUNS = {}                 # вид проверки → id запущенного сканера: повторный вызов ждёт ту же, а не запускает вторую
 
@@ -2344,7 +2433,7 @@ def agent_check(kind, wait=240):
     if spec[0] == "task":
         t = TASKS.get(spec[1])
         if not (t and t.get("status") == "running"):
-            t = start_task(spec[1], {})
+            t = start_task(spec[1], dict(spec[2]) if len(spec) > 2 else {})
         while t.get("status") == "running" and time.time() - t0 < wait:
             time.sleep(1)
             t = TASKS.get(spec[1]) or t
@@ -2353,6 +2442,13 @@ def agent_check(kind, wait=240):
         if t.get("status") == "error":
             return {"ошибка": t.get("error")}
         res = t.get("result")
+        if spec[1] == "hunter":             # находки — понятным текстом, без служебных полей
+            import hunter
+            res = {"итог": res.get("label"), "вердикт": res.get("verdict"), "секунд": res.get("took"),
+                   "находки": [hunter.explain(f) for f in res.get("findings", [])[:20]],
+                   "не_проверено": (res.get("stats") or {}).get("not_checked") or [],
+                   "где_исправить": "«Защита от вирусов → Охотник за майнерами»: у каждой находки кнопки (остановить, отключить автозапуск, "
+                                    "в карантин) — всё отменяется в «Что изменил ScanHub»"}
         if spec[1] == "junk_scan":          # для очистки нужны id категорий — отдаём коротко и понятно
             res = {"категории": [{"id": c["id"], "что": c.get("label"), "размер": f"{c.get('size', 0) / 2 ** 20:,.0f} МБ".replace(",", " "),
                                   "безопасно": c.get("safe"), "нужны_права_администратора": bool(c.get("admin"))}

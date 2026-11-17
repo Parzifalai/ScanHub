@@ -1023,6 +1023,7 @@ class DeepScan:
             ("drivers", "Уязвимые драйверы", "драйверы, через которые вирусы выключают антивирус (база LOLDrivers)", self.s_drivers),
             ("certs", "Корневые сертификаты", "поддельные сертификаты для перехвата HTTPS (Sysinternals Sigcheck)", self.s_certs),
             ("defexcl", "Настройки Defender", "исключения и выключенные защиты — вредоносы прячутся так от антивируса", self.s_defexcl),
+            ("hunter", "Охотник за майнерами", "свой сканер ScanHub: код файлов, маскировка, ClickFix, закрепление, поведение майнеров", self.s_hunter),
             ("browsers", "Браузеры", "расширения не из магазина и с опасными правами, политики, подмена прокси", self.s_browsers),
             ("origin", "Откуда скачаны программы", "сайты-источники файлов в Загрузках и на Рабочем столе: поддельные и опасные (FMHY, Maltrail)", self.s_origin),
             ("defender", "Microsoft Defender", "быстрая проверка: память и системные места", self.s_defender),
@@ -1213,7 +1214,7 @@ class DeepScan:
         return r
 
     def s_network(self, s):
-        n = system.network()
+        n = self.net = system.network()
         for c in n["connections"]:
             if c["flags"]:
                 s["findings"].append(f"{c['name']} → {c['remote']}: порт, типичный для майнинг-пулов")
@@ -1227,7 +1228,7 @@ class DeepScan:
         bad = bool(n["hosts_tampered"] or n["pool_dns"])
         try:
             import intel
-            r = intel.check_network(self.emit)
+            r = self.intel_res = intel.check_network(self.emit)
             for h in r["hits"]:
                 s["findings"].append(("⚠ " if h["level"] == "bad" else "") + h["text"])
                 if h.get("exe"):
@@ -1245,7 +1246,7 @@ class DeepScan:
                  label=f"находок: {len(s['findings'])}" if s["findings"] else "ничего подозрительного")
 
     def s_autoruns(self, s):
-        items = system.autoruns()
+        items = self.autoruns = system.autoruns()
         bad = [i for i in items if i["level"] == "bad"]
         warn = [i for i in items if i["level"] == "warn"]
         for i in bad + warn:
@@ -1270,6 +1271,25 @@ class DeepScan:
         s.update(verdict="suspicious" if bad else "unknown" if r["items"] else "clean",
                  label=r["label"])
         self.emit("  " + s["label"])
+
+    def s_hunter(self, s):
+        """Свой сканер ScanHub (hunter.py): всё уже собранное (автозагрузка, сеть, Defender) не собирает второй раз."""
+        import hunter
+        r = hunter.scan("deep", emit=lambda t: self.emit("  " + str(t)), stopped=self.stopped,
+                        admin_out=getattr(self, "defender_prefs", None), autoruns=getattr(self, "autoruns", None),
+                        net=getattr(self, "net", None), intel_res=getattr(self, "intel_res", None))
+        self.job["hunter"] = r
+        mark = {"threat": "⚠ ", "suspicious": "", "info": "к сведению: "}
+        for f in r["findings"]:
+            s["findings"].append(f"{mark[f['level']]}{f['title']}" + (f" · {f['path']}" if f.get("path") else ""))
+            if f.get("path") and any(a["kind"] == "quarantine" for a in f["actions"]) and os.path.isfile(f["path"]):
+                self.suspects.add(f["path"])
+                if not any(x["path"] == f["path"] for x in s["files"]):
+                    s["files"].append({"path": f["path"], "name": f["title"], "engine": "ScanHub"})
+        for t in (r.get("stats") or {}).get("not_checked") or []:
+            s.setdefault("notes", []).append(t)
+        s.update(verdict={"threat": "threat", "suspicious": "suspicious", "info": "unknown"}.get(r["verdict"], "clean"),
+                 label=r["label"])
 
     def s_browsers(self, s):
         import browsers

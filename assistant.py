@@ -1845,12 +1845,14 @@ TOOLS = {
     "programs": (t_programs, "Установленные программы (поиск по названию или издателю). С search — ещё и папка программы и сколько она "
                              "занимает: для «сколько весит программа» достаточно этого вызова.", {"search": {"type": "string"}}),
     "run_check": (t_run_check, "ЗАПУСТИТЬ проверку ScanHub и дождаться итога (только смотрит, ничего не меняет). Вызывай, когда человек "
-                               "просит проверить: miners — поиск скрытых майнеров (MinerSearch, 1–5 мин); quick_scan — быстрая проверка "
+                               "просит проверить: hunter — встроенный охотник ScanHub за майнерами, следами ClickFix и закреплением вредоносов (процессы, код файлов, автозагрузка, сеть, поведение; ~20 с, без скачиваний — ЗАПУСКАЙ ПЕРВЫМ на «проверь на майнеры/вирусы»); "
+                               "hunter_deep — он же глубже (диск целиком, видеокарта, ловушка «майнер прячется от Диспетчера задач»; 2–4 мин); "
+                               "miners — второе мнение внешним MinerSearch (1–5 мин); quick_scan — быстрая проверка "
                                "Microsoft Defender (память, автозагрузка, системные папки; 2–5 мин); junk — что можно очистить (мусор и кэши "
                                "по категориям с id и размерами, ~10 с); startup — что запускается с Windows; health — общее здоровье ПК "
                                "(защита, обновления, диски, батарея); hardware — проверка комплектующих. Если проверка ещё идёт — вызови "
                                "ещё раз с тем же kind, ScanHub не запустит её второй раз.",
-                  {"kind": {"type": "string", "enum": ["miners", "quick_scan", "junk", "startup", "health", "hardware"]}}),
+                  {"kind": {"type": "string", "enum": ["hunter", "hunter_deep", "miners", "quick_scan", "junk", "startup", "health", "hardware"]}}),
     "startup": (t_startup, "Что запускается вместе с Windows, с пометками о подозрительном.", {}),
     "processes": (t_processes, "Что сейчас нагружает процессор и память, подозрительные процессы.", {}),
     "network": (t_network, "Сеть: открытые порты, подмена hosts, обращения к майнинг-пулам, состояние Wi‑Fi.", {}),
@@ -1947,7 +1949,7 @@ STEP_TEXT = {"scanhub_findings": "смотрю, что ScanHub уже нашёл
              "run_check": "запускаю проверку", "remember": "запоминаю", "forget": "забываю заметку",
              "past_chats": "вспоминаю прошлые разговоры", "printers": "смотрю принтеры", "services": "смотрю службы Windows",
              "scheduled_tasks": "смотрю Планировщик заданий"}
-CHECK_LABEL = {"miners": "поиск майнеров", "quick_scan": "быструю проверку Defender", "junk": "поиск мусора", "startup": "автозагрузку",
+CHECK_LABEL = {"hunter": "охотника за майнерами", "hunter_deep": "глубокого охотника за майнерами", "miners": "MinerSearch", "quick_scan": "быструю проверку Defender", "junk": "поиск мусора", "startup": "автозагрузку",
                "health": "здоровье ПК", "hardware": "комплектующие"}
 ARG_LABEL = {"run_check": "kind","windows_events": "log", "lookup_code": "code", "file_info": "path", "list_folder": "path", "find_files": "name",
              "read_file": "path", "threat_intel": "kind", "scan_result": "target", "web_search": "query", "web_fetch": "url",
