@@ -2293,7 +2293,29 @@ def _ty_quick(text):
         w = VY_FIX[m.group(1).lower()]
         return w[0].upper() + w[1:] if m.group(1)[0].isupper() else w
     parts = re.split(r"(```.*?```|`[^`\n]*`)", text or "", flags=re.S)
-    return "".join(x if i % 2 else VY_FIX_RE.sub(fix, x) for i, x in enumerate(parts))
+    return "".join(x if i % 2 else _ty_pron(VY_FIX_RE.sub(fix, x)) for i, x in enumerate(parts))
+
+
+# 2.5: местоимения и «вы + глагол в настоящем» («если вы используете», «у вас», «ваш Excel») — модели в быстром режиме
+# сбивались и на них. Прошедшее время («вы запускали») не трогаем: род человека неизвестен.
+TY_PRON = {"вас": "тебя", "вам": "тебе", "вами": "тобой", "ваш": "твой", "ваша": "твоя", "ваше": "твоё", "ваши": "твои",
+           "вашего": "твоего", "вашему": "твоему", "вашим": "твоим", "вашей": "твоей", "вашу": "твою", "ваших": "твоих",
+           "вашими": "твоими", "вашем": "твоём"}
+TY_PRON_RE = re.compile(r"(?<![\w-])(" + "|".join(sorted(TY_PRON, key=len, reverse=True)) + r")(?![\w-])", re.I)
+TY_VERB_IRR = {"хотите": "хочешь", "можете": "можешь", "будете": "будешь", "даёте": "даёшь", "даете": "даёшь", "едете": "едешь"}
+TY_VY_RE = re.compile(r"(?<![\w-])(вы)(\s+(?:не\s+|уже\s+|ещё\s+|сейчас\s+|точно\s+)?)([а-яё]{2,}?)(ете|ёте|ите)(?![\w-])", re.I)
+
+
+def _ty_pron(s):
+    def pron(m):
+        w = TY_PRON[m.group(1).lower()]
+        return w[0].upper() + w[1:] if m.group(1)[0].isupper() else w
+
+    def vy(m):
+        verb = (m.group(3) + m.group(4)).lower()
+        to = TY_VERB_IRR.get(verb) or m.group(3) + {"ете": "ешь", "ёте": "ёшь", "ите": "ишь"}[m.group(4).lower()]
+        return ("Ты" if m.group(1)[0] == "В" else "ты") + m.group(2) + to
+    return TY_PRON_RE.sub(pron, TY_VY_RE.sub(vy, s))
 
 
 def _clean_tags(text):
