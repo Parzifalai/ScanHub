@@ -1218,8 +1218,8 @@ function pHunter(dev){
     return `<span class="${bad ? "chip-warn" : ran ? "chip-ok" : "chip-note"}"${bad ? ` title="${esc(keys.map(k => errs[k]).filter(Boolean).join("; "))}"` : ""}>${bad ? "!" : ran ? "✓" : "–"} ${name}</span>`;
   }).join(" ");
   return pnl(`${head("Охотник за майнерами", r ? `${esc(r.label)} · ${r.took} с · ${st.mode === "deep" || t?.args?.mode === "deep" ? "глубокая" : "быстрая"} проверка` : "свой сканер ScanHub — ничего не скачивает и ничего не удаляет сам",
-      `<button class="primary" data-task-run="hunter" data-args="${attr({mode: "quick"})}"${run ? " disabled" : ""}>Быстрая проверка · 20 с</button>
-       <button data-task-run="hunter" data-args="${attr({mode: "deep"})}"${run ? " disabled" : ""}>Глубокая · 2–4 мин</button>`)}
+      `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="primary" data-task-run="hunter" data-args="${attr({mode: "quick"})}"${run ? " disabled" : ""}>Быстрая проверка · 20 с</button>
+       <button data-task-run="hunter" data-args="${attr({mode: "deep"})}"${run ? " disabled" : ""}>Глубокая · 2–4 мин</button></div>`)}
     ${explain("Ищет то, что прячется: майнеры (даже переименованные в <b>svchost.exe</b> — узнаёт по коду внутри файла), программы, которые выдают себя за системные, " +
       "следы <b>ClickFix</b> — когда сайт просит «нажми Win+R и вставь команду», скрытый автозапуск, выключенную защиту и связь с майнинг-пулами. " +
       "Глубокая проверка ещё и следит за поведением: майнер грузит процессор ровно и без окна, а когда открывают Диспетчер задач — затихает. ScanHub ненадолго «открывает» его и смотрит, кто притих. " +

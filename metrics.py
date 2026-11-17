@@ -216,7 +216,8 @@ def idle_seconds():
         li = LII()
         li.cbSize = ctypes.sizeof(LII)
         if ctypes.windll.user32.GetLastInputInfo(ctypes.byref(li)):
-            return (ctypes.windll.kernel32.GetTickCount() - li.dwTime) / 1000.0
+            # GetTickCount без restype приходит как знаковое число: после ~25 дней без перезагрузки простой выходил отрицательным
+            return ((ctypes.windll.kernel32.GetTickCount() - li.dwTime) & 0xFFFFFFFF) / 1000.0
     except Exception:
         pass
     return None

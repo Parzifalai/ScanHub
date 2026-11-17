@@ -4,6 +4,20 @@
 
 The text of the newest version's section goes into the GitHub release description, and ScanHub shows it in the “Update ScanHub” window.
 
+## 2.5.0
+
+**Miner Hunter: ScanHub's own scanner**
+- New tab “Virus protection → Miner Hunter”. Nothing to download, no admin rights needed: a quick check takes about 20 seconds, a deep one 2–4 minutes.
+- Recognises a miner by the code inside the file (XMRig, lolMiner, T-Rex, NBMiner, GMiner, PhoenixMiner and others) even when it's renamed to svchost.exe, and finds their configs and launch scripts in your user folders.
+- Catches programs posing as Windows ones (svchost.exe outside the Windows folder, “svch0st.exe”), ClickFix traces (a site telling you to “press Win+R and paste a command”), hidden startup (Task Scheduler tasks, services, WMI subscriptions, launch hijacks, a replaced Windows sign-in), switched-off Windows protection and connections to mining pools.
+- The deep check watches behaviour: flat load with no window, Monero-sized memory, a busy GPU with no game, and a trap: ScanHub “opens Task Manager” for a few seconds and checks who goes quiet (that's how hidden miners hide).
+- No false alarms: “dangerous” needs several pieces of evidence at once; signatures of known publishers and ScanHub's own tasks (sensors, memory cleanup, the Watcher) are taken into account.
+- It never deletes anything by itself: each finding has “Stop process”, “Disable task”, “Disable startup”, “Quarantine” and “Check file online” buttons, and changes show up in “What ScanHub changed” with an undo.
+- Built into the deep and ultra checks (next to MinerSearch), and the AI agent runs it for “check for miners” in 20 seconds instead of 1–5 minutes.
+
+**Fixes**
+- The “PC is busy while you're away” alert no longer goes silent after about 25 days of Windows uptime without a restart.
+
 ## 2.4.0
 
 **Chat history and a memory for the AI agent**

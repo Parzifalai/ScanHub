@@ -1,0 +1,272 @@
+% всех ядер	% of all cores
+% всех ядер, разброс	% of all cores, spread
+% после; повтор:	% after; repeat:
+% при «Диспетчере задач»	% when Task Manager is open
+(SYSTEM|СИСТЕМА|SERVICE|СЛУЖБА)	-
+(или запусти глубокую проверку)	(or run the deep scan)
+(не расшифровалось)	(could not be decoded)
+1 адрес	1 address
+Windows не даёт остановить этот процесс без прав администратора — отключи его автозапуск и перезагрузи ПК	Windows won't let this process be stopped without administrator rights — disable its startup and restart your PC
+certutil/bitsadmin/msiexec + адрес	certutil/bitsadmin/msiexec + address
+certutil/bitsadmin/msiexec/regsvr32 + адрес	certutil/bitsadmin/msiexec/regsvr32 + address
+mshta + адрес	mshta + address
+regsvr32/rundll32 + адрес	regsvr32/rundll32 + address
+«Защита от вирусов → Охотник за майнерами»: у каждой находки кнопки (остановить, отключить автозапуск, в карантин) — всё отменяется в «Что изменил ScanHub»	“Virus protection → Miner Hunter”: every finding has buttons (stop, disable startup, quarantine) — everything can be undone in “What ScanHub changed”
+Быстрая проверка · 20 с	Quick scan · 20 s
+В настройках защиты есть изменения. Скорее всего, их сделал ты или одна из твоих программ.	There are changes in your protection settings. Most likely you or one of your programs made them.
+В пользу программы:	In the program's favor:
+Внутри файла есть упоминания майнинга, но серьёзных признаков нет. Скорее всего, это обычная программа. Делать ничего не нужно.	The file mentions mining, but there are no serious signs. It's most likely an ordinary program. You don't need to do anything.
+Вредоносный автозапуск	Malicious startup
+Глубокая · 2–4 мин	Deep · 2–4 min
+Глубокая проверка ещё и следит за поведением: майнер грузит процессор ровно и без окна, а когда открывают Диспетчер задач — затихает. ScanHub ненадолго «открывает» его и смотрит, кто притих.	The deep scan also watches behavior: a miner loads the processor steadily and without a window, and goes quiet when Task Manager is opened. ScanHub briefly “opens” it and sees who goes quiet.
+Глубокая проверка: диск, код программ, поведение… 2–4 минуты	Deep scan: disk, program code, behavior… 2–4 minutes
+Если выключал сам на время — включи обратно в «Безопасность Windows».	If you turned it off yourself for a while, turn it back on in Windows Security.
+Если ты сам отключал обновления или пользовался «активатором» — это его след.	If you disabled updates yourself or used an “activator”, this is its trace.
+Если это твоя программа, несохранённое в ней пропадёт. Майнер с автозапуском вернётся после перезагрузки — отключи и его.	If this is your program, anything unsaved in it will be lost. A miner with startup will come back after a restart — disable that too.
+Задача Планировщика	Task Scheduler task
+Защита Windows выведена из строя	Windows protection has been knocked out
+Защита Windows ослаблена	Windows protection is weakened
+Защита Windows ослаблена. Если это настраивал не ты — это мог сделать вирус, чтобы спрятаться.	Windows protection is weakened. If you didn't set this up, a virus may have done it to hide.
+Защита Windows отключена или обойдена так, как это делают вирусы, чтобы антивирус их не видел.	Windows protection is turned off or bypassed the way viruses do it, so the antivirus can't see them.
+Защита от вирусов · Охотник за майнерами	Virus protection · Miner Hunter
+Защитник Windows выключен через политики	Windows Defender is turned off by policy
+ИТОГ:	RESULT:
+Имя напоминает системную программу. Серьёзных признаков нет — скорее всего, совпадение.	The name resembles a system program. No serious signs — most likely a coincidence.
+Имя похоже на системное	Name looks like a system one
+Исключения Защитника Windows	Windows Defender exclusions
+Ищет то, что прячется: майнеры (даже переименованные в	Looks for what hides: miners (even ones renamed as
+Когда-то была выполнена команда, которая скачивает и запускает код из интернета. Если это был установщик, который ты запускал сам, — всё в порядке.	At some point a command was run that downloads and runs code from the internet. If it was an installer you ran yourself, everything is fine.
+Команда скачивала и запускала код	The command downloaded and ran code
+Компьютер недавно искал адрес майнинг-пула	The computer recently looked up a mining pool address
+Компьютер недавно обращался к адресу, связанному с майнингом или из списка подозрительных. Это могло быть и открытие сайта в браузере. Само по себе не опасно.	The computer recently contacted an address linked to mining or on a suspicious list. It could just have been opening a website in a browser. By itself it's not dangerous.
+МБ своей памяти	MB of its memory
+Можно сделать:	You can:
+Находка встроенного сканера ScanHub	Finding from ScanHub's built-in scanner
+Не проверено:	Not checked:
+Необычный автозапуск	Unusual startup
+Необычный, но не обязательно опасный способ автозапуска. Если программу ставил ты — всё в порядке.	An unusual but not necessarily dangerous way to start. If you installed the program, everything is fine.
+Ничего подозрительного не нашёл. 👍 Майнеров, подмены системных программ, скрытого автозапуска и следов ClickFix нет.	Found nothing suspicious. 👍 No miners, fake system programs, hidden startup or ClickFix traces.
+ОПАСНО	DANGEROUS
+Обращения к адресам из базы вредоносных серверов	Contacts with addresses from a malicious server database
+Одна странность — ещё не угроза: «опасно» ставится, только когда сходятся несколько улик. Всё, что ты сделаешь кнопками ниже, отменяется.	One oddity is not yet a threat: “dangerous” is set only when several clues add up. Everything you do with the buttons below can be undone.
+Она перестанет запускаться. Вернуть можно в «Приватность → Что изменил ScanHub».	It will stop launching. You can restore it in “Privacy → What ScanHub changed”.
+Опасная команда из интернета	Dangerous command from the internet
+Опасно ли это и что делать?	Is this dangerous and what should I do?
+Опасные исключения или выключенная защита Defender	Dangerous exclusions or Defender turned off
+Остановить процесс	Stop process
+Остановить процесс (PID	Stop process (PID
+Отключаю задачу… может появиться окно UAC	Disabling the task… a UAC window may appear
+Отключить автозапуск	Disable startup
+Отключить задачу	Disable task
+Отключить задачу Планировщика	Disable Task Scheduler task
+Охотник за майнерами	Miner Hunter
+ПОДОЗРИТЕЛЬНО	SUSPICIOUS
+Папка автозагрузки	Startup folder
+Переместить	Move
+Подделка под системную программу	Fake system program
+Подозрительное соединение	Suspicious connection
+Подозрительный автозапуск	Suspicious startup
+Показать в папке	Show in folder
+Постоянная защита Windows выключена	Windows real-time protection is off
+Похоже на программу для майнинга	Looks like a mining program
+Похоже, на этом компьютере выполнили команду с мошеннического сайта (поддельная «проверка, что вы не робот» или «исправление ошибки»). Такие команды ставят программы, которые крадут пароли и сессии из браузера.	It looks like a command from a scam site was run on this computer (a fake “verify you're not a robot” or “fix the error”). Such commands install programs that steal passwords and sessions from the browser.
+Почему так решил:	Why I decided so:
+Примерная дата:	Approximate date:
+Проверить файл всеми установленными антивирусами и онлайн	Check the file with all installed antivirus programs and online
+Проверить файл онлайн	Check the file online
+Проверяю процессы, автозагрузку, код программ…	Checking processes, startup, program code…
+Программа выдаёт себя за системную	The program pretends to be a system one
+Программа на компьютере связана с сервером, который известен как вредоносный или майнинговый.	A program on the computer is connected to a server known as malicious or mining-related.
+Программа называется как системная (или очень похоже), но находится не там, где положено. Это частый приём маскировки. Проверь её онлайн, прежде чем что-то делать.	The program is named like a system one (or very close), but sits where it shouldn't. This is a common disguise trick. Check it online before doing anything.
+Программа притворяется частью Windows — называется как системная, но лежит в чужой папке. Настоящие системные программы так не делают; это типичная маскировка вирусов.	The program pretends to be part of Windows — it's named like a system one but sits in a foreign folder. Real system programs don't do that; it's a typical virus disguise.
+Программа соединена с адресом из списка подозрительных. Списки иногда ошибаются, поэтому стоит проверить, что это за программа.	The program is connected to an address from a suspicious list. Lists are sometimes wrong, so it's worth checking what this program is.
+Реестр	Registry
+Связь с вредоносным сервером	Connection to a malicious server
+Сетевой след	Network trace
+Скрытый майнер	Hidden miner
+След заражения через поддельную «проверку»	Trace of infection through a fake “check”
+Служба (не авто)	Service (not auto)
+Убрать файл в Корзину	Move the file to the Recycle Bin
+Убрать файл в карантин (можно вернуть)	Move the file to quarantine (can be restored)
+Улики:	Clues:
+Упоминание майнинга	Mining mention
+Файл hosts перекрывает сайты защиты или обновлений	The hosts file overrides protection or update sites
+Файл:	File:
+Часть автозапуска (вход в Windows, перехват запуска, WMI-подписки) одной кнопкой не отключается — это системные места, ошибка там ломает Windows. Нажми «Спросить агента» у находки: он подскажет безопасный способ. Или запусти глубокую проверку и сторонние сканеры (Dr.Web CureIt, KVRT).	Part of startup (Windows sign-in, launch hijacking, WMI subscriptions) can't be disabled with one button — these are system places, and a mistake there breaks Windows. Press “Ask the agent” on the finding: it will suggest a safe way. Or run the deep scan and third-party scanners (Dr.Web CureIt, KVRT).
+Что делать: если не знаешь, что это, — проверь онлайн или отключи. Если знаешь и ставил сам — ничего.	What to do: if you don't know what it is, check it online or disable it. If you know it and installed it yourself, do nothing.
+Что делать: нажми предложенное действие ниже — ScanHub ничего не удаляет безвозвратно, всё можно вернуть.	What to do: press the suggested action below — ScanHub never deletes anything permanently, everything can be restored.
+Что делать: ничего, это просто к сведению.	What to do: nothing, it's just for your information.
+Что проверено:	What was checked:
+Что-то закрепилось в системе способом, которым пользуются вредоносные программы, чтобы запускаться при каждом включении и оставаться незаметными.	Something has dug itself into the system the way malicious programs do, to start on every boot and stay unnoticed.
+Эта запись запускается сама вместе с Windows необычным способом. Так делают и вредоносные программы, и некоторые обычные. Если не знаешь, что это, — лучше отключить (это обратимо).	This entry starts with Windows in an unusual way. Both malicious and some ordinary programs do this. If you don't know what it is, it's better to disable it (this can be undone).
+Эта команда скачивает код из интернета и сразу его запускает. Так работают и некоторые установщики, и мошеннические «проверки». Если вводил её не ты и не по инструкции, которой доверяешь, — считай опасной.	This command downloads code from the internet and runs it right away. Some installers work this way, and so do scam “checks”. If you didn't enter it, or not from instructions you trust, consider it dangerous.
+Это похоже на скрытый майнер: программа добывает криптовалюту для чужого человека за счёт твоего компьютера. Из-за неё компьютер греется, шумит и тормозит. Для файлов опасности нет, но её нужно убрать.	This looks like a hidden miner: the program mines cryptocurrency for someone else at the expense of your computer. It makes the computer hot, noisy and slow. Your files aren't in danger, but it needs to be removed.
+Это программа (или её части) для добычи криптовалюты. Если ты ставил майнер сам — всё в порядке, можно ничего не делать. Если нет — её стоит убрать: кто-то может зарабатывать на твоём компьютере.	This is a program (or parts of one) for mining cryptocurrency. If you installed the miner yourself, everything is fine and you can do nothing. If not, it's worth removing: someone may be earning money on your computer.
+автозагрузка	startup
+автозагрузка: список не получен	startup: list not received
+автозапуск из временной или общей папки	startup from a temporary or shared folder
+автозапуск:	startup:
+адрес известного установщика	address of a known installer
+адрес — голые цифры IP, а не имя сайта	the address is a bare IP number, not a site name
+библиотека встраивается во все программы (AppInit_DLLs)	a library is injected into all programs (AppInit_DLLs)
+быстрая	quick
+в Защитнике Windows есть исключения	Windows Defender has exclusions
+в Защитнике Windows опасное исключение или выключенная защита	Windows Defender has a dangerous exclusion or protection turned off
+в Корзину? Достать можно из Корзины Windows.	to the Recycle Bin? You can get it back from the Windows Recycle Bin.
+в карантин? Файл перестанет запускаться. Если это ложная тревога — верни его в «Защита от вирусов → Карантин».	to quarantine? The file will stop launching. If it's a false alarm, put it back in “Virus protection → Quarantine”.
+в команде выбран алгоритм добычи криптовалюты	the command selects a cryptocurrency mining algorithm
+в команде запуска указан адрес майнинг-пула	the launch command contains a mining pool address
+в команде запуска указан кошелёк криптовалюты	the launch command contains a cryptocurrency wallet
+в команде настройки, характерные для майнеров	the command has settings typical of miners
+в команде оболочки упоминается запуск майнера	the shell command mentions launching a miner
+в команде параметр --donate-level — он есть только у майнеров	the command has the --donate-level parameter — only miners have it
+в команде текст «я не робот» — приём мошеннических сайтов	the command contains the text “I'm not a robot” — a scam-site trick
+в настройках указан кошелёк или адрес пула	the settings contain a wallet or pool address
+в скрипте адрес сервера добычи криптовалюты	the script contains a crypto mining server address
+в скрипте выбран алгоритм добычи	the script selects a mining algorithm
+в скрипте параметр --donate-level — он есть только у майнеров	the script has the --donate-level parameter — only miners have it
+в скрипте указан кошелёк криптовалюты	the script contains a cryptocurrency wallet
+включена:	on:
+вместо одной программы Windows запускает другую (перехват запуска)	instead of one program, Windows launches another (launch hijacking)
+внутри файла упоминается майнинг	the file mentions mining inside
+внутри файла — код майнера (его не скрыть переименованием)	miner code inside the file (renaming can't hide it)
+время слоёв	layer time
+глубокая	deep
+глубокая проверка смотрит всё	the deep scan checks everything
+готово за	done in
+грузит компьютер только тогда, когда ты отходишь	loads the computer only when you step away
+держит одно постоянное соединение с интернетом	keeps one constant connection to the internet
+жду список автозагрузки…	waiting for the startup list…
+загружает библиотеку из папки пользователя	loads a library from the user folder
+задача Планировщика	Task Scheduler task
+задача планировщика выдаёт себя за задачу Microsoft	a Task Scheduler task pretends to be a Microsoft task
+запуск кода из интернета через mshta	runs code from the internet via mshta
+запускает код из интернета через системную утилиту	runs code from the internet via a system utility
+запускает код прямо из интернета через mshta	runs code straight from the internet via mshta
+запускает скрипт из папки пользователя или временной папки	runs a script from the user folder or a temporary folder
+запускается сама вместе с Windows	starts by itself with Windows
+запускается со скрытым окном	starts with a hidden window
+запускается через скрытую консоль	starts through a hidden console
+запущена в фоне, без окна	running in the background, without a window
+затихли дважды:	went quiet twice:
+защита Windows	Windows protection
+имя подделано под системную программу Windows	the name is faked to look like a Windows system program
+исключение через политики	exclusion through policies
+исключения Защитника Windows — нужны права администратора	Windows Defender exclusions — administrator rights needed
+история PowerShell	PowerShell history
+ищу следы опасных команд (окно «Выполнить», история PowerShell)…	looking for traces of dangerous commands (the Run window, PowerShell history)…
+к сведению:	for your information:
+когда сайт просит «нажми Win+R и вставь команду», скрытый автозапуск, выключенную защиту и связь с майнинг-пулами.	when a site asks you to “press Win+R and paste a command”, hidden startup, turned-off protection and connections to mining pools.
+код программ	program code
+команда зашифрована (Base64)	the command is encoded (Base64)
+команда зашифрована (Base64), чтобы её нельзя было прочитать	the command is encoded (Base64) so it can't be read
+команда отключает защиту Windows или добавляет исключения	the command turns off Windows protection or adds exclusions
+команда скачивает код из интернета и сразу выполняет	the command downloads code from the internet and runs it right away
+команда скачивает файл из интернета	the command downloads a file from the internet
+команда:	command:
+командную строку запустил документ Office — так работают вредоносные вложения	the command line was started by an Office document — malicious attachments work this way
+команду вставили в окно «Выполнить» (Win+R) — так делают по указке поддельных сайтов	the command was pasted into the Run window (Win+R) — fake sites tell people to do this
+компьютер недавно искал адрес майнинг-пула	the computer recently looked up a mining pool address
+компьютер недавно обращался к адресу из базы вредоносных серверов	the computer recently contacted an address from a malicious server database
+кошелёк	wallet
+кто-то затих — повторяю опыт, чтобы исключить совпадение…	someone went quiet — repeating the test to rule out coincidence…
+лежит в папке пользователя, а не там, куда ставятся программы	sits in the user folder, not where programs get installed
+называется как системная программа Windows, но лежит не в папке Windows	named like a Windows system program but not in the Windows folder
+найдено опасного:	dangerous found:
+настоящее имя:	real name:
+находки	findings
+не позже	no later than
+не получилось — окно UAC отменено или такой задачи уже нет	didn't work — the UAC window was cancelled or the task no longer exists
+не проверено:	not checked:
+нет программ с постоянной нагрузкой — опыт не нужен	no programs with constant load — the test isn't needed
+нет цифровой подписи издателя	no publisher's digital signature
+никто не затих	nobody went quiet
+окно «Выполнить» (Win+R)	the Run window (Win+R)
+окно спрятано	window hidden
+опасного не найдено; к сведению:	nothing dangerous found; for your information:
+опыт: на несколько секунд показываю «приманку» с именем Диспетчера задач — скрытные майнеры при нём затихают…	test: for a few seconds I show a “decoy” named like Task Manager — stealthy miners go quiet when it's open…
+отключена:	off:
+очки	points
+ошибки слоёв:	layer errors:
+папки пользователя	user folders
+перехвачен запуск системной или защитной программы	launch of a system or protection program was hijacked
+по истории наблюдений	from observation history
+поведение майнеров	miner behavior
+поведение программ (нагрузка, память) — не установлен модуль psutil	program behavior (load, memory) — the psutil module is not installed
+подменена системная программа экрана входа — так получают доступ без пароля	the sign-in screen's system program was replaced — this is how people get in without a password
+подменён запуск при входе в Windows	the startup at Windows sign-in was replaced
+подозрительного:	suspicious:
+подписан известным издателем	signed by a known publisher
+постоянная защита выключена, а другого антивируса нет	real-time protection is off and there is no other antivirus
+потоков, занято	threads, busy
+почти все её потоки заняты счётом	almost all its threads are busy computing
+при закрытии одной программы тайно запускается другая	when one program is closed, another secretly starts
+при этом почти не обращается к диску	and it barely touches the disk
+приманку запустить не удалось	couldn't start the decoy
+проверено программ под нагрузкой:	programs checked under load:
+проверка остановлена	scan stopped
+проверяю, что внутри запущенных программ (ищу код майнеров)…	checking what's inside running programs (looking for miner code)…
+программ на диске — не хватило времени, проверю в следующий раз	programs on disk — ran out of time, I'll check next time
+программа без окна сильно нагружает видеокарту	a program with no window heavily loads the graphics card
+программа перестаёт грузить компьютер, как только открывается Диспетчер задач, и продолжает, когда он закрыт	the program stops loading the computer as soon as Task Manager opens, and continues when it's closed
+программа подключается к серверу добычи криптовалюты	the program connects to a cryptocurrency mining server
+программа сейчас запущена	the program is running right now
+программа соединена с адресом из базы вредоносных серверов	the program is connected to an address from a malicious server database
+программа соединена с сервером майнинг-пула	the program is connected to a mining pool server
+пропущен: открыт Диспетчер задач или похожая программа	skipped: Task Manager or a similar program is open
+просматриваю папки, где прячутся майнеры…	browsing the folders where miners hide…
+процесс уже завершился, а его номер занял другой — ничего не трогаю	the process has already ended and its number was taken by another — touching nothing
+процессы	processes
+путь в исключениях Defender	path in Defender exclusions
+рядом лежат настройки или скрипт запуска майнера	miner settings or a launch script are nearby
+рядом лежит драйвер WinRing0 — майнеры ускоряют им добычу	the WinRing0 driver is nearby — miners use it to speed up mining
+сверяю соединения с базой вредоносных адресов (уже скачанной)…	comparing connections with the malicious address database (already downloaded)…
+свой сканер ScanHub — ничего не скачивает и ничего не удаляет сам	ScanHub's own scanner — downloads nothing and deletes nothing by itself
+свой сканер ScanHub: код файлов, маскировка, ClickFix, закрепление, поведение майнеров	ScanHub's own scanner: file code, disguise, ClickFix, persistence, miner behavior
+сейчас сильно нагружает процессор	currently loads the processor heavily
+секунд	seconds
+секции UPX0/UPX1	UPX0/UPX1 sections
+сеть	network
+сеть: данные не получены	network: data not received
+системный процесс svchost запущен не так, как его запускает Windows (признак подмены)	the system process svchost is started not the way Windows starts it (a sign of replacement)
+скачанное из интернета сразу передано в командную строку	something downloaded from the internet was passed straight to the command line
+скачать | командная строка	download | command line
+скачивает код из интернета и сразу его выполняет	downloads code from the internet and runs it right away
+скачивает файл системной утилитой, которой обычные программы так не пользуются	downloads a file with a system utility that ordinary programs don't use this way
+скачивание файла системной утилитой	file download with a system utility
+скрипт запускает добычу криптовалюты (в нём адрес пула)	the script starts cryptocurrency mining (it contains a pool address)
+скрипт из папки пользователя запускается скрытно	a script from the user folder starts quietly
+скрипт отключает защиту Windows или добавляет исключения	the script turns off Windows protection or adds exclusions
+скрипт прячет своё окно	the script hides its window
+скрипт скачивает код из интернета и сразу его запускает	the script downloads code from the internet and runs it right away
+скрытая программа держит в памяти около 2 ГБ — столько нужно для добычи Monero	a hidden program holds about 2 GB in memory — that's what Monero mining needs
+скрытая программа ровно и без пауз нагружает процессор	a hidden program loads the processor steadily and without pauses
+скрытные майнеры при нём затихают; закрой его и повтори проверку	stealthy miners go quiet when it's open; close it and repeat the scan
+скрытое окно	hidden window
+скрытый автозапуск через WMI — в обычном списке автозагрузки его не видно	hidden startup via WMI — not visible in the usual startup list
+скрытый автозапуск через WMI — нужны права администратора	hidden startup via WMI — administrator rights needed
+скрытых майнеров, следов стилеров и вредоносного автозапуска не найдено	no hidden miners, stealer traces or malicious startup found
+следы	traces
+следы ClickFix	ClickFix traces
+слежение за закрытием программы включено	watching for the program to close is on
+слои, с:	layers, s:
+служба Windows запускается из папки пользователя	a Windows service starts from the user folder
+смотрю запущенные программы и их команды…	looking at running programs and their commands…
+содержимое	contents
+соединение по порту, которым часто пользуются майнинг-пулы	connection on a port often used by mining pools
+статистика:	statistics:
+сценарий входа пользователя — редкий способ автозапуска	user logon script — a rare startup method
+у программы есть редкое право «блокировка страниц в памяти» — майнеры выдают его себе для скорости	the program has the rare “lock pages in memory” right — miners give it to themselves for speed
+узнаёт по коду внутри файла), программы, которые выдают себя за системные	it recognizes them by the code inside the file), programs that pose as system ones
+улики	clues
+файл hosts перекрывает сайты антивирусов или обновлений Windows	the hosts file overrides antivirus or Windows update sites
+файл переименован: в его свойствах записано другое имя	the file was renamed: its properties record a different name
+файл сжат упаковщиком UPX — так часто прячут содержимое	the file is compressed with the UPX packer — often used to hide contents
+файл спрятан от Защитника Windows (добавлен в исключения)	the file is hidden from Windows Defender (added to exclusions)
+фильтр	filter
+цифровая подпись повреждена или недействительна	the digital signature is damaged or invalid
+цифровая подпись цела	the digital signature is intact
+часть папок — не хватило времени	some folders — ran out of time
+это программа из папки Windows	this is a program from the Windows folder
+это файл настроек майнера	this is a miner's settings file
+этого процесса нет в последней проверке — запусти проверку ещё раз	this process isn't in the latest scan — run the scan again
