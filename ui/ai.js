@@ -34,6 +34,10 @@ const AI_ACT = {
   wu_drivers: {label: () => "Драйверы в Windows Update", ask: null},
   junk_clean: {label: a => `Очистить мусор (${String(a).split(",").filter(Boolean).length} кат.)`,
                ask: a => `Очистить мусор этих категорий: ${a}? Удаляются только временные файлы и кэши — то же, что кнопка «Очистить» в «Очистка и место».`},
+  // 2.5: драйвер из скачанного файла и служба Windows
+  install_driver: {label: a => `Поставить драйвер ${String(a).split("\\").pop()}`,
+                   ask: a => `Поставить драйвер из ${a}? ScanHub распакует его, проверит, что он для устройства с ошибкой, и поставит. Попросит права администратора. Вернуть: Диспетчер устройств → Свойства → Драйвер → «Откатить».`},
+  service_start: {label: a => `Включить службу ${a}`, ask: a => `Включить и запустить службу Windows «${a}»? Попросит права администратора; вернуть можно в «Приватность → Что изменил ScanHub».`},
 };
 function aiActions(src){
   const acts = [...String(src || "").matchAll(/\[\[действие:([a-z_]+)(?::([^\]]+))?\]\]/g)].map(m => ({id: m[1], arg: (m[2] || "").trim()})).filter(a => AI_ACT[a.id]);
@@ -56,6 +60,8 @@ async function aiDoAction(a){
     if (a.id === "restore_on") [name, args] = ["restore_enable", {}];
     if (a.id === "free_ram") [name, args] = ["mem_quick", {}];
     if (a.id === "junk_clean") [name, args] = ["junk_clean", {ids: a.arg.split(",").map(s => s.trim()).filter(Boolean)}];
+    if (a.id === "install_driver") [name, args] = ["driver_install", {path: a.arg}];
+    if (a.id === "service_start") [name, args] = ["service_set", {name: a.arg}];
     if (a.id === "startup_off") {
       const st = (await runTask("startup", undefined, true)).result || {};
       const it = (st.items || []).find(i => i.name.toLowerCase() === a.arg.toLowerCase()) || (st.items || []).find(i => i.name.toLowerCase().includes(a.arg.toLowerCase()));
@@ -64,7 +70,11 @@ async function aiDoAction(a){
     }
     const t = await runTask(name, args);
     if (t.status === "error") return toast("Не получилось", t.error, "bad");
-    toast("Готово", a.id === "disable_driver" ? "Драйвер отключён — перезагрузи компьютер, чтобы он выгрузился из памяти" : AI_ACT[a.id].label(a.arg), "ok", 8000);
+    // 2.5: задача кончилась, но сделать не вышло (драйвер не для этого устройства, UAC отменён, служба не запустилась) — не «Готово»
+    if (t.result && (t.result.ok === false || t.result.работает === false))
+      return toast("Не получилось", t.result.ошибка || t.result.итог || `служба ${t.result.служба || a.arg} не запустилась`, "warn", 12000);
+    toast("Готово", a.id === "disable_driver" ? "Драйвер отключён — перезагрузи компьютер, чтобы он выгрузился из памяти"
+      : a.id === "install_driver" ? (t.result?.итог || "Драйвер поставлен") : AI_ACT[a.id].label(a.arg), "ok", 8000);
     try { redrawPanels() } catch {}
   } catch (e) { toast("Не получилось", e.message, "bad") }
 }

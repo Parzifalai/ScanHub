@@ -1,0 +1,81 @@
+Bluetooth: звук	Bluetooth: audio
+ScanHub не включает — только службы обычных функций (звук, печать, Bluetooth, отпечаток…)	ScanHub doesn't turn this on — only services for everyday features (sound, printing, Bluetooth, fingerprint…)
+ScanHub распакует его, проверит, что он для устройства с ошибкой, и поставит. Попросит права администратора. Вернуть: Диспетчер устройств → Свойства → Драйвер → «Откатить».	ScanHub will unpack it, check that it's for the device with the error, and install it. It will ask for admin rights. To undo: Device Manager → Properties → Driver → "Roll Back".
+ScanHub ставит драйвер из .cab, .zip, .inf или папки с .inf	ScanHub installs a driver from a .cab, .zip, .inf or a folder with an .inf
+Автозапуск носителей	AutoPlay for drives
+Биометрическая служба (отпечаток, Windows Hello)	Biometric service (fingerprint, Windows Hello)
+Вернуть: Диспетчер устройств → это устройство → Свойства → Драйвер → «Откатить» (или «Удалить устройство» с галочкой «Удалить драйвер»).	To undo: Device Manager → this device → Properties → Driver → "Roll Back" (or "Uninstall device" with "Delete the driver" ticked).
+Включить и запустить службу Windows	Turn on and start the Windows service
+Включить службу	Turn on service
+Время Windows	Windows Time
+Геолокация	Location
+Датчики	Sensors
+Датчики (наблюдение)	Sensors (monitoring)
+Для служб Windows — действие service_start	For Windows services, use the service_start action
+Доступ к камере и микрофону	Camera and microphone access
+Драйвер поставлен	Driver installed
+Звук Windows	Windows Audio
+Звук: устройства воспроизведения	Audio: playback devices
+Камера: Frame Server	Camera: Frame Server
+Кнопки клавиатуры и мультимедиа	Keyboard and media keys
+Обновления Windows (оркестратор)	Windows Update (orchestrator)
+Печать	Printing
+Подключения к сетям	Network connections
+Поиск Windows	Windows Search
+Попросит права администратора; вернуть можно в «Приватность → Что изменил ScanHub».	It will ask for admin rights; you can undo it in "Privacy → What ScanHub changed".
+Поставить драйвер	Install driver
+Поставить драйвер из	Install the driver from
+Сенсорная клавиатура и перо	Touch keyboard and pen
+Сеть: DHCP	Network: DHCP
+Сеть: DNS	Network: DNS
+Сеть: обнаружение	Network: discovery
+Сеть: обнаружение устройств	Network: device discovery
+Сеть: определение сети	Network: location awareness
+Сеть: профили	Network: profiles
+Сканеры и камеры (WIA)	Scanners and cameras (WIA)
+Служба Windows	Windows service
+Сопряжение устройств	Device pairing
+Телефоны и плееры по USB	Phones and players over USB
+Темы оформления	Themes
+Установлен драйвер устройства	Device driver installed
+Фоновая загрузка (Windows Update)	Background download (Windows Update)
+архив больше 3 ГБ — на драйвер не похоже	the archive is over 3 GB — that doesn't look like a driver
+в этом файле нет драйвера (.inf) — это другой тип файла или архив неполный	there's no driver (.inf) in this file — it's a different kind of file or the archive is incomplete
+драйвер добавлен, но устройство всё ещё с ошибкой — скорее всего нужна другая версия драйвера	the driver was added, but the device still has an error — it most likely needs a different driver version
+драйвер не запустился	the driver didn't start
+драйвер поставлен, нужна перезагрузка — после неё проверь устройство	the driver is installed, a restart is needed — check the device after it
+драйвер поставлен, устройство заработало	the driver is installed and the device works
+драйверы	-
+если устройство не работает без ошибки в Диспетчере — дело не в драйвере	if the device doesn't work but shows no error in Device Manager, the driver isn't the problem
+заработало	-
+защиты	-
+имя	-
+ищу устройства заново	scanning for devices again
+класс	-
+найди драйвер по номеру устройства (ссылка «искать_тут») и скачай версию для Windows 11 / 10, x64	find the driver by the device ID (the search link) and download the version for Windows 11 / 10, x64
+не запустилась	didn't start
+не получилось распаковать .cab:	couldn't unpack the .cab:
+нет в списке ScanHub (есть:	isn't in ScanHub's list (available:
+нет на этом компьютере	isn't on this computer
+номер	-
+окно UAC отменено — без прав администратора драйвер не поставить	the UAC prompt was cancelled — the driver can't be installed without admin rights
+остановлена, как было:	stopped, as before:
+ошибка устройства	device error
+подходит	-
+проверь путь (инструменты find_files / file_info) — в Загрузках или в «Новая папка»	check the path (find_files / file_info tools) — in Downloads or in a "New folder"
+сейчас нет устройств с ошибкой драйвера — ставить нечего	there are no devices with a driver error right now — nothing to install
+службу	-
+службы	-
+совместимые	-
+состояние	-
+ставлю драйвер	installing the driver
+стало	-
+у драйвера нет действительной подписи	the driver has no valid signature
+устройство настроено неправильно — нужен другой драйвер	the device is set up wrong — it needs a different driver
+устройство отключено	the device is disabled
+устройство сообщило об ошибке	the device reported an error
+файл повреждён или это не архив	the file is damaged or isn't an archive
+файла или папки нет:	no such file or folder:
+часть устройств заработала	some of the devices now work
+это установщик (.exe/.msi), а не файл драйвера — его запускают двойным щелчком; перед запуском его можно проверить в ScanHub («Проверить файл»)	this is an installer (.exe/.msi), not a driver file — run it with a double-click; you can check it in ScanHub first ("Check file")
+этот драйвер не для твоих устройств с ошибкой — ставить его ScanHub не будет	this driver isn't for your devices with an error — ScanHub won't install it

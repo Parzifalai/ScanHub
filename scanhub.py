@@ -1819,6 +1819,9 @@ def _task_fn(name, args):
         "runtimes": lambda: {"items": diag.runtimes()},
         "driver_disable": lambda: _driver_toggle(str(args.get("service", "")), True, run_el),
         "driver_restore": lambda: _driver_toggle(str(args.get("service", "")), False, run_el),
+        # 2.5: драйвер из скачанного файла (только если он для устройства с ошибкой) и службы обычных функций — «Сделай сам» агента
+        "driver_install": lambda: __import__("drvfix").install(str(args.get("path", "")), run_el),
+        "service_set": lambda: __import__("drvfix").service_set(str(args.get("name", "")), run_el, str(args.get("mode", "")), bool(args.get("stop"))),
         "net_diag": lambda: __import__("netdiag").run(prog, speed=args.get("speed", True) is not False),
         "app_links": lambda: app_links(False),
         "app_links_create": lambda: app_links(True),
@@ -2110,6 +2113,7 @@ CHANGE_TASKS = {
     "shred": "Файлы уничтожены шредером", "restore_enable": "Включена защита системы", "restore_create": "Создана точка восстановления",
     "quarantine": "Файлы перемещены в карантин", "q_restore": "Файл возвращён из карантина", "q_delete": "Файл удалён из карантина навсегда",
     "app_links_create": "Созданы ярлыки ScanHub", "hunter_task_set": "Задача Планировщика",
+    "driver_install": "Установлен драйвер устройства", "service_set": "Служба Windows",
 }
 _flip = lambda a: not a.get("enable")
 UNDO = {
@@ -2125,10 +2129,12 @@ UNDO = {
     "memclean_set": ("memclean_set", lambda a, r: {"enable": _flip(a)}, None),
     "sensors_set": ("sensors_set", lambda a, r: {"enable": _flip(a)}, None),
     "hunter_task_set": ("hunter_task_set", lambda a, r: {"task": a.get("task"), "enable": _flip(a)}, None),
+    "service_set": ("service_set", lambda a, r: {"name": a.get("name"), "mode": (r or {}).get("было") or "demand", "stop": True}, None),
     "envpath_fix": ("@path", None, None), "shortcuts_remove": ("@shortcuts", None, None),
     "force_remove": ("@reg", None, None), "force_remove_many": ("@reg", None, None), "leftovers_remove": ("@reg", None, None),
 }
 HOW = {
+    "driver_install": "Вернуть: Диспетчер устройств → это устройство → Свойства → Драйвер → «Откатить» (или «Удалить устройство» с галочкой «Удалить драйвер»).",
     "uninstall": "Вернуть: поставь программу заново с её официального сайта.",
     "appx_remove": "Вернуть: найди приложение в Microsoft Store и установи снова.",
     "recycle": "Вернуть: открой Корзину Windows → правой кнопкой по файлу → «Восстановить».",
@@ -2157,6 +2163,8 @@ def _change_keys(name, a):
         return ["game"]
     if name in ("driver_disable", "driver_restore"):
         return [f"drv:{a.get('service')}"]
+    if name == "service_set":
+        return [f"svc:{str(a.get('name')).lower()}"]
     if name == "hunter_task_set":
         return [f"task:{a.get('task')}"]
     if name in ("hosts_set", "watch_set", "memclean_set", "sensors_set"):
@@ -2216,6 +2224,10 @@ def _change_items(name, a, r):
             return [os.path.basename(f.get("path", "")) for f in a.get("files", [])]
         if name == "ai_delete":
             return [d.get("path", "") for d in (r or {}).get("done", [])]
+        if name == "driver_install":
+            return list((r or {}).get("заработало") or []) or list((r or {}).get("драйверы") or [])
+        if name == "service_set":
+            return [("остановлена, как было: " if a.get("stop") else "включена: ") + str((r or {}).get("служба") or a.get("name"))]
     except Exception:
         pass
     return []
@@ -2225,13 +2237,15 @@ def journal_record(name, args, result, started):
     """Записать успешное изменение. Резервные копии, сделанные задачей, запоминаются для отмены."""
     if name not in CHANGE_TASKS:
         return
+    if isinstance(result, dict) and result.get("ok") is False:     # 2.5: драйвер не подошёл, UAC отменён — ничего не менялось
+        return
     t0 = time.mktime(time.strptime(started[:19], "%Y-%m-%dT%H:%M:%S")) - 2 if started else time.time() - 600
     backups = [p for p in glob.glob(os.path.join(DATA, "backups", "**", "*"), recursive=True)
                if os.path.isfile(p) and os.path.getmtime(p) >= t0]
     undo = UNDO.get(name)
     e = {"id": uuid.uuid4().hex[:10], "t": now(), "task": name, "title": CHANGE_TASKS[name], "items": _change_items(name, args, result)[:40],
          "keys": _change_keys(name, args), "args": args, "backups": backups[:60],
-         "result": {k: v for k, v in (result or {}).items() if k in ("backup", "names", "removed", "freed")} if isinstance(result, dict) else {},
+         "result": {k: v for k, v in (result or {}).items() if k in ("backup", "names", "removed", "freed", "было")} if isinstance(result, dict) else {},
          "undo": bool(undo), "how": HOW.get(name, "" if undo else IRREVERSIBLE)}
     if name == "shortcuts_remove" and not (result or {}).get("backup"):
         e["undo"] = False
@@ -2394,7 +2408,7 @@ def admin_console(what):
 # Агент (или модель по API) вызывает только действия из плана, который человек одобрил кнопкой. Здесь они идут через те же
 # задачи, что и кнопки окна: с проверкой «только найденное ScanHub», окном UAC, точкой отката и записью в журнал изменений.
 
-def _wait_task(name, args, timeout=900):
+def _wait_task(name, args, timeout=900, raw=False):
     t = start_task(name, args)
     t0 = time.time()
     while t.get("status") == "running" and time.time() - t0 < timeout:
@@ -2404,8 +2418,22 @@ def _wait_task(name, args, timeout=900):
         return {"ok": False, "ошибка": t.get("error")}
     if t.get("status") == "running":
         return {"ok": None, "итог": "ещё выполняется — ход видно в окне ScanHub"}
+    if raw:
+        return {"ok": True, "result": t.get("result")}
     res = json.dumps(t.get("result"), ensure_ascii=False, default=str)
     return {"ok": True, "итог": res[:1500]}
+
+
+def _task_json(r):
+    """Итог задачи для агента — как есть (ok/ошибка внутри результата), а не «ok: True» за сам факт, что задача кончилась."""
+    if r.get("ok") is not True:
+        return r
+    res = r.get("result")
+    if isinstance(res, dict):
+        if "ok" not in res:
+            res["ok"] = bool(res.get("работает", True))
+        return res
+    return r
 
 
 def agent_action(action, arg):
@@ -2429,7 +2457,18 @@ def agent_action(action, arg):
             return {"ok": False, "ошибка": f"в автозагрузке нет записи «{arg}»"}
         return _wait_task("startup_set", {"id": it["id"], "enable": False})
     if action == "security_on":
+        # 2.5: неизвестный id раньше молча «выполнялся» без единой команды, и агент сообщал «включено»
+        known = [t["id"] for t in tweaks.SECURITY]
+        if arg not in known:
+            return {"ok": False, "ошибка": f"защиты «{arg}» нет в списке ScanHub (есть: {', '.join(known)}). "
+                                           "Для служб Windows — действие service_start"}
         return _wait_task("security_apply", {"ids": [arg]})
+    if action == "install_driver":
+        r = _wait_task("driver_install", {"path": arg}, timeout=1200, raw=True)
+        return _task_json(r)
+    if action == "service_start":
+        r = _wait_task("service_set", {"name": arg}, timeout=300, raw=True)
+        return _task_json(r)
     if action == "restore_on":
         return _wait_task("restore_enable", {})
     if action == "free_ram":

@@ -19,7 +19,17 @@ The text of the newest version's section goes into the GitHub release descriptio
 - While the agent works you see a step timeline: a scene, the elapsed time and a "Stop" button on top, finished steps with a tick below, and the current step glowing. Repeated steps no longer show twice — they merge into "×2". The chat and the "Final verdict" after checks both look like this.
 - The words the agent searches for are now shown in quotes.
 
+**Agent: sees driver problems through to the end**
+- For a device with an error (say, a fingerprint reader with code 28) the agent takes its hardware ID (VID/PID) and links a Microsoft Update Catalog search for exactly that ID, instead of suggesting "the top one".
+- New "Install driver" action: ScanHub unpacks the downloaded .cab or .zip itself, checks the driver is for that device (it won't install someone else's), installs it with one UAC prompt and checks whether the error is gone. Undo with "Roll Back" in Device Manager.
+- New "Turn on service" action for everyday-feature services (fingerprint and Windows Hello, sound, printing, Bluetooth, Wi‑Fi and more), with undo in "What ScanHub changed".
+- The agent finds recently downloaded drivers in Downloads (and in a "New folder") itself, and if one fits, the install button shows up even if the model forgot it.
+- Ready-made commands use the real file path — no "<user>" placeholder or made-up name. The install button only points at a file that actually exists.
+- More honest: "done" only after a check; common errors (expand "destination required", "can't open source file", no .inf) are read from the actual error text. Follow-up replies skip the "In short / What it is" headings and go straight to the next step.
+
 **Fixes**
+- "Turn on protection" with an unknown name (the agent passed the WbioSrvc service that way) silently did nothing while the agent reported "turned on". Now it's an honest refusal.
+- The agent recognises questions about ".sys" driver files again (a pattern bug since 1.0.0).
 - The “PC is busy while you're away” alert no longer goes silent after about 25 days of Windows uptime without a restart.
 
 ## 2.4.0
