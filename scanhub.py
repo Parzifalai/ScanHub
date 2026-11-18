@@ -730,10 +730,16 @@ def _minersearch_verdict(t0, job):
         logs = sorted((p for p in glob.glob(os.path.join(deepscan.MS_LOGS, "MinerSearch_*.log")) if os.path.getmtime(p) >= t0 - 5),
                       key=os.path.getmtime)
         if not logs:
-            return None
+            why = deepscan.minersearch_why_not(job["lines"])
+            job["lines"] += ["", why + " — отчёт не появился."]
+            return ["error", why]
         raw = open(logs[-1], "rb").read()
         r = deepscan.parse_minersearch(raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8", "replace"))
         job["report"] = logs[-1]
+        if not r["complete"] and not r["threats"]:
+            why = deepscan.minersearch_why_not(job["lines"])
+            job["lines"] += ["", f"{why}. Отчёт пустой или оборван: {logs[-1]}"]
+            return ["error", why]
         job["lines"] += ["", f"Отчёт MinerSearch: {logs[-1]}"] + [f"⚠ {t}" for t in r["threats"][:20]] + [f"• {t}" for t in r["warn"][:10]]
         if r["threats"]:
             return ["threat", f"Найдено угроз: {len(r['threats'])}"]
@@ -2574,9 +2580,15 @@ def agent_check(kind, wait=240):
             started = datetime.fromisoformat(job["started"]).timestamp() if isinstance(job.get("started"), str) else t0
             logs = sorted((p for p in glob.glob(os.path.join(deepscan.MS_LOGS, "MinerSearch_*.log")) if os.path.getmtime(p) >= started - 5),
                           key=os.path.getmtime)
+            r = None
             if logs:
                 raw = open(logs[-1], "rb").read()
                 r = deepscan.parse_minersearch(raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8", "replace"))
+            if not r or (not r["complete"] and not r["threats"]):
+                # 2.5.1: пустой отчёт — проверки НЕ было; нельзя говорить человеку «чисто»
+                out.update(готово=False, ошибка=deepscan.minersearch_why_not(job.get("lines")),
+                           важно="проверка майнеров НЕ состоялась — не говори, что компьютер чист; объясни причину и предложи запустить снова")
+            else:
                 out.update(угрозы=r["threats"][:15], предупреждения=r["warn"][:10],
                            мелкие_пометки_не_угрозы={k: len(v) for k, v in r["minor"].items()}, отчёт=logs[-1])
                 out.pop("конец_журнала", None)

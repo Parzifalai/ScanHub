@@ -8,6 +8,7 @@ The text of the newest version's section goes into the GitHub release descriptio
 
 **Fixes**
 - MinerSearch miner search ("Find only" and when the agent asks for it) runs without its own window: no program window and no update question. ScanHub waits for the scan to finish and shows the result from its report ("No miners found" / "Threats found: N").
+- MinerSearch no longer reports "No miners found" when the scan never happened, for example when it closed at once because a previous scan's window was still open and its report stayed empty. ScanHub now shows the reason ("MinerSearch is already open — close it and run again"), and the agent won't say the PC is clean.
 - Before a scan the agent asks for, ScanHub updates the scanner itself if a new version is out.
 - The agent no longer wanders through MinerSearch folders for 15 minutes waiting for the report: the run used to count as finished as soon as the window opened.
 - Antigravity: "subscription limit reached" is no longer shown when an answer was stopped by time or step count — it now says so. The real error text goes into the error log.

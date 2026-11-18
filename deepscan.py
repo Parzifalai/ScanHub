@@ -106,7 +106,20 @@ def parse_minersearch(text):
         else:
             kind = next((k for k in MS_MINOR if body.startswith(k)), None)
             minor.setdefault(kind or body.split(" ")[0], []).append(body[:300])
-    return {"threats": threats, "warn": warn, "minor": minor}
+    # 2.5.1: проверка дошла до конца, только если в отчёте есть итог. Пустой отчёт (MinerSearch закрылся сразу —
+    # «другая копия уже запущена») раньше читался как «майнеров нет»
+    done = bool(_re.search(r"Время сканирования|Найдено угроз:\s*\[|Анализ заверш", text))
+    return {"threats": threats, "warn": warn, "minor": minor, "complete": done}
+
+
+def minersearch_why_not(lines):
+    """Почему MinerSearch не проверил — понятным текстом по его выводу."""
+    out = "\n".join(str(l) for l in lines or ())
+    if "Другая копия" in out or "already running" in out.lower():
+        return "MinerSearch уже открыт (осталось окно прошлой проверки) — закрой его и запусти поиск снова"
+    if "перезагруз" in out.lower() or "reboot" in out.lower():
+        return "MinerSearch просит сначала перезагрузить компьютер"
+    return "MinerSearch закрылся, не закончив проверку"
 
 
 # ---------------------------------------------------------------- помощник с правами администратора (ультра проверка)
@@ -1202,6 +1215,12 @@ class DeepScan:
         raw = open(logs[-1], "rb").read()
         text = raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8", "replace")
         r = parse_minersearch(text)
+        if not r["complete"] and not r["threats"]:
+            run = res[0] if res else {}
+            why = minersearch_why_not([run.get("out") or run.get("error") or ""])
+            self.emit(f"  {why} · отчёт {logs[-1]}")
+            s.update(problem=why + " — поиск майнеров сделан только встроенными средствами", fix={"run": ["minersearch", "scanonly"]})
+            return None
         self.emit(f"  MinerSearch: угроз {len(r['threats'])}, предупреждений {len(r['warn'])}, мелких пометок {sum(len(v) for v in r['minor'].values())} · отчёт {logs[-1]}")
         for t in r["threats"][:15]:
             s["findings"].append("⚠ MinerSearch: " + t)
