@@ -63,7 +63,7 @@ function aiHistList(){
     const g = c.pin ? "Закреплённые" : aiChatGroup(c.updated);
     if (g !== last) { html += `<div class="ai-hist-g">${esc(g)}</div>`; last = g }
     html += `<div class="ai-hist-it${c.id === AI.chatId ? " on" : ""}" data-id="${esc(c.id)}">
-      <button class="ai-hist-open" type="button" data-ai-chat="${esc(c.id)}" title="${esc(c.title)}">${c.ctx ? `<span class="ai-hist-ctx" title="Разговор о проверке">✦</span>` : ""}<span class="t">${esc(c.title)}</span></button>
+      <button class="ai-hist-open" type="button" data-ai-chat="${esc(c.id)}">${c.ctx ? `<span class="ai-hist-ctx" title="Разговор о проверке">✦</span>` : ""}<span class="t">${esc(c.title)}</span></button>
       <span class="ai-hist-acts"><button class="ai-ib" type="button" data-ai-chat-pin="${esc(c.id)}" title="${c.pin ? "Открепить" : "Закрепить сверху"}" aria-label="${c.pin ? "Открепить" : "Закрепить"}"${c.pin ? ' class="on"' : ""}>${AI_PIN}</button>
         <button class="ai-ib" type="button" data-ai-chat-ren="${esc(c.id)}" title="Переименовать" aria-label="Переименовать">${AI_PEN}</button>
         <button class="ai-ib" type="button" data-ai-chat-del="${esc(c.id)}" title="Удалить чат" aria-label="Удалить чат">${AI_BIN}</button></span></div>`;
@@ -206,3 +206,11 @@ document.addEventListener("click", async e => {
   catch { const t = document.createElement("textarea"); t.value = code; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove() }
   b.textContent = "Скопировано ✓"; setTimeout(() => { b.textContent = "Копировать" }, 1600);
 }, true);
+
+// 2.5: полное название чата подсказкой — только если оно не поместилось (иначе подсказка дублировала строку)
+document.addEventListener("mouseover", e => {
+  const b = e.target.closest?.(".ai-hist-open");
+  if (!b) return;
+  const t = b.querySelector(".t");
+  if (t && t.scrollWidth > t.clientWidth + 1) b.title = t.textContent; else b.removeAttribute("title");
+});

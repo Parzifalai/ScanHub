@@ -1837,7 +1837,10 @@ body.ai-full.in-host .ai-head{padding-right:158px}
 
 /* ---------- 2.4: история чатов агента — колонка слева на всё окно, список поверх разговора панелью сбоку */
 .ai-panel{--hw:260px}
-.ai-hist{display:flex;flex-direction:column;min-height:0;background:rgba(6,10,26,.42)}
+.ai-hist{display:flex;flex-direction:column;min-height:0;background:rgba(6,10,26,.42);box-sizing:border-box;overflow:hidden}
+/* 2.5: длинное название чата растягивало строки и поиск шире колонки — при наведении строка вылезала за край */
+.ai-hist > *{min-width:0;max-width:100%;box-sizing:border-box}
+.ai-hist-list{overflow-x:hidden}
 .ai-hist[hidden]{display:none}
 .ai-panel.hist-col{padding-left:var(--hw)}
 .ai-panel.hist-col .ai-hist{position:absolute;left:0;top:0;bottom:0;width:var(--hw);border-right:1px solid var(--glass-line);animation:histIn .32s var(--ease) both}
