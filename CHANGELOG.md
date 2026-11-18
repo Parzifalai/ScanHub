@@ -31,6 +31,12 @@ The text of the newest version's section goes into the GitHub release descriptio
 - Ready-made commands use the real file path — no "<user>" placeholder or made-up name. The install button only points at a file that actually exists.
 - More honest: "done" only after a check; common errors (expand "destination required", "can't open source file", no .inf) are read from the actual error text. Follow-up replies skip the "In short / What it is" headings and go straight to the next step.
 
+**Small things**
+- Agent replies show a small agent orb instead of a line on the left; the progress card has no line.
+- "Miner Hunter" shows its own icon (a crosshair with a crystal) instead of "?" before the first check.
+- Miner Hunter finding cards no longer have broken shadows.
+- In chat history a long title no longer spills out of the column, and the full-title tooltip only appears when it's cut off.
+
 **Fixes**
 - "Turn on protection" with an unknown name (the agent passed the WbioSrvc service that way) silently did nothing while the agent reported "turned on". Now it's an honest refusal.
 - The agent recognises questions about ".sys" driver files again (a pattern bug since 1.0.0).
