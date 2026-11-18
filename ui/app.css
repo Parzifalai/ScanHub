@@ -1453,7 +1453,11 @@ button.hs-go:hover{color:var(--accent2);background:rgba(122,156,255,.05)}
 /* сообщения: свои — пузырём справа, ответы помощника — текстом с линией слева, без коробки */
 .ai-msg{border-radius:0;padding:0;line-height:1.55;font-size:14px}
 .ai-u{align-self:flex-end;max-width:85%;background:var(--accent);color:#fff;padding:9px 13px;border-radius:16px 16px 4px 16px}
-.ai-a{background:none;padding:2px 0 2px 14px;border-left:2px solid color-mix(in srgb,var(--accent2) 55%,transparent)}
+/* 2.5: вместо линии слева — маленький шарик агента у начала ответа (как в шапке панели): видно, кто говорит, без полосы вдоль текста */
+.ai-a{background:none;padding:1px 0 2px 34px;position:relative}
+.ai-a::before{content:"";position:absolute;left:0;top:1px;width:20px;height:20px;border-radius:50%;background:var(--orb);
+  box-shadow:0 0 10px rgba(120,120,255,.45),inset 0 -2px 4px rgba(10,20,80,.5)}
+.ai-msg.ai-run::before{content:none}
 .ai-a strong{color:#fff}
 .ai-a a{color:var(--accent2)}
 .ai-err{background:var(--bad-bg);color:var(--bad);padding:9px 12px;border-radius:12px}
