@@ -1187,6 +1187,14 @@ const hKey = (name, args) => name + JSON.stringify(args);
 const H_LAYERS = [["процессы", ["processes", "processes_list"]], ["код программ", ["fingerprint_running", "fingerprint_autoruns", "fingerprint_disk"]],
   ["папки пользователя", ["disk"]], ["автозагрузка", ["persistence", "registry"]], ["следы ClickFix", ["traces"]], ["защита Windows", ["defense"]],
   ["сеть", ["network_score", "intel"]], ["поведение майнеров", ["physics"]]];
+// 2.5: значок Охотника до первой проверки — прицел, в центре кристалл (то, что добывают майнеры); кольцо медленно «ищет»
+const HUNT_ICON = `<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" class="hunt-svg">
+  <g class="hunt-ring" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+    <path d="M16 4.5a11.5 11.5 0 0 1 11.5 11.5M27.5 16A11.5 11.5 0 0 1 16 27.5M16 27.5A11.5 11.5 0 0 1 4.5 16M4.5 16A11.5 11.5 0 0 1 16 4.5" stroke-dasharray="14 4.1"/></g>
+  <path d="M16 1.5v5M16 25.5v5M1.5 16h5M25.5 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+  <path class="hunt-gem" d="M16 10.5l4.6 4.3-4.6 6.7-4.6-6.7z" fill="var(--accent2)"/>
+  <path d="M11.4 14.8h9.2M16 10.5l-1.6 4.3 1.6 6.7 1.6-6.7z" fill="none" stroke="rgba(255,255,255,.55)" stroke-width=".8" stroke-linejoin="round"/></svg>`;
+
 function hunterBtn(f, a){
   const done = (name, args, label, extra = "") => {
     const ok = HDONE.has(hKey(name, args));
@@ -1252,7 +1260,7 @@ function pHunter(dev){
   return pnl(`<div class="hhead">
       ${V ? `<div class="hverdict hv-${V.cls}"><span class="hv-ic">${V.ic}</span><div><h3>${V.h}</h3><div class="sub">${V.s}</div>
         <div class="sub hv-meta">Проверено ${esc(hWhen(r.at || t.finished))} · ${mode === "deep" ? "глубокая" : "быстрая"} проверка · ${hDur(r.took)}${admin ? " · с правами администратора" : ""}</div></div></div>`
-        : `<div class="hverdict"><span class="hv-ic">${run ? '<div class="spin" style="width:20px;height:20px;border-width:2px"></div>' : "?"}</span><div><h3>${run ? "Ищу…" : "Охотник за майнерами"}</h3>
+        : `<div class="hverdict"><span class="hv-ic${run ? "" : " hv-hunt"}">${run ? '<div class="spin" style="width:20px;height:20px;border-width:2px"></div>' : HUNT_ICON}</span><div><h3>${run ? "Ищу…" : "Охотник за майнерами"}</h3>
           <div class="sub">${run ? (mode === "deep" ? "Глубокая проверка: диск, код программ, поведение — 2–4 минуты." : "Процессы, автозагрузка, код программ, следы команд — около 20 секунд.")
             : "Свой сканер ScanHub: находит скрытые майнеры и следы вирусов. Ничего не скачивает и ничего не удаляет сам."}</div></div></div>`}
       <div class="hbtns">${scanBtn("quick", "Быстрая · 20 с")}${scanBtn("deep", "Глубокая · 2–4 мин")}</div></div>

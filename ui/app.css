@@ -2041,3 +2041,9 @@ body.ai-full.in-host .ai-head{padding-right:158px}
 .errc-btns .ghost{background:transparent;border-color:transparent;color:var(--muted)}
 .errc-auto{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);cursor:pointer;width:max-content;max-width:100%}
 @media (max-width:560px){.errc{padding:14px}.errc-ic{display:none}}
+/* 2.5: значок Охотника до первой проверки — прицел с кристаллом */
+.hv-ic.hv-hunt{color:var(--accent2);background:radial-gradient(circle at 50% 45%,rgba(91,140,255,.22),var(--panel3) 70%);box-shadow:inset 0 0 0 1px rgba(122,156,255,.22)}
+.hunt-ring{transform-origin:16px 16px;animation:huntSpin 14s linear infinite}
+.hunt-gem{filter:drop-shadow(0 0 4px rgba(91,140,255,.8))}
+@keyframes huntSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.hunt-ring{animation:none}}
