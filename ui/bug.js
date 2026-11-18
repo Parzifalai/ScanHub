@@ -204,3 +204,58 @@ async function repliesOpen(){
   if (REPLIES.unread) { await repliesLoad("read"); REPLIES_SEEN = 0 }
 }
 document.addEventListener("click", e => { if (e.target.closest("[data-replies]")) { e.preventDefault(); repliesOpen() } });
+
+// ---------- 2.5: свои ошибки ScanHub → автору. Карточка на «Главной», пока есть неотправленные (в том числе случившиеся до
+// открытия окна и в прошлые запуски). Одинаковые склеены, отправленное не повторяется, «Не сейчас» — на 3 дня или до новой.
+let ERRC = null;
+async function errCardLoad(){
+  try { ERRC = await api("/api/errors/pending") } catch { ERRC = null }
+  errCardPaint();
+}
+function errCardPaint(){
+  const el = document.getElementById("errCard");
+  if (!el) return;
+  const g = ERRC?.groups || [];
+  if (!g.length || ERRC.auto) { el.innerHTML = ""; return }
+  const total = g.reduce((s, x) => s + x.count, 0);
+  const since = ERRC.since ? new Date(ERRC.since).toLocaleDateString(LOC, {day: "numeric", month: "long"}) : "";
+  const kinds = g.length === 1 ? "1 ошибку" : g.length < 5 ? `${g.length} ошибки` : `${g.length} ошибок`;
+  el.innerHTML = `<section class="errc" aria-label="Ошибки ScanHub">
+    <div class="errc-ic" aria-hidden="true">!</div>
+    <div class="errc-main">
+      <b>ScanHub записал ${kinds} в своей работе</b>
+      <p class="sub">${since ? `С ${esc(since)}` : "Недавно"}, всего раз: ${total}. Это сбои самого ScanHub, а не твоего компьютера. Отправь их автору — он сможет их исправить. Уйдёт только где и что сломалось, без имени, путей, файлов и ключей.</p>
+      <ul class="errc-list">${g.slice(0, 3).map(x => `<li><span>${esc(x.where)}</span> — ${esc(x.msg.length > 110 ? x.msg.slice(0, 110) + "…" : x.msg)}${x.count > 1 ? ` <span class="errc-n">×${x.count}</span>` : ""}</li>`).join("")}${g.length > 3 ? `<li class="sub">и ещё ${g.length - 3}</li>` : ""}</ul>
+      <div class="errc-btns"><button class="primary small" data-errc="send">Отправить автору</button>
+        <button class="small" data-errc="preview">Что уйдёт</button>
+        <button class="small ghost" data-errc="later">Не сейчас</button></div>
+      <label class="errc-auto"><input type="checkbox" data-errc="auto"> Дальше отправлять такие ошибки сами</label>
+    </div></section>`;
+}
+async function errCardSend(){
+  const b = document.querySelector('[data-errc="send"]');
+  if (b) { b.disabled = true; b.textContent = "Отправляю…" }
+  try {
+    const r = await api("/api/errors/report", {action: "send"});
+    toast("Ошибки отправлены автору — спасибо!", r.sent ? `Видов ошибок: ${r.sent}. Ответ автора появится в «Написать автору → Мои сообщения».` : "", "ok", 8000);
+  } catch (e) { toast("Не отправилось", e.message + ". Попробуй позже или «Написать автору» → «Скопировать отчёт».", "warn", 12000) }
+  errCardLoad();
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-errc]");
+  if (!b || b.tagName === "INPUT") return;
+  const a = b.dataset.errc;
+  if (a === "send") return errCardSend();
+  if (a === "later") { await api("/api/errors/report", {action: "later"}).catch(() => {}); return errCardLoad() }
+  if (a === "preview") {
+    const r = await api("/api/errors/report", {action: "preview"}).catch(() => ({text: ""}));
+    if (await modal({title: "Что уйдёт автору", body: "Ровно этот текст. Имя, пути, почта и ключи уже скрыты.", copy: r.text, ok: "Отправить", cancel: "Закрыть", icon: "i", wide: true}))
+      errCardSend();
+  }
+});
+document.addEventListener("change", async e => {
+  if (e.target.dataset?.errc !== "auto") return;
+  await api("/api/errors/report", {action: "auto", on: e.target.checked}).catch(() => {});
+  if (e.target.checked) await errCardSend();          // эти отправляем сразу, дальше — сам; выключить — ⚙ Настройки
+});
+setTimeout(errCardLoad, 4000); setInterval(errCardLoad, 120000);

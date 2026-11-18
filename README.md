@@ -87,10 +87,11 @@ Optional:
 | Nothing about the phone, only tool downloads: Google Platform Tools (if adb is not installed yet) and the list of stalkerware apps | dl.google.com, GitHub | during a phone check; hashes of apps not from a store go to VirusTotal if you entered a key |
 | An anonymous “ScanHub ran today” ping: random copy id, version, language, Windows build number | the ScanHub author (Cloudflare Worker) | once a day, **only if you agreed** (card on the home screen or ⚙ Settings) |
 | An error report or an idea: only what you saw in the window before sending; the ScanHub error log only if you tick the box | the ScanHub author on Telegram (through a Cloudflare Worker) | on “Bug or idea?” → “Send” |
+| ScanHub's own errors: where and what broke, how many times (no name, paths, files or keys; “What will be sent” shows it) | the ScanHub author on Telegram (through a Cloudflare Worker) | on “Send to the author” in the card on “Home”; automatically **only if you turned on** “Send ScanHub errors to the author automatically”, at most every 6 hours |
 | The ids of your messages to the author and the secrets for them, to fetch the author's reply | the ScanHub author (Cloudflare Worker) | every half hour while ScanHub is open, and only if you wrote to the author |
 | The AI agent's search queries (a program name, an error code; no paths or user name) and the pages it reads | DuckDuckGo or Bing, sites from the results; the winget catalog | only if internet access is enabled in the agent settings and the agent needs a reference |
 
-ScanHub sends nothing else anywhere: no ads, no accounts, no hidden analytics. The launch counter works only if you agreed to it, and an error report goes out only when you press “Send”. History, logs and settings are stored only on your computer, in the `data` folder (API keys are encrypted by Windows for your account). To clear history and logs: ⚙ Settings → “Clear scan history and logs”.
+ScanHub sends nothing else anywhere: no ads, no accounts, no hidden analytics. The launch counter works only if you agreed to it, and an error report goes out only when you press “Send” (or turned on automatic sending of ScanHub's own errors). History, logs and settings are stored only on your computer, in the `data` folder (API keys are encrypted by Windows for your account). To clear history and logs: ⚙ Settings → “Clear scan history and logs”.
 
 ## Uninstalling
 

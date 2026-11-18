@@ -1,0 +1,25 @@
+1 ошибку	1 error
+ScanHub записал	ScanHub logged
+Автоотчёт	-
+Видов ошибок:	Kinds of errors:
+Главная → ошибки ScanHub	-
+Дальше отправлять такие ошибки сами	Send errors like these automatically from now on
+Если в работе самого ScanHub что-то сломается, он сам отправит автору, где и что (не чаще раза в 6 часов, каждую ошибку — один раз). Без имени, путей, файлов и ключей. Выключено — ScanHub только предложит отправить карточкой на «Главной».	If something breaks inside ScanHub itself, it sends the author where and what (at most every 6 hours, each error once). No name, paths, files or keys. When off, ScanHub only offers to send them with a card on "Home".
+Не отправилось	Didn't send
+Не сейчас	Not now
+Недавно	Recently
+Ответ автора появится в «Написать автору → Мои сообщения».	The author's reply will show up in "Write to the author → My messages".
+Отправить автору	Send to the author
+Отправлять ошибки ScanHub автору сами	Send ScanHub errors to the author automatically
+Отчёт по кнопке	-
+Ошибки отправлены автору — спасибо!	Errors sent to the author — thank you!
+Попробуй позже или «Написать автору» → «Скопировать отчёт».	Try again later, or "Write to the author" → "Copy report".
+Ровно этот текст. Имя, пути, почта и ключи уже скрыты.	Exactly this text. Your name, paths, email and keys are already hidden.
+Что уйдёт	What will be sent
+Это сбои самого ScanHub, а не твоего компьютера. Отправь их автору — он сможет их исправить. Уйдёт только где и что сломалось, без имени, путей, файлов и ключей.	These are failures of ScanHub itself, not of your computer. Send them to the author so they can be fixed. Only where and what broke is sent — no name, paths, files or keys.
+автоотчёт об ошибках	-
+в своей работе	in its own work
+всего раз:	times in total:
+об ошибках ScanHub: видов	-
+ошибки	errors
+ошибок	errors

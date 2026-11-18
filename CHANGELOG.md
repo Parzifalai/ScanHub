@@ -19,6 +19,10 @@ The text of the newest version's section goes into the GitHub release descriptio
 - While the agent works you see a step timeline: a scene, the elapsed time and a "Stop" button on top, finished steps with a tick below, and the current step glowing. Repeated steps no longer show twice — they merge into "×2". The chat and the "Final verdict" after checks both look like this.
 - The words the agent searches for are now shown in quotes.
 
+**ScanHub's own errors go to the author**
+- If something breaks inside ScanHub (even before the window opens, or in earlier runs), a card appears on "Home": what broke and how often, with "Send to the author", "What will be sent" and "Not now". Identical errors are merged, anything already sent isn't offered again, and "Not now" hides the card for 3 days or until a new kind of error shows up.
+- A "Send ScanHub errors to the author automatically" option (in the card and in ⚙ Settings, off by default): at most every 6 hours, each error once. Only where and what broke is sent — no name, paths, files or keys.
+
 **Agent: sees driver problems through to the end**
 - For a device with an error (say, a fingerprint reader with code 28) the agent takes its hardware ID (VID/PID) and links a Microsoft Update Catalog search for exactly that ID, instead of suggesting "the top one".
 - New "Install driver" action: ScanHub unpacks the downloaded .cab or .zip itself, checks the driver is for that device (it won't install someone else's), installs it with one UAC prompt and checks whether the error is gone. Undo with "Roll Back" in Device Manager.

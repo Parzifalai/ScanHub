@@ -42,6 +42,7 @@
       <div id="sRes"></div>
       <div class="ultra-cta" id="ultraCta"></div>
       <div id="todo"></div>
+      <div id="errCard"></div>
       <div>
         <div class="sec-row"><h2 class="sec"><span data-ic="quick"></span>Быстрые действия</h2><div class="grow"></div><a id="qaMore" aria-expanded="false">Все быстрые действия</a></div>
         <!-- четыре самых частых — крупно; остальные раскрываются ссылкой «Все быстрые действия» -->
@@ -182,6 +183,8 @@
     </label>
     <label class="switch"><input type="checkbox" name="usage_ping"> <span>Анонимная статистика запусков
       <span class="hint" style="display:block">Раз в день сообщать автору, что ScanHub запущен: случайный номер этой копии, версия, язык и номер сборки Windows. Без имён, файлов и находок. Так автор узнаёт, сколько людей пользуется ScanHub.</span></span></label>
+    <label class="switch"><input type="checkbox" name="errors_auto"> <span>Отправлять ошибки ScanHub автору сами
+      <span class="hint" style="display:block">Если в работе самого ScanHub что-то сломается, он сам отправит автору, где и что (не чаще раза в 6 часов, каждую ошибку — один раз). Без имени, путей, файлов и ключей. Выключено — ScanHub только предложит отправить карточкой на «Главной».</span></span></label>
     <label class="switch"><input type="checkbox" name="ctx_menu"> <span>Пункт «Проверить в ScanHub» в меню правой кнопки мыши
       <span class="hint" style="display:block">Скачал программу — нажми по ней правой кнопкой → «Проверить в ScanHub», и до запуска увидишь, можно ли её открывать. Включён по умолчанию. В Windows 11 пункт — в «Показать дополнительные параметры» (или сразу: Shift + правая кнопка). Только для твоей учётной записи, без прав администратора.</span></span></label>
     <fieldset class="limits"><legend>Проверка папок и программ</legend>

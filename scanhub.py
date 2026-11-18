@@ -2985,6 +2985,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self.send(200, self_update(q.get("force") == "1"))
         if u.path == "/api/errors":                  # сколько ошибок ScanHub записано с запуска (окно предлагает отчёт)
             return self.send(200, dict(report.NEW))
+        if u.path == "/api/errors/pending":          # 2.5: неотправленные автору ошибки — карточка на «Главной»
+            return self.send(200, {**report.pending(), "auto": bool(config().get("errors_auto"))})
         last_ping = time.time()
         if WATCHER:
             WATCHER.keep_alive()
@@ -3058,7 +3060,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                                    "metadefender_key": bool(c["metadefender_key"]), "hybrid_key": bool(c["hybrid_key"]),
                                    "github_token": bool(c["github_token"]), "alerts_on": bool(c.get("alerts_on", True)),
                                    "check_every_hours": c["check_every_hours"], "vt_files": c["vt_files"], "fs_files": c["fs_files"],
-                                   "smart_mb": c["smart_mb"], "folder_full": bool(c["folder_full"]), "ctx_menu": ctxmenu_on()})
+                                   "smart_mb": c["smart_mb"], "folder_full": bool(c["folder_full"]), "ctx_menu": ctxmenu_on(), "errors_auto": bool(c.get("errors_auto"))})
         if u.path == "/api/log":
             h = next((x for x in load_json(HISTORY_FILE, []) if x["id"] == q.get("id")), None)
             if not h or not os.path.exists(h["log"]):
@@ -3132,6 +3134,24 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 if body.get("action") == "read":
                     return self.send(200, report.replies_read())
                 return self.send(200, report.replies_view())
+            if p == "/api/errors/report":
+                # 2.5: свои ошибки — автору: preview (что уйдёт) / send / later («Не сейчас») / auto (галочка «отправлять сами»)
+                act = body.get("action")
+                keys = [str(k) for k in body.get("keys") or []] or None
+                if act == "preview":
+                    rep, _ = report.errors_report(VERSION, config(), keys)
+                    return self.send(200, {"text": report.preview_text(rep) if rep else ""})
+                if act == "later":
+                    report.snooze()
+                    return self.send(200, {"ok": True})
+                if act == "auto":
+                    _cfg_update({"errors_auto": bool(body.get("on"))})
+                    return self.send(200, {"ok": True, "auto": bool(body.get("on"))})
+                try:
+                    return self.send(200, report.send_errors(VERSION, config(), keys))
+                except Exception as e:
+                    report.record("отправка в поддержку", e)
+                    raise
             if p == "/api/report/send":
                 try:
                     report.send(report.build(body, VERSION, config()), config())
@@ -3996,7 +4016,22 @@ def _replies_loop():
                 _notify("автор ответил на твоё сообщение", "Открой ScanHub → «Написать автору» → «Мои сообщения»")
         except Exception:
             pass                               # нет интернета или посредник старый — попробуем позже
+        _errors_auto()
         time.sleep(1800)
+
+
+def _errors_auto():
+    """2.5: галочка «Отправлять ошибки ScanHub автору сами» — не чаще раза в 6 часов, только новые виды ошибок."""
+    if not config().get("errors_auto"):
+        return
+    try:
+        last = report._sent_state().get("last_sent")
+        if last and (datetime.now() - datetime.fromisoformat(last)).total_seconds() < 6 * 3600:
+            return
+        if report.pending(True)["groups"]:
+            report.send_errors(VERSION, config(), auto=True)
+    except Exception:
+        pass                                   # нет связи — попробуем через полчаса (в журнал не пишем: это породило бы новую «ошибку»)
 
 
 def main():

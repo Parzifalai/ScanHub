@@ -762,6 +762,7 @@ async function openSettings(){
   for (const k of ["vt_files", "fs_files", "smart_mb"]) f[k].value = CFG[k];
   f.folder_full.checked = !!CFG.folder_full;
   f.ctx_menu.checked = !!CFG.ctx_menu;
+  f.errors_auto.checked = !!CFG.errors_auto;
   try { USAGE = (await api("/api/usage")).on ?? null } catch {}
   f.usage_ping.checked = USAGE === true;
   $("#vtState").textContent = CFG.virustotal_key ? "· сохранён ✓" : "· не задан";
@@ -809,6 +810,7 @@ $("#settings").addEventListener("close", async () => {
     if (v === "-") body[k] = ""; else if (v) body[k] = v;
   }
   await api("/api/config", body);
+  if (f.errors_auto.checked !== !!CFG.errors_auto) { await api("/api/errors/report", {action: "auto", on: f.errors_auto.checked}).catch(() => {}); errCardLoad() }
   if (f.usage_ping.checked !== (USAGE === true)) USAGE = (await api("/api/usage", {on: f.usage_ping.checked}).catch(() => ({on: USAGE}))).on;
   if (f.ctx_menu.checked !== !!CFG.ctx_menu) {
     const r = await api("/api/ctxmenu", {enable: f.ctx_menu.checked}).catch(e => ({error: e.message}));

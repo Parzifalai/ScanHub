@@ -113,6 +113,101 @@ def recent(n=15):
     return out
 
 
+# ---------------------------------------------------------------- 2.5: свои ошибки — автору (карточка на «Главной» и автоотправка)
+# У подруги своё окно падало при каждом запуске 5 дней подряд, а «Сбои и ошибки» — всегда; всё лежало в errors.log, автор не знал.
+# Одинаковые ошибки склеиваются (числа в тексте не считаются), отправленное не предлагается снова, «Не сейчас» — на 3 дня
+# или пока не появится ошибка нового вида.
+SENT_FILE = os.path.join(DATA, "errors_sent.json")
+SKIP_WHERE = ("отправка в поддержку",)        # не отправилось само сообщение — отправлять его ошибку тем же путём бессмысленно
+SNOOZE_DAYS = 3
+
+
+def _sig(e):
+    msg = re.sub(r"0x[0-9a-fA-F]+|\d+", "#", str(e.get("msg", "")))[:160]
+    return hashlib.sha1(f"{e.get('where', '')}|{msg}".encode("utf-8")).hexdigest()[:12]
+
+
+def _sent_state():
+    try:
+        s = json.load(open(SENT_FILE, encoding="utf-8"))
+        return s if isinstance(s, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _save_sent(s):
+    os.makedirs(DATA, exist_ok=True)
+    s["keys"] = dict(sorted((s.get("keys") or {}).items(), key=lambda kv: kv[1])[-500:])
+    with open(SENT_FILE + ".tmp", "w", encoding="utf-8") as f:
+        json.dump(s, f, ensure_ascii=False, indent=1)
+    os.replace(SENT_FILE + ".tmp", SENT_FILE)
+
+
+def pending(include_snoozed=False):
+    """Ошибки ScanHub, которые ещё не уходили автору, — по видам: где, что, сколько раз, когда впервые и последний раз."""
+    st = _sent_state()
+    sent = st.get("keys") or {}
+    groups = {}
+    for e in recent(400):
+        if str(e.get("where", "")) in SKIP_WHERE:
+            continue
+        k = _sig(e)
+        if k in sent:
+            continue
+        g = groups.setdefault(k, {"key": k, "where": e.get("where", ""), "msg": str(e.get("msg", ""))[:300], "tb": e.get("tb", ""),
+                                  "count": 0, "first": e.get("t", ""), "last": e.get("t", "")})
+        g["count"] += 1
+        g["last"] = e.get("t", "") or g["last"]
+    out = sorted(groups.values(), key=lambda g: g["last"], reverse=True)
+    snoozed = False
+    if out and not include_snoozed and st.get("later"):
+        try:
+            fresh = (datetime.now() - datetime.fromisoformat(st["later"])).days < SNOOZE_DAYS
+        except ValueError:
+            fresh = False
+        if fresh and all(g["key"] in (st.get("later_keys") or []) for g in out):
+            snoozed = True
+    return {"groups": [] if snoozed else out[:20], "kinds": len(out), "total": sum(g["count"] for g in out),
+            "since": min((g["first"] for g in out if g["first"]), default=""), "snoozed": snoozed}
+
+
+def snooze():
+    with _lock:
+        st = _sent_state()
+        st["later"] = datetime.now().isoformat(timespec="seconds")
+        st["later_keys"] = [g["key"] for g in pending(True)["groups"]]
+        _save_sent(st)
+
+
+def errors_report(version, cfg, keys=None, auto=False):
+    """Отчёт автору о своих ошибках: короткий список видов в тексте, журнал с трассировками — файлом (так делает посредник)."""
+    from assistant import redact
+    groups = [g for g in pending(True)["groups"] if not keys or g["key"] in keys][:20]
+    if not groups:
+        return None, []
+    head = ("Автоотчёт" if auto else "Отчёт по кнопке") + f" об ошибках ScanHub: видов {len(groups)}, всего {sum(g['count'] for g in groups)}"
+    lines = [head] + [f"• {g['where']} — {g['msg'][:160]} (×{g['count']}, последний раз {g['last'].replace('T', ' ')[:16]})" for g in groups]
+    rep = build({"kind": "bug", "text": "\n".join(lines), "tech": True, "logs": False,
+                 "page": "автоотчёт об ошибках" if auto else "Главная → ошибки ScanHub"}, version, cfg)
+    log = [f"{g['first']} … {g['last']} ×{g['count']} · {g['where']} · {g['msg']}" + (f"\n    {g['tb']}" if g.get("tb") else "") for g in groups]
+    rep.setdefault("tech", {})["последние_ошибки_ScanHub"] = redact("\n".join(log), cfg)
+    return rep, [g["key"] for g in groups]
+
+
+def send_errors(version, cfg, keys=None, auto=False):
+    rep, ks = errors_report(version, cfg, keys, auto)
+    if not rep:
+        return {"ok": True, "sent": 0}
+    send(rep, cfg)
+    with _lock:
+        st = _sent_state()
+        now = datetime.now().isoformat(timespec="seconds")
+        st.setdefault("keys", {}).update({k: now for k in ks})
+        st["last_sent"] = now
+        _save_sent(st)
+    return {"ok": True, "sent": len(ks)}
+
+
 def _windows():
     try:
         import winreg
