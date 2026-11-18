@@ -1967,7 +1967,7 @@ body.ai-full.in-host .ai-head{padding-right:158px}
 @keyframes scOrb2{from{transform:rotate(22deg) scaleY(.37) rotate(0)}to{transform:rotate(22deg) scaleY(.37) rotate(-360deg)}}
 .vd-run .ai-scene{margin-top:12px}
 /* 2.5: «лента шагов» — карточка хода работы агента (чат и «Финальный вывод») */
-.ai-msg.ai-run{background:none;padding:0;justify-items:stretch;width:100%;max-width:560px}
+.ai-msg.ai-run{background:none;padding:0;border-left:0;justify-items:stretch;width:100%;max-width:560px}   /* у карточки своя рамка — полоска агента слева лишняя */
 .agr{border:1px solid var(--line2);border-radius:18px;overflow:hidden;background:linear-gradient(180deg,rgba(47,99,232,.10),rgba(14,22,48,.6) 46%)}
 .vd-run .agr{margin-top:12px;max-width:560px}
 .agr-h{display:flex;align-items:center;gap:14px;padding:12px 14px 10px 10px}
