@@ -30,6 +30,12 @@ The text of the newest version's section goes into the GitHub release descriptio
 **Fixes**
 - "Turn on protection" with an unknown name (the agent passed the WbioSrvc service that way) silently did nothing while the agent reported "turned on". Now it's an honest refusal.
 - The agent recognises questions about ".sys" driver files again (a pattern bug since 1.0.0).
+- ScanHub's own window no longer crashes on PCs with an older WebView2 engine (an Edge window with a white bar and Edge's own buttons used to open instead). If the window still fails, the reason now goes into the error log.
+- Starting ScanHub again (the shortcut while the window is minimised) brings back the open window instead of opening a second one.
+- "Skip" in "Getting ScanHub ready" works: the "Skip setup?" question used to open underneath the setup window. Confirmations and notifications are now always on top.
+- The setup window no longer gets cut off at the top on a small screen; it scrolls instead.
+- "Crashes and errors" no longer fails completely because a program stored its install date in the registry as a number.
+- If a message to support fails to send, the reason goes into the error log.
 - The “PC is busy while you're away” alert no longer goes silent after about 25 days of Windows uptime without a restart.
 
 ## 2.4.0

@@ -53,6 +53,25 @@ def _val(k, name):
         return None
 
 
+def _str(k, name):
+    """2.5: текстовое поле записи программы. Некоторые установщики пишут InstallDate, DisplayVersion и т. п. числом (REG_DWORD) —
+    на ноутбуке подруги из-за этого падал весь список программ, а с ним «Сбои и ошибки» (TypeError в re.fullmatch)."""
+    v = _val(k, name)
+    if v is None:
+        return None
+    if isinstance(v, (list, tuple)):
+        v = " ".join(str(x) for x in v)
+    return str(v) if not isinstance(v, bytes) else v.decode("utf-16-le", "ignore").strip("\x00")
+
+
+def _num(k, name):
+    v = _val(k, name)
+    try:
+        return int(v or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def programs():
     out, seen = [], set()
     for hive, path, view, tag in ROOTS:
@@ -66,32 +85,32 @@ def programs():
                 k = winreg.OpenKey(root, sub)
             except OSError:
                 continue
-            name = _val(k, "DisplayName")
-            if not name or _val(k, "SystemComponent") == 1 or _val(k, "ParentKeyName") or \
-                    (_val(k, "ReleaseType") or "") in ("Update", "Hotfix", "Security Update"):
+            name = _str(k, "DisplayName")
+            if not name or _num(k, "SystemComponent") == 1 or _str(k, "ParentKeyName") or \
+                    (_str(k, "ReleaseType") or "") in ("Update", "Hotfix", "Security Update"):
                 continue
-            us = _val(k, "UninstallString") or ""
-            qs = _val(k, "QuietUninstallString") or ""
+            us = _str(k, "UninstallString") or ""
+            qs = _str(k, "QuietUninstallString") or ""
             if not us and not _val(k, "WindowsInstaller"):
                 continue
             key = f"{tag}\\{sub}"
             # одна и та же запись видна и в 64-, и в 32-битном представлении реестра — её показываем один раз;
             # а вот записи «для всех» и «для тебя» — разные установки, их показываем обе (иначе после удаления
             # одной «программа появляется снова»)
-            dedup = (name.lower(), (_val(k, "DisplayVersion") or ""), "HKCU" if tag == "HKCU" else "HKLM", sub.lower())
+            dedup = (name.lower(), (_str(k, "DisplayVersion") or ""), "HKCU" if tag == "HKCU" else "HKLM", sub.lower())
             if dedup in seen:
                 continue
             seen.add(dedup)
-            loc = (_val(k, "InstallLocation") or "").strip().strip('"')
+            loc = (_str(k, "InstallLocation") or "").strip().strip('"')
             exe = _resolve(system.exe_from_command(us)) if us and "msiexec" not in us.lower() else ""
             msi = bool(_val(k, "WindowsInstaller")) or "msiexec" in us.lower()
-            d = _val(k, "InstallDate") or ""
-            out.append({"key": key, "name": name, "version": _val(k, "DisplayVersion") or "", "publisher": _val(k, "Publisher") or "",
-                        "size": (_val(k, "EstimatedSize") or 0) * 1024, "date": f"{d[:4]}-{d[4:6]}-{d[6:8]}" if re.fullmatch(r"\d{8}", d) else "",
+            d = _str(k, "InstallDate") or ""
+            out.append({"key": key, "name": name, "version": _str(k, "DisplayVersion") or "", "publisher": _str(k, "Publisher") or "",
+                        "size": _num(k, "EstimatedSize") * 1024, "date": f"{d[:4]}-{d[4:6]}-{d[6:8]}" if re.fullmatch(r"\d{8}", d) else "",
                         "location": loc if loc and os.path.isdir(loc) else "", "uninstall": us, "quiet": qs, "msi": msi,
                         "broken": bool(exe) and not os.path.exists(exe), "user": tag == "HKCU", "scope": SCOPE[tag],
                         "protected": _protected(name),
-                        "icon": (_val(k, "DisplayIcon") or "").split(",")[0].strip('"')})
+                        "icon": (_str(k, "DisplayIcon") or "").split(",")[0].strip('"')})
     out.sort(key=lambda p: (p["name"].lower(), p["scope"]))
     names = {}
     for p in out:

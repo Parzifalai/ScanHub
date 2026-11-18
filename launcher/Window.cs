@@ -11,6 +11,8 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
@@ -29,7 +31,50 @@ static class WindowHost
             return File.Exists(p) ? Assembly.LoadFrom(p) : null;
         };
         try { SetProcessDpiAwarenessContext(new IntPtr(-4)); } catch (Exception) { }     // per-monitor v2: чёткий текст на 125–150 %
-        return Show(url, dataDir);
+        // 2.5: любая непойманная ошибка окна — текстом в window-error.txt (сервер положит его в журнал ошибок) и код 12,
+        // а не безымянное падение 0xE0434352, по которому причину не узнать
+        errFile = Path.Combine(dataDir, "window-error.txt");
+        AppDomain.CurrentDomain.UnhandledException += delegate (object s, UnhandledExceptionEventArgs e) { Fail(e.ExceptionObject as Exception); };
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+        Application.ThreadException += delegate (object s, System.Threading.ThreadExceptionEventArgs e) { Fail(e.Exception); };
+        // 2.5: окно ScanHub одно. Повторный запуск (ярлык, когда окно свёрнуто) не открывает второе, а разворачивает первое
+        // и, если сервер сменил адрес, переводит его на новый. Код 20 — «отдал первому окну», сервер не открывает Edge.
+        bool created;
+        var ev = new EventWaitHandle(false, EventResetMode.AutoReset, "Local\\ScanHubWindow_" + Key(dataDir), out created);
+        if (!created)
+        {
+            try { File.WriteAllText(Path.Combine(dataDir, "window-focus-url.txt"), url); } catch (Exception) { }
+            try { AllowSetForegroundWindow(-1); } catch (Exception) { }
+            ev.Set();
+            return 20;
+        }
+        Focus = ev;
+        try { return Show(url, dataDir); }
+        catch (Exception e) { Fail(e); return 12; }
+    }
+
+    public static EventWaitHandle Focus;
+
+    static string Key(string dir)
+    {
+        using (var md5 = System.Security.Cryptography.MD5.Create())
+            return BitConverter.ToString(md5.ComputeHash(Encoding.UTF8.GetBytes(Path.GetFullPath(dir).ToLowerInvariant()))).Replace("-", "").Substring(0, 16);
+    }
+
+    [DllImport("user32.dll")] static extern bool AllowSetForegroundWindow(int pid);
+
+    static string errFile;
+
+    public static void Fail(Exception e)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(errFile));
+            File.WriteAllText(errFile, DateTime.Now.ToString("s") + " " + (e == null ? "unknown" : e.GetType().Name + ": " + e.Message +
+                " | " + (e.StackTrace ?? "").Replace("\r\n", " ← ")));
+        }
+        catch (Exception) { }
+        Environment.Exit(12);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -92,11 +137,14 @@ class HostForm : Form
             return;
         }
         var cw = web.CoreWebView2;
-        cw.Settings.IsStatusBarEnabled = false;
-        cw.Settings.IsZoomControlEnabled = false;
-        cw.Settings.AreDevToolsEnabled = false;
-        cw.Settings.IsPasswordAutosaveEnabled = false;
-        cw.Settings.IsGeneralAutofillEnabled = false;
+        // 2.5: каждая настройка — отдельно. В старом движке WebView2 (Edge не обновлялся) части настроек нет: обращение к ней
+        // бросало исключение мимо try, окно падало (код 0xE0434352) и ScanHub открывался через Edge — с белой полосой сверху
+        var st = cw.Settings;
+        Try(delegate { st.IsStatusBarEnabled = false; });
+        Try(delegate { st.IsZoomControlEnabled = false; });
+        Try(delegate { st.AreDevToolsEnabled = false; });
+        Try(delegate { st.IsPasswordAutosaveEnabled = false; });
+        Try(delegate { st.IsGeneralAutofillEnabled = false; });
         cw.DocumentTitleChanged += delegate { Text = cw.DocumentTitle; };
         cw.WebMessageReceived += OnMessage;
         cw.NavigationCompleted += delegate { Tell(); };
@@ -107,7 +155,44 @@ class HostForm : Form
             if (a.Uri.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) Process.Start(a.Uri);
         };
         cw.Navigate(url);
+        // повторный запуск ScanHub: развернуть это окно и вывести вперёд
+        if (WindowHost.Focus != null)
+        {
+            var t = new Thread(delegate ()
+            {
+                while (true)
+                {
+                    WindowHost.Focus.WaitOne();
+                    try { BeginInvoke(new Action(BringToFront2)); } catch (Exception) { return; }
+                }
+            });
+            t.IsBackground = true;
+            t.Start();
+        }
     }
+
+    void BringToFront2()
+    {
+        if (WindowState == FormWindowState.Minimized) ShowWindow(Handle, 9);      // SW_RESTORE — как было (обычное или развёрнутое)
+        Show();
+        Activate();
+        SetForegroundWindow(Handle);
+        try
+        {
+            string f = Path.Combine(dataDir, "window-focus-url.txt");
+            string u = File.ReadAllText(f).Trim();
+            File.Delete(f);
+            var cur = web.CoreWebView2 != null ? new Uri(web.CoreWebView2.Source) : null;
+            var nu = new Uri(u);
+            if (cur == null || cur.Port != nu.Port || cur.Host != nu.Host) web.CoreWebView2.Navigate(u);   // сервер переехал на другой порт
+        }
+        catch (Exception) { }
+    }
+
+    [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h, int cmd);
+    [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
+
+    static void Try(Action a) { try { a(); } catch (Exception) { } }
 
     void OnMessage(object sender, CoreWebView2WebMessageReceivedEventArgs e)
     {

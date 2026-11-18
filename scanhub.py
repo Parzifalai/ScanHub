@@ -3133,7 +3133,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     return self.send(200, report.replies_read())
                 return self.send(200, report.replies_view())
             if p == "/api/report/send":
-                report.send(report.build(body, VERSION, config()), config())
+                try:
+                    report.send(report.build(body, VERSION, config()), config())
+                except Exception as e:
+                    # 2.5: у подруги отчёт «не отправился», а в errors.log пусто — теперь причина видна в журнале
+                    if "хотя бы пару слов" not in str(e):
+                        report.record("отправка в поддержку", e)
+                    raise
                 return self.send(200, {"ok": True})
             if p == "/api/fps":
                 # счётчик FPS для игр: PresentMon с правами администратора + окошко поверх игры
@@ -3539,6 +3545,10 @@ WIN_SEEN = [0.0]
 
 def _webview2_ok():
     """Движок WebView2 есть в Windows 11 всегда; в Windows 10 — если его поставили Edge, Office или другие программы."""
+    return bool(_webview2_version())
+
+
+def _webview2_version():
     import winreg
     guid = r"{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
     for root, key in ((winreg.HKEY_LOCAL_MACHINE, rf"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{guid}"),
@@ -3548,10 +3558,10 @@ def _webview2_ok():
             with winreg.OpenKey(root, key) as k:
                 v = winreg.QueryValueEx(k, "pv")[0]
                 if v and v != "0.0.0.0":
-                    return True
+                    return str(v)
         except OSError:
             continue
-    return False
+    return ""
 
 
 def open_window():
@@ -3570,10 +3580,21 @@ def open_window():
                     time.sleep(0.5)
                     if WIN_SEEN[0] >= t0:
                         return
+                    if p.poll() == 20:                 # 2.5: окно уже было открыто — его развернули, второе не нужно
+                        return
                     if p.poll() is not None and p.returncode != 0:
                         break
                 if WIN_SEEN[0] < t0:
-                    report.record("своё окно ScanHub", RuntimeError(f"не открылось (код {p.poll()}) — открываю через Edge"))
+                    # 2.5: окно само пишет текст своей ошибки — в журнал вместе с кодом и версией движка
+                    why = ""
+                    try:
+                        ef = os.path.join(DATA, "webview", "window-error.txt")
+                        why = open(ef, encoding="utf-8", errors="replace").read().strip()[:600]
+                        os.remove(ef)
+                    except OSError:
+                        pass
+                    report.record("своё окно ScanHub", RuntimeError(f"не открылось (код {p.poll()}, WebView2 {_webview2_version() or '?'})"
+                                                                    f"{': ' + why if why else ''} — открываю через Edge"))
                     _open_edge(url)
             threading.Thread(target=fallback, daemon=True).start()
             return
