@@ -1,0 +1,8 @@
+Antigravity остановил ответ: слишком долго или слишком много шагов. Спроси короче или по частям, например «запусти MinerSearch» отдельно от «разбери итог».	Antigravity stopped the answer: it took too long or too many steps. Ask shorter or in parts, e.g. "run MinerSearch" separately from "explain the result".
+Antigravity: ответ не закончен	-
+Ищет и удаляет скрытые майнеры: процессы, службы, задачи планировщика, реестр, hosts, руткиты. «Только найти» работает без своего окна (одно окно UAC), лечение открывается окном MinerSearch.	Finds and removes hidden miners: processes, services, scheduled tasks, registry, hosts, rootkits. "Find only" runs without its own window (one UAC prompt); treatment opens in the MinerSearch window.
+Майнеров не найдено	No miners found
+Отчёт MinerSearch:	MinerSearch report:
+Предупреждений:	Warnings:
+агент: обновление	-
+ищу майнеры — обычно 3–5 минут; окно MinerSearch не появится	looking for miners — usually 3–5 minutes; the MinerSearch window won't appear

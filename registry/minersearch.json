@@ -4,7 +4,7 @@
   "section": "downloadable",
   "simple": "Находит скрытые майнеры, которые тайно грузят компьютер.",
   "category": "Антимайнер",
-  "description": "Ищет и удаляет скрытые майнеры: процессы, службы, задачи планировщика, реестр, hosts, руткиты. Открывается своим окном и просит права администратора.",
+  "description": "Ищет и удаляет скрытые майнеры: процессы, службы, задачи планировщика, реестр, hosts, руткиты. «Только найти» работает без своего окна (одно окно UAC), лечение открывается окном MinerSearch.",
   "repo": "BlendLog/MinerSearch",
   "source": {
     "type": "github-release",
@@ -17,8 +17,13 @@
       "id": "scanonly",
       "label": "Только найти, ничего не удалять",
       "target": "none",
-      "gui": true,
+      "elevated": true,
+      "admin": true,
+      "timeout": 1500,
+      "started_text": "ищу майнеры — обычно 3–5 минут; окно MinerSearch не появится",
       "args": [
+        "--accept-eula",
+        "--console-mode",
         "--scan-only",
         "--no-review-interact"
       ]

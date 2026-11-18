@@ -724,6 +724,24 @@ def decode(b):
 ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 
 
+def _minersearch_verdict(t0, job):
+    """Свежий отчёт MinerSearch (C:\\_MinerSearchLogs) → вердикт и строки итога в журнал проверки."""
+    try:
+        logs = sorted((p for p in glob.glob(os.path.join(deepscan.MS_LOGS, "MinerSearch_*.log")) if os.path.getmtime(p) >= t0 - 5),
+                      key=os.path.getmtime)
+        if not logs:
+            return None
+        raw = open(logs[-1], "rb").read()
+        r = deepscan.parse_minersearch(raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8", "replace"))
+        job["report"] = logs[-1]
+        job["lines"] += ["", f"Отчёт MinerSearch: {logs[-1]}"] + [f"⚠ {t}" for t in r["threats"][:20]] + [f"• {t}" for t in r["warn"][:10]]
+        if r["threats"]:
+            return ["threat", f"Найдено угроз: {len(r['threats'])}"]
+        return ["suspicious", f"Предупреждений: {len(r['warn'])}"] if r["warn"] else ["clean", "Майнеров не найдено"]
+    except (OSError, ValueError, KeyError):
+        return None
+
+
 def verdict(m, mode, code, lines=()):
     if mode.get("count_regex"):
         found = [int(x) for l in lines for x in re.findall(mode["count_regex"], l)]
@@ -904,6 +922,8 @@ def start_job(tid, mode_id, target, batch=None):
                         job["lines"] += [ANSI.sub("", l) for l in (r.get("out") or r.get("error") or "").splitlines() if l.strip()]
                     code = res[-1].get("code") if res and res[-1].get("ok") else -1
                     v = verdict(m, mode, code, job["lines"])
+                    if m["id"] == "minersearch":    # 2.5: итог — по его отчёту (без окна MinerSearch), а не просто «Готово»
+                        v = _minersearch_verdict(t0, job) or v
                     job.update(code=code, verdict=v, status="stopped" if job.get("stop") else "done", finished=now())
                     finish_job(job)
                     return
@@ -2531,6 +2551,13 @@ def agent_check(kind, wait=240):
     jid = _AGENT_RUNS.get(kind)
     job = jobs.get(jid) if jid else None
     if not (job and job["status"] == "running"):
+        # 2.5: вышла новая версия сканера — сначала обновить (иначе MinerSearch сам спрашивал «обновиться?» своим окном)
+        ts = tool_state(state(), tid)
+        if ts.get("installed") and ts.get("latest") and ts["installed"] != ts["latest"]:
+            try:
+                _install_wait(tid)
+            except Exception as e:
+                report.record(f"агент: обновление {tid}", e)
         try:
             job = start_job(tid, mode, None)
         except (RuntimeError, StopIteration) as e:

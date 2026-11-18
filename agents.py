@@ -407,14 +407,22 @@ def _agy_result(output):
     text = str(res.get("response") or "").strip()
     err = str(res.get("error") or "")
     if res.get("status") != "SUCCESS":
-        if re.search(r"(?i)auth|log ?in|sign ?in|credential|401|403", err):
+        # 2.5: настоящий текст ошибки — в журнал ошибок (раньше пропадал: «лимит исчерпан» при 88–97 % свободных лимитов)
+        try:
+            import report
+            report.record("Antigravity: ответ не закончен", f"status={res.get('status')} error={err[:600]}")
+        except Exception:
+            pass
+        if re.search(r"(?i)auth|log ?in|sign ?in|credential|\b401\b|\b403\b", err):
             raise AgentError("Antigravity не вошёл в аккаунт — войди в настройках агента.")
-        if re.search(r"(?i)quota|limit|exhaust|429|rate", err):
+        # сначала предел по времени и шагам: в их тексте тоже бывает «limit» («time limit», «turn limit»), это не квота
+        if re.search(r"(?i)time ?limit|timed? ?out|deadline|max(imum)?[ _-]?(turns?|steps?|iterations?)|(turn|step|iteration)s? ?limit|cancel", err):
+            raise AgentError("Antigravity остановил ответ: слишком долго или слишком много шагов. Спроси короче или по частям, "
+                             "например «запусти MinerSearch» отдельно от «разбери итог».")
+        if re.search(r"(?i)quota|exhaust|\b429\b|rate[ _-]?limit|usage[ _-]?limit|too many requests|resource_exhausted", err):
             raise AgentError("Лимит подписки Antigravity на эту модель сейчас исчерпан — попробуй позже или выбери другую модель (например, Flash).")
-        if re.search(r"(?i)model", err):
+        if re.search(r"(?i)\bmodel\b.*(not found|unknown|unsupported|invalid|unavailable)", err):
             raise AgentError("Antigravity не принял выбранную модель — нажми «Найти модели» в настройках агента и выбери снова.")
-        if re.search(r"(?i)time ?limit|timed? ?out|deadline", err):
-            raise AgentError("Antigravity не успел ответить — спроси точнее или выбери модель побыстрее.")
         raise AgentError("Antigravity не закончил ответ" + (f": {err[:200]}" if err else " — повтори вопрос."))
     if not text:
         raise AgentError("Antigravity вернул пустой ответ — повтори вопрос.")
