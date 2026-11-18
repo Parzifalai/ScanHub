@@ -1243,8 +1243,8 @@ function pHunter(dev){
     const ignoreBtn = HDONE.has(hKey("hunter_ignore", {id: f.id})) ? "" : `<button class="small" data-task-run="hunter_ignore" data-args="${attr({id: f.id})}"
       data-confirm="${esc(`Скрыть «${f.title}»? Больше не покажу её в итогах, а если она станет серьёзнее — покажу снова. Вернуть скрытое можно внизу этой страницы.`)}">Это был я — скрыть</button>`;
     return `<article class="hf hf-${f.level}">
-      <header><span class="ic ic-${{threat: "threat", suspicious: "suspicious", info: "running"}[f.level]}">${{threat: "!", suspicious: "?", info: "i"}[f.level]}</span>
-        <h4>${esc(f.title)}</h4><span class="hf-lvl">${lvl[f.level]}</span></header>
+      <div class="hf-head"><span class="ic ic-${{threat: "threat", suspicious: "suspicious", info: "running"}[f.level]}">${{threat: "!", suspicious: "?", info: "i"}[f.level]}</span>
+        <h4>${esc(f.title)}</h4><span class="hf-lvl">${lvl[f.level]}</span></div>
       <p>${esc(f.lead || f.why)}</p>
       ${f.cmd ? `<dl class="hf-facts"><dt>Команда</dt><dd class="mono">${esc(f.cmd)}</dd>
         ${from.length ? `<dt>Откуда скачивала</dt><dd>${from.map(esc).join(" → ")}</dd>` : ""}

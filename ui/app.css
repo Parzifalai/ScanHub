@@ -2020,7 +2020,9 @@ body.ai-full.in-host .ai-head{padding-right:158px}
 .hlist{display:grid;gap:10px}
 .hf{background:var(--panel2);border:1px solid var(--line);border-left:3px solid #5B8CFF;border-radius:12px;padding:14px 16px;display:grid;gap:8px}
 .hf-threat{border-left-color:var(--bad)} .hf-suspicious{border-left-color:var(--warn)}
-.hf header{display:flex;gap:10px;align-items:center}
+/* 2.5: шапка карточки — не <header>: общие правила шапки окна (фон, тень-подложка, «липкость») ломали карточку */
+.hf-head{display:flex;gap:10px;align-items:center}
+.hf-head .ic{width:22px;height:22px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700}
 .hf h4{margin:0;font-size:15px;flex:1;min-width:0}
 .hf-lvl{font-size:12px;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:1px 8px}
 .hf p{margin:0;color:var(--muted);line-height:1.5}
