@@ -1152,8 +1152,14 @@ class DeepScan:
         if not exe:
             return []
         self.ms_t0 = time.time()
+        try:
+            import metrics                             # своя задача датчиков на паузу — иначе MinerSearch находит «угрозу» в самом ScanHub
+            metrics.SENSORS_PAUSE["until"] = time.time() + 1500 + 120
+        except Exception:
+            pass
         self.ms_dir = os.path.join(DATA_DIR, "reports", self.job["id"] + "-minersearch")
-        return [{"type": "run", "cmd": [exe, "--accept-eula", "--console-mode", "--scan-only", "--no-review-interact"],
+        return [{"type": "run", "cmd": ["schtasks", "/End", "/TN", r"ScanHub\Sensors"], "timeout": 30},
+                {"type": "run", "cmd": [exe, "--accept-eula", "--console-mode", "--scan-only", "--no-review-interact"],
                  "cwd": os.path.dirname(exe), "timeout": 1500, "console": True, "answers": ["No"] * 3},
                 {"type": "copy_glob", "src_dir": MS_LOGS, "pattern": "MinerSearch_*.log", "dst_dir": self.ms_dir,
                  "newer_than": self.ms_t0 - 5, "timeout": 60}]
@@ -1178,7 +1184,7 @@ class DeepScan:
             out = res[0].get("out", "")
             self.defender_prefs = res[1].get("out", "") if len(res) > 1 and res[1].get("ok") else None
             if ms_ops:
-                self.ms_res = res[2:4]
+                self.ms_res = res[-2:]                 # запуск MinerSearch и копия его отчёта — последние две операции
         except PermissionError:
             admin = False
             self.emit("  без прав администратора: проверяю только свои процессы")

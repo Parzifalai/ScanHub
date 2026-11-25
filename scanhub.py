@@ -910,6 +910,9 @@ def start_job(tid, mode_id, target, batch=None):
                 ops.append({"type": "run", "cmd": main, "cwd": os.path.dirname(exe), "timeout": int(mode.get("timeout", 900)), "label": "проверка",
                             "console": bool(mode.get("console")), "answers": mode.get("answers")})   # своя скрытая консоль (MinerSearch без неё падает)
                 rep_dir = os.path.join(DATA, "reports", job["id"])
+                if mode.get("pause_sensors"):
+                    metrics.SENSORS_PAUSE["until"] = time.time() + sum(o["timeout"] for o in ops) + 120
+                    ops.insert(0, {"type": "run", "cmd": ["schtasks", "/End", "/TN", metrics.SENSORS_TASK], "timeout": 30, "quiet": True})
                 if mode.get("elevated_log"):
                     ops.append({"type": "copy_glob", "src_dir": os.path.dirname(exe), "pattern": mode["elevated_log"], "dst_dir": rep_dir,
                                 "newer_than": t0 - 5, "timeout": 60})
@@ -924,6 +927,8 @@ def start_job(tid, mode_id, target, batch=None):
                     return
                 if mode.get("elevated"):
                     for o, r in zip(ops, res):
+                        if o.get("quiet"):
+                            continue
                         if o is not ops[-1]:
                             job["lines"].append(f"[{o['label']}: код {r.get('code')}]")
                         job["lines"] += [ANSI.sub("", l) for l in (r.get("out") or r.get("error") or "").splitlines() if l.strip()]
@@ -952,7 +957,13 @@ def start_job(tid, mode_id, target, batch=None):
                 report.record(f"{m['id']}: {mode['id']}", e)
             job.update(code=code, verdict=v, status="stopped" if job.get("stop") else "done", finished=now())
             finish_job(job)
-        threading.Thread(target=work_elev, daemon=True).start()
+        def work_elev_wrap():
+            try:
+                work_elev()
+            finally:
+                if mode.get("pause_sensors"):
+                    metrics.SENSORS_PAUSE["until"] = 0      # датчики ScanHub сам запустит снова через несколько секунд
+        threading.Thread(target=work_elev_wrap, daemon=True).start()
         return job
 
     if mode.get("gui"):

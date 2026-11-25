@@ -83,6 +83,9 @@ SENSORS_DIR = os.path.join(os.environ.get("ProgramData", r"C:\ProgramData"), "Sc
 SENSORS_JSON = os.path.join(SENSORS_DIR, "sensors.json")
 SENSORS_WANT = os.path.join(SENSORS_DIR, "want")
 SENSORS_TASK = r"ScanHub\Sensors"
+# пока MinerSearch ищет майнеры, датчики выключены: скрытая консоль с PowerShell (conhost --headless) для него выглядит
+# как «сторожевой процесс» майнера — каждая проверка находила «1 угрозу», и это был сам ScanHub
+SENSORS_PAUSE = {"until": 0}
 SENSORS_SCRIPT = os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "ScanHub", "sensors.ps1")
 FAN_MODES = {1: "Тихий", 2: "Баланс", 3: "Производительность", 224: "Свой", 255: "Свой"}
 
@@ -451,7 +454,7 @@ class Metrics:
             self.sensors_wait = None
         elif self.sensors_wait is None:
             self.sensors_wait = now
-        if self.sensors is None and now - self.sensors_started > 20:
+        if self.sensors is None and now - self.sensors_started > 20 and now > SENSORS_PAUSE["until"]:
             # агент не работает — запустить задачу (без UAC: права выданы при включении датчиков)
             subprocess.run(["schtasks", "/Run", "/TN", SENSORS_TASK], capture_output=True, creationflags=NO_WINDOW)
             self.sensors_started = now

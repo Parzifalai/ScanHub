@@ -19,6 +19,7 @@
       "target": "none",
       "elevated": true,
       "console": true,
+      "pause_sensors": true,
       "answers": ["No", "No", "No"],
       "admin": true,
       "timeout": 1500,
