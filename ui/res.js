@@ -199,12 +199,53 @@ function heatLine(h){
     const why = h.reasons.find(r => r[0] === "bad") || h.reasons.find(r => r[0] === "warn");
     return `<div class="load" style="color:var(--warn)">🌡 Видеокарта ${Math.round(h.now)}°C${c ? ` — греет <b style="color:var(--text)">${esc(c.name.replace(/\.exe$/i, ""))}</b> (${c.avg}% в среднем)` : ""}${why ? ". " + esc(why[1]) : ""}</div>`;
   }
-  return c && c.avg >= 10 ? `<div class="load">Видеокарту нагружает: <b>${esc(c.name.replace(/\.exe$/i, ""))}</b> ${c.avg}%</div>` : "";
+  return c && c.avg >= 10 ? `<div class="load">Видеокарту нагружает: <b>${esc(c.name.replace(/\.exe$/i, ""))}</b> ${c.avg}% ${whatBtn(c.name, [c.pid])}</div>` : "";
+}
+// «Что это?»: сразу — проверка ScanHub (чей процесс на самом деле, подпись, путь), потом VirusTotal и мнение агента
+function whatBtn(name, pids){
+  return `<button class="whatis" data-whatis="${esc(name)}" data-pids="${esc((pids || []).filter(Boolean).join(","))}">что это?</button>`;
+}
+const WHO_LVL = {ok: ["✓", "ok"], warn: ["!", "warn"], bad: ["✕", "bad"], info: ["i", "info"]};
+function aiText(t){
+  return esc(String(t || "").replace(/\[\[[^\]]*\]\]/g, "").trim()).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n+/g, "<br>");
+}
+async function whatIs(name, pids){
+  const short = name.replace(/\.exe$/i, "");
+  modal({title: `Что такое ${short}?`, icon: "?", ok: "Понятно", cancel: null, wide: true,
+         html: `<div id="whoBox" class="who"><div class="who-wait">Смотрю, чей это процесс, кто подписал файл и откуда он запущен…</div></div>`});
+  const box = () => document.getElementById("whoBox");
+  let r;
+  try { r = await api("/api/procwho", {name, pids: (pids || "").split(",").filter(Boolean).map(Number)}) }
+  catch (err) { if (box()) box().innerHTML = `<div class="who-line bad">Не получилось проверить: ${esc(err.message)}</div>`; return }
+  if (!box()) return;
+  if (r.error) { box().innerHTML = `<div class="who-line bad">${esc(r.error)}</div>`; return }
+  const [ic, cls] = WHO_LVL[r.level] || WHO_LVL.info;
+  const files = (r.files || []).map(f => `<div class="who-file"><span title="${esc(f.path || "")}">${esc(f.path || "")}</span> · ${esc(f.sig)}</div>`).join("");
+  box().innerHTML = `
+    <div class="who-verdict ${cls}"><span class="who-ic">${ic}</span><b>${esc(r.verdict)}</b>${r.owner ? `<span class="who-owner">${r.owner.startsWith("ScanHub") ? "" : "чей: "}${esc(r.owner)}</span>` : ""}</div>
+    ${r.what ? `<p class="who-what">${esc(r.what)}</p>` : ""}
+    ${(r.why || []).length ? `<ul class="who-why">${r.why.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+    ${r.services?.length ? `<div class="who-file">Службы внутри: ${esc(r.services.join(", "))}</div>` : ""}
+    ${files}
+    <div class="who-row" id="whoVt"><span class="who-k">VirusTotal</span><span class="who-wait">${r.job ? "спрашиваю по отпечатку файла…" : "—"}</span></div>
+    <div class="who-row" id="whoAi"><span class="who-k">Мнение агента</span><span class="who-wait">${r.job ? "жду VirusTotal…" : "—"}</span></div>`;
+  if (!r.job) return;
+  for (let i = 0; i < 150 && box(); i++) {             // до 5 минут: агент через подписку может думать долго
+    await new Promise(res => setTimeout(res, i < 10 ? 700 : 2000));
+    let j; try { j = await api("/api/procwho/job?id=" + r.job) } catch { continue }
+    const vt = document.getElementById("whoVt"), ai = document.getElementById("whoAi");
+    if (!vt || !ai) return;
+    if (j.vt) { const [vi, vc] = WHO_LVL[j.vt.level] || WHO_LVL.info; vt.innerHTML = `<span class="who-k">VirusTotal</span><span class="who-v ${vc}">${vi} ${esc(j.vt.text)}</span>` }
+    if (j.ai_status === "off") { ai.innerHTML = `<span class="who-k">Мнение агента</span><span class="who-wait">агент не настроен — включается в панели агента</span>`; return }
+    if (j.ai_status === "error") { ai.innerHTML = `<span class="who-k">Мнение агента</span><span class="who-v bad">не ответил: ${esc(j.ai_error || "ошибка")}</span>`; return }
+    if (j.ai_status === "done") { ai.innerHTML = `<span class="who-k">Мнение агента</span><span class="who-v">${aiText(j.ai)}</span>`; return }
+    if (j.vt_status === "done") ai.innerHTML = `<span class="who-k">Мнение агента</span><span class="who-wait">${esc(j.ai_step || "думает…")}</span>`;
+  }
 }
 function cpuLine(c){
   if (!c || c.now < 50) return "";
   const top = c.culprits?.[0];
-  return `<div class="load" style="color:var(--warn)">⚙ Процессор загружен на ${Math.round(c.now)}%${top ? ` — больше всего <b style="color:var(--text)">${esc(top.name.replace(/\.exe$/i, ""))}</b> (${Math.round(top.avg)}% в среднем${top.title ? ", " + esc(top.title.toLowerCase()) : ""})` : ""}</div>`;
+  return `<div class="load" style="color:var(--warn)">⚙ Процессор загружен на ${Math.round(c.now)}%${top ? ` — больше всего <b style="color:var(--text)">${esc(top.name.replace(/\.exe$/i, ""))}</b> (${Math.round(top.avg)}% в среднем${top.title ? ", " + esc(top.title.toLowerCase()) : ""}) ${whatBtn(top.name, top.pids)}` : ""}</div>`;
 }
 function drawCpuWhy(){
   const box = $("#cpuBox"), c = M?.cpu_why;
@@ -266,8 +307,9 @@ $("#procSort").onclick = e => {
   drawRes();
 };
 document.addEventListener("click", async e => {
-  const a = e.target.closest("[data-scan-exe],[data-open],[data-why],[data-kill]");
+  const a = e.target.closest("[data-scan-exe],[data-open],[data-why],[data-kill],[data-whatis]");
   if (!a) return;
+  if (a.dataset.whatis) return whatIs(a.dataset.whatis, a.dataset.pids);
   if (a.dataset.open) return api("/api/open", {path: a.dataset.open});
   if (a.dataset.why) { run("witr", "pid", a.dataset.why); return }
   if (a.dataset.kill) {

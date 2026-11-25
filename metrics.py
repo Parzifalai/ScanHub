@@ -934,7 +934,8 @@ while ($true) {
             # среднее за окно, считая отсутствующие отсчёты нулём, — чтобы короткий всплеск не выглядел постоянной нагрузкой
             share = len(vals) / ticks
             g = groups.setdefault(key, {"name": name, "exe": exe, "title": known[0] if known else "", "advice": known[1] if known else "",
-                                        "avg": 0.0, "peak": 0.0, "count": 0})
+                                        "avg": 0.0, "peak": 0.0, "count": 0, "pids": []})
+            g["pids"].append(pid)
             g["avg"] += sum(vals) / len(vals) * min(1.0, share)
             g["peak"] = max(g["peak"], max(vals))
             g["count"] += 1

@@ -1,0 +1,78 @@
+(и ещё	(and
+0 из	0 of
+0 из 0	0 of 0
+Island (панель сверху экрана)	Island (the bar at the top of the screen)
+MinerSearch закрылся, не закончив проверку	MinerSearch closed before finishing the scan
+MinerSearch просит сначала перезагрузить компьютер	MinerSearch asks you to restart the PC first
+MinerSearch уже открыт (осталось окно прошлой проверки) — закрой его и запусти поиск снова	MinerSearch is already open (a window from the last scan is still there) — close it and run the search again
+ScanHub (это окно)	ScanHub (this window)
+VirusTotal этот файл ещё не видел (редкая или новая версия)	VirusTotal hasn't seen this file yet (a rare or new version)
+Windows (служба или задача по расписанию)	Windows (a service or scheduled task)
+«Связь с телефоном»	Phone Link
+Без подписи, но это файл самого ScanHub.	Unsigned, but it's ScanHub's own file.
+Без цифровой подписи и запущен из	No digital signature and started from
+Без цифровой подписи — у небольших программ это бывает, но издателя не подтвердить.	No digital signature — common for small programs, but the publisher can't be confirmed.
+Другая копия	-
+Издатель малоизвестный, но подпись настоящая.	A little-known publisher, but the signature is genuine.
+Копии запущены из разных мест	Copies are running from different places
+Мнение агента	Agent's opinion
+Не получилось проверить:	Couldn't check:
+Отчёт пустой или оборван:	The report is empty or cut off:
+Похоже на вирус	Looks like a virus
+Почта Windows	Windows Mail
+Проводник	File Explorer
+Процесс уже закрылся — проверить нечего. Нажми «Что это?» снова, когда он снова появится в нагрузке.	The process has already closed — nothing to check. Press “what is this?” again when it shows up in the load again.
+Путь к файлу виден только с правами администратора — ScanHub проверил то, что доступно.	The file path is only visible with admin rights — ScanHub checked what it could see.
+Сейчас выполняет:	Now running:
+Сейчас не запущен	Not running now
+Системное имя	A system name
+Смотрю, чей это процесс, кто подписал файл и откуда он запущен…	Checking whose process this is, who signed the file and where it runs from…
+Та копия, что грузила компьютер, уже закрылась — ниже все копии, что работают сейчас.	The copy that was loading the PC has closed — below are all copies running now.
+Установлен в Program Files как обычная программа.	Installed in Program Files like a regular program.
+Файл изменён после подписи производителя — настоящие программы так не делают.	The file was changed after the publisher signed it — genuine programs don't do that.
+Что такое	What is
+Это не отдельная программа, а встроенный браузер Microsoft Edge (WebView2): в нём нарисованы окна других программ. Здесь его используют:	This isn't a program of its own but Microsoft Edge's built-in browser (WebView2): other programs draw their windows in it. Here it's used by:
+Это часть самого ScanHub.	This is part of ScanHub itself.
+агент не настроен — включается в панели агента	the agent isn't set up — turn it on in the agent panel
+антивирусов отметили его — единичные срабатывания обычно ложные	antivirus engines flagged it — single hits are usually false alarms
+антивирусов — чисто	antivirus engines — clean
+браузер Edge	the Edge browser
+виджеты Windows	Windows widgets
+временной папки	a temporary folder
+думает…	thinking…
+жду VirusTotal…	waiting for VirusTotal…
+запустил	-
+игровая панель Xbox	the Xbox Game Bar
+издатель не указан	publisher not given
+клавиатура и эмодзи Windows	the Windows keyboard and emoji panel
+копий	-
+меню «Пуск» Windows	the Windows Start menu
+не ответил:	didn't answer:
+нет ключа VirusTotal (вводится в ⚙ Настройках)	no VirusTotal key (enter it in ⚙ Settings)
+нет такой проверки	no such check
+но файл лежит не на своём месте	but the file isn't where it belongs
+оболочка Windows (уведомления, часы)	the Windows shell (notifications, clock)
+описание	-
+отчёт не появился.	no report appeared.
+папки, куда пишет кто угодно	a folder anyone can write to
+перезагруз	-
+подпись ПОВРЕЖДЕНА — файл изменён после подписи	signature BROKEN — the file was changed after signing
+подпись действительная.	the signature is valid.
+подпись не проверяется (сертификат не доверенный)	signature can't be verified (untrusted certificate)
+подпись не прочиталась	couldn't read the signature
+подпись ненадёжная (сертификат не доверенный)	unreliable signature (untrusted certificate)
+поиск и меню «Пуск» Windows	Windows search and Start menu
+поиск майнеров сделан только встроенными средствами	-
+проверка майнеров НЕ состоялась — не говори, что компьютер чист; объясни причину и предложи запустить снова	-
+проверь каждое.	check each one.
+службы Windows:	Windows services:
+спрашиваю по отпечатку файла…	looking up the file's fingerprint…
+так маскируются вирусы.	that's how viruses disguise themselves.
+так часто прячутся майнеры и трояны. Нужна проверка.	miners and trojans often hide like this. Worth checking.
+ты сам (через «Пуск», ярлык или Проводник)	you (via Start, a shortcut or File Explorer)
+файл не виден без прав администратора — VirusTotal не спрашивали	the file isn't visible without admin rights — VirusTotal wasn't asked
+файла нет в базе	the file isn't in the database
+чей:	whose:
+что это за процесс	what is this process
+что это?	what is this?
+экран блокировки Windows	the Windows lock screen

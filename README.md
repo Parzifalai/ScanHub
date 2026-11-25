@@ -30,6 +30,7 @@ Every release also has **SHA256SUMS.txt** with the checksums of both archives, s
 ## What it does
 
 - **A home screen you can read in a second (2.0):** a live shield shows the real state: “all good”, “something to fix” or “threat found”. During a scan a beam runs across it and the ring fills up with the percentage. Next to it: Windows stability, CPU, memory and free space with charts; click one to see detailed load. Below that, “What's worth doing” and quick actions.
+- **“What is this?” next to the load (2.5.1):** when the home screen says some program is loading the CPU or GPU, the “what is this?” button next to it tells you whose it really is and whether it's dangerous. For example, msedgewebview2 isn't a program of its own but the windows of WhatsApp, the Start menu or ScanHub itself; svchost is specific Windows services; python is a specific script. In 2 seconds, offline, ScanHub checks the signature, the folder and whether the file poses as a system one; then it looks up the file's fingerprint on VirusTotal, and the AI agent sums it up: “✅ Fine”, “⚠️ Worth checking” or “⛔ Dangerous”.
 - **Its own window (2.0.5):** ScanHub opens in a dedicated window with no browser chrome. The window buttons sit in its dark header, and its size and position are remembered. If the WebView2 engine is missing (Windows 10), it opens through Edge instead.
 - **Final AI verdict (2.0.9):** after a file scan, a deep check or an ultra check, the built-in AI agent reads the combined result of all scanners, searches the web for the file (name, SHA-256, what people write about it, with links) and gives a short answer: “Safe to open” or “Don't open it”. Under the verdict there is a chat: ask what the file is, what to do next, or tell the agent to do it for you.
 - **AI second opinion:** “Copy summary for AI” after a file scan (signature, hashes, where it was downloaded from, every scanner with details), after an ultra check, plus “Full PC summary for AI” (28 sections about the whole PC). Paste it into Claude, ChatGPT or Gemini and you get a short answer (“dangerous or not, and what to do” in a few words) and a detailed one with facts. Personal data is hidden by default.
@@ -78,7 +79,7 @@ Optional:
 
 | What | Where | When |
 |---|---|---|
-| The hash (fingerprint) of the file being checked, not the file itself | VirusTotal, Filescan, MetaDefender, Hybrid Analysis, CIRCL | when you scan a file; the first four only if you entered a key |
+| The hash (fingerprint) of the file being checked, not the file itself | VirusTotal, Filescan, MetaDefender, Hybrid Analysis, CIRCL | when you scan a file and on the “what is this?” button on the home screen (VirusTotal and CIRCL only); the first four only if you entered a key |
 | The file itself | VirusTotal or Filescan | only with the separate “Upload the file for analysis” button, with a warning |
 | Names and versions of npm/pip packages | OSV.dev (Google) | only in the “npm and pip packages” check |
 | A found API key (to check whether it is still active) | the service that key belongs to | only in the TruffleHog “Only active keys” mode |

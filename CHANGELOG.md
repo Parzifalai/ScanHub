@@ -6,7 +6,12 @@ The text of the newest version's section goes into the GitHub release descriptio
 
 ## 2.5.1
 
+**New**
+- “What is this?” next to the load on the home screen. Next to “CPU is at… most of it X” and “GPU is loaded by X” there's now a “what is this?” button. In 2 seconds it says whose program it really is and whether it's dangerous: msedgewebview2 is the windows of WhatsApp, the Start menu or ScanHub itself; svchost shows which services run inside; python shows which script. ScanHub checks the signature, the folder and whether the file poses as a system one, then looks up its fingerprint on VirusTotal, and the AI agent gives a one- or two-sentence verdict: “✅ Fine”, “⚠️ Worth checking” or “⛔ Dangerous”.
+
 **Fixes**
+- MinerSearch no longer finds “1 threat” in ScanHub itself. ScanHub's hidden sensors console looked like a miner's watchdog process; sensors now pause during the scan.
+- MinerSearch “Find only” no longer crashes right away with “The handle is invalid”: it needs its own (hidden) console window.
 - MinerSearch miner search ("Find only" and when the agent asks for it) runs without its own window: no program window and no update question. ScanHub waits for the scan to finish and shows the result from its report ("No miners found" / "Threats found: N").
 - MinerSearch no longer reports "No miners found" when the scan never happened, for example when it closed at once because a previous scan's window was still open and its report stayed empty. ScanHub now shows the reason ("MinerSearch is already open — close it and run again"), and the agent won't say the PC is clean.
 - Before a scan the agent asks for, ScanHub updates the scanner itself if a new version is out.

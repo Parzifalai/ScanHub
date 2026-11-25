@@ -3015,6 +3015,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return self.send(200, fps.view())
         if u.path == "/api/usage":
             return self.send(200, {"on": config().get("usage_ping")})
+        if u.path == "/api/procwho/job":
+            import procwho
+            j = procwho.view(q.get("id"), assistant)
+            return self.send(200, j) if j else self.send(404, {"error": "нет такой проверки"})
         if u.path == "/api/ai/job":
             j = assistant.view(q.get("id"))
             return self.send(200, j) if j else self.send(404, {"error": "нет такого запроса"})
@@ -3456,6 +3460,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
                                            "cfg": assistant.cfg_view(config())})
                 except assistant.AIError as e:
                     return self.send(200, {"ok": False, "error": str(e)})
+            if p == "/api/procwho":                    # «Что это?» у процесса на главной: сразу — своя проверка, фоном — VirusTotal и агент
+                import procwho
+                try:
+                    res = procwho.inspect(str(body.get("name", ""))[:120], body.get("pids") or [])
+                except Exception as e:
+                    report.record("что это за процесс", e)
+                    return self.send(200, {"error": f"не получилось проверить: {e}"})
+                jid = procwho.start(res, config(), assistant) if res.get("path") or res.get("count") else None
+                return self.send(200, {**{k: v for k, v in res.items() if k != "facts"}, "job": jid})
             if p == "/api/ai/ask":
                 kind = body.get("kind") if body.get("kind") in ("explain", "solve", "act", "review", "verdict") else "chat"
                 cfg_ = config()
