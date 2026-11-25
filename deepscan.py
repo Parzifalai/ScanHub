@@ -506,6 +506,17 @@ def _in_data(p):
     return bool(p) and os.path.dirname(os.path.abspath(p)).lower() == DATA.lower()
 
 
+def _hidden_console():
+    """Своя консоль, но скрытая. Программам, которые спрашивают размер окна консоли (MinerSearch --console-mode:
+    Console.BufferWidth), без консоли некуда смотреть — они падают с «Неверный дескриптор». Вывод не перехватываем:
+    перенаправленный вывод ломает то же самое, а итог такие программы пишут в свой отчёт."""
+    si = subprocess.STARTUPINFO()
+    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    si.wShowWindow = 0                                  # SW_HIDE
+    return {"creationflags": subprocess.CREATE_NEW_CONSOLE, "startupinfo": si,
+            "stdin": None, "stdout": None, "stderr": None}
+
+
 def _exec_ops(ops, prog=None, ctl=None):
     """Выполнить операции (уже в процессе с правами администратора) и вернуть результаты по каждой."""
     in_data = _in_data
@@ -529,12 +540,15 @@ def _exec_ops(ops, prog=None, ctl=None):
                 # обновляет раз в секунду: если ScanHub закрылся или упал, программа не остаётся работать с правами администратора
                 outf = op.get("stdout_file") if in_data(op.get("stdout_file")) else None
                 alive = op.get("alive") if in_data(op.get("alive")) else None
-                fh = open(outf, "wb") if outf else None
-                p = subprocess.Popen(op["cmd"], stdout=fh or subprocess.PIPE, stderr=subprocess.DEVNULL if fh else subprocess.STDOUT,
-                                     cwd=op.get("cwd"), creationflags=NO_WINDOW)
+                fh = open(outf, "wb") if outf and not op.get("console") else None
+                if op.get("console"):
+                    p = subprocess.Popen(op["cmd"], cwd=op.get("cwd"), **_hidden_console())
+                else:
+                    p = subprocess.Popen(op["cmd"], stdout=fh or subprocess.PIPE, stderr=subprocess.DEVNULL if fh else subprocess.STDOUT,
+                                         cwd=op.get("cwd"), creationflags=NO_WINDOW)
                 import threading
                 buf = []
-                if not fh:
+                if not fh and p.stdout:
                     threading.Thread(target=lambda: buf.append(p.stdout.read()), daemon=True).start()
                 t0, cmd = time.time(), None
                 while p.poll() is None:
@@ -594,6 +608,9 @@ def _exec_ops(ops, prog=None, ctl=None):
                         shutil.copyfile(f, d)
                         got.append(d)
                 results.append({"ok": True, "files": got})
+            elif op["type"] == "run" and op.get("console"):
+                r = subprocess.run(op["cmd"], timeout=op.get("timeout", 1200), cwd=op.get("cwd"), **_hidden_console())
+                results.append({"ok": True, "code": r.returncode, "out": ""})
             elif op["type"] == "run":
                 r = subprocess.run(op["cmd"], capture_output=True, timeout=op.get("timeout", 1200),
                                    cwd=op.get("cwd"), creationflags=NO_WINDOW)
@@ -1095,7 +1112,7 @@ class DeepScan:
         self.ms_t0 = time.time()
         self.ms_dir = os.path.join(DATA_DIR, "reports", self.job["id"] + "-minersearch")
         return [{"type": "run", "cmd": [exe, "--accept-eula", "--console-mode", "--scan-only", "--no-review-interact"],
-                 "cwd": os.path.dirname(exe), "timeout": 1500},
+                 "cwd": os.path.dirname(exe), "timeout": 1500, "console": True},
                 {"type": "copy_glob", "src_dir": MS_LOGS, "pattern": "MinerSearch_*.log", "dst_dir": self.ms_dir,
                  "newer_than": self.ms_t0 - 5, "timeout": 60}]
 
