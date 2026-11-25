@@ -134,6 +134,32 @@ def wifi():
             "tx": get(r"Transmit rate \(Mbps\)", r"Скорость передачи \(Мбит/с\)")}
 
 
+def proxy_info():
+    """Системный прокси пользователя (его оставляют VPN и «ускорители» и забывают убрать): сайты тогда тормозят или не открываются."""
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Internet Settings") as k:
+            def val(n):
+                try:
+                    return winreg.QueryValueEx(k, n)[0]
+                except OSError:
+                    return None
+            return {"on": bool(val("ProxyEnable")), "server": str(val("ProxyServer") or ""), "pac": str(val("AutoConfigURL") or "")}
+    except Exception:
+        return None
+
+
+def link_mbps(text):
+    """«100 Mbps», «1 Gbps», «866.7 Mbps» → Мбит/с."""
+    m = re.match(r"\s*([\d.,]+)\s*([GMK]?)bps", str(text or ""), re.I)
+    if not m:
+        return None
+    try:
+        return float(m.group(1).replace(",", ".")) * {"G": 1000, "M": 1, "K": 0.001, "": 1e-6}[m.group(2).upper()]
+    except ValueError:
+        return None
+
+
 # ---------------------------------------------------------------- скорость (Cloudflare)
 def speed_down(seconds=8, size=50_000_000):
     req = urllib.request.Request(f"https://speed.cloudflare.com/__down?bytes={size}", headers={"User-Agent": "ScanHub"})
@@ -171,6 +197,7 @@ def run(progress=lambda s: None, speed=True):
     progress("2% · смотрю сетевой адаптер")
     R["adapter"] = _ps(INFO_PS) or {}
     R["wifi"] = wifi()
+    R["proxy"] = proxy_info()
     gw = R["adapter"].get("gateway")
     if gw:
         progress("8% · пингую роутер (20 раз)")
@@ -246,6 +273,18 @@ def judge(R):
     elif down.get("error"):
         add("warn", "Скорость измерить не удалось", down["error"])
     ad = R.get("adapter", {})
+    mb = link_mbps(ad.get("speed"))
+    if mb is not None and "802.3" in str(ad.get("media", "")) and mb <= 100:
+        add("warn", f"Кабель или порт работают на {mb:.0f} Мбит/с",
+            "Сетевая карта и роутер почти всегда умеют гигабит. Скорость 100 Мбит/с — признак плохого или старого кабеля (нужна витая пара категории 5e/6 с четырьмя парами), "
+            "разболтавшегося разъёма или старого порта роутера. Попробуй другой кабель и другой порт роутера.")
+        where.append("cable")
+    px = R.get("proxy") or {}
+    if (px.get("on") and px.get("server")) or px.get("pac"):
+        add("warn", "В Windows включён прокси: " + (px.get("server") or px.get("pac")),
+            "Через него идёт весь трафик браузеров. Если ты не настраивал его сам, а VPN или «ускоритель» уже выключен, прокси забыт и тормозит или ломает сайты: "
+            "«Параметры → Сеть и Интернет → Прокси» → выключить.")
+        where.append("proxy")
     vpn = ad.get("vpn") or []
     if ad.get("via_vpn"):
         add("info", "Интернет идёт через VPN: " + (ad.get("desc") or ""), "Задержка и скорость зависят от VPN. Для проверки выключи его и повтори.")
@@ -253,5 +292,5 @@ def judge(R):
         add("info", "Установлен VPN, но интернет идёт мимо него: " + ", ".join(vpn[:2]),
             "Это нормально для программ вроде Radmin VPN или ZeroTier — они нужны для игр по локальной сети и интернет не замедляют.")
     verdict = {"wifi": "Похоже, дело в слабом Wi‑Fi", "router": "Проблема между компьютером и роутером", "isp": "Проблема у провайдера или в роутере",
-               "dns": "Медленный DNS"}.get(where[0]) if where else "Интернет в порядке"
+               "dns": "Медленный DNS", "cable": "Кабель или порт работают на 100 Мбит/с", "proxy": "В Windows включён прокси"}.get(where[0]) if where else "Интернет в порядке"
     return verdict, F

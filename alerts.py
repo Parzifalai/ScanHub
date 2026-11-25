@@ -110,7 +110,11 @@ class Watcher:
                        if top.get("name") else "Закрой лишние программы.", {"page": "speed:memory"})
         for d in (snap.get("now") or {}).get("disks") or []:
             free = d["total"] - d["used"]
-            if free < 5 * 2 ** 30:
+            # не флешки и не маленькие разделы (на 8-гигабайтной флешке «мало места» — это норма): тревога, когда
+            # осталось меньше 5 ГБ и меньше 10% диска
+            if d.get("removable") or d["total"] < 30 * 2 ** 30:
+                continue
+            if free < 5 * 2 ** 30 and free < d["total"] * 0.1:
                 self._fire("disk_low:" + d["mount"], "disk_low", "warn", f"На диске {d['mount']} осталось {free / 2 ** 30:.1f} ГБ",
                            "Когда место кончается, Windows тормозит и не ставит обновления. Освободи место в «Очистке».", {"page": "clean:junk"})
         for p in snap.get("suspicious") or []:

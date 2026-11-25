@@ -8,8 +8,20 @@ The text of the newest version's section goes into the GitHub release descriptio
 
 **New**
 - “What is this?” next to the load on the home screen. Next to “CPU is at… most of it X” and “GPU is loaded by X” there's now a “what is this?” button. In 2 seconds it says whose program it really is and whether it's dangerous: msedgewebview2 is the windows of WhatsApp, the Start menu or ScanHub itself; svchost shows which services run inside; python shows which script. ScanHub checks the signature, the folder and whether the file poses as a system one, then looks up its fingerprint on VirusTotal, and the AI agent gives a one- or two-sentence verdict: “✅ Fine”, “⚠️ Worth checking” or “⛔ Dangerous”.
+- “Why is the internet slow” spots two more common causes: a cable running at 100 Mbit/s instead of gigabit (a bad cable or port) and a forgotten proxy in Windows settings left behind by a VPN or a “booster”.
+
+**Security**
+- The temperature sensors and full memory cleanup run with admin rights. They used to write their files to the shared ProgramData\ScanHub folder, which any program can write to: by swapping a file for a link, malware could make them overwrite a system file. Their files now live in Program Files\ScanHub\data, which only an administrator can write to, and the agents refuse to run if the folder has been tampered with. If you already have sensors or full cleanup turned on, an “Update” button appears under “Load” (UAC once).
+- “End” under “Load” checks the process name and start time. If the program has already closed and another process got its number, ScanHub leaves it alone.
+- Updating programs installs the same installer that ScanHub downloaded and scanned: same architecture, same scope (“for you” or “for everyone”) and same type. Before, winget could pick a different installer at install time.
+- Quarantine is more reliable: files are moved in pieces instead of being read into memory whole, so large files no longer crash ScanHub. The quarantine list is written before the original is deleted, and if anything fails the file stays where it was. Before a restore, the copy is checked against its fingerprint.
 
 **Fixes**
+- The Stop button and time limits work even when a scanner or installer hangs without printing anything. Before, such a program held up the check forever.
+- Error pop-ups are red, not green with a check mark.
+- “Running out of disk space” no longer fires on USB sticks and small partitions: the alert is for a regular disk with less than 5 GB and less than 10% free.
+- Windows notifications come in English when ScanHub's interface is in English.
+- Turning the sensors off no longer removes full memory cleanup.
 - MinerSearch no longer finds “1 threat” in ScanHub itself. ScanHub's hidden sensors console looked like a miner's watchdog process; sensors now pause during the scan.
 - MinerSearch “Find only” no longer crashes right away with “The handle is invalid”: it needs its own (hidden) console window.
 - MinerSearch miner search ("Find only" and when the agent asks for it) runs without its own window: no program window and no update question. ScanHub waits for the scan to finish and shows the result from its report ("No miners found" / "Threats found: N").

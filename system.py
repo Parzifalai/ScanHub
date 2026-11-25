@@ -649,6 +649,18 @@ def watch_set(enable):
 def toast(title, text):
     """Уведомление Windows без сторонних модулей."""
     from html import escape
+    try:                    # при английском интерфейсе уведомление тоже по-английски (тексты в коде русские)
+        with open(os.path.join(DATA, "config.json"), encoding="utf-8-sig") as f:
+            lang = json.load(f).get("lang")
+        if lang not in ("ru", "en"):
+            import ctypes
+            lang = "ru" if ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF == 0x19 else "en"
+        en = lang == "en"
+        if en:
+            import i18n
+            title, text = i18n.tr(title), i18n.tr(text)
+    except Exception:
+        pass
     xml = (f"<toast><visual><binding template='ToastGeneric'><text>{escape(title)}</text><text>{escape(text)}</text>"
            f"</binding></visual></toast>")
     ps(r"""[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
@@ -722,7 +734,20 @@ def watch_once():
 
 MEMCLEAN_TASK = r"ScanHub\MemClean"
 MEMCLEAN_SCRIPT = os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "ScanHub", "memclean.ps1")
-MEMCLEAN_JSON = os.path.join(os.environ.get("ProgramData", r"C:\ProgramData"), "ScanHub", "memclean.json")
+# 2.5.1: результат пишется в Program Files\ScanHub\data (только администратор), раньше — в ProgramData\ScanHub (дыра 3.8)
+MEMCLEAN_JSON = os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "ScanHub", "data", "memclean.json")
+MEMCLEAN_LEGACY = os.path.join(os.environ.get("ProgramData", r"C:\ProgramData"), "ScanHub", "memclean.json")
+
+
+def memclean_outdated():
+    """Установлен скрипт очистки до 2.5.1 (пишет в общую папку) — нужно обновить, один раз UAC."""
+    import hashlib
+    try:
+        a = hashlib.sha256(open(MEMCLEAN_SCRIPT, "rb").read()).digest()
+        b = hashlib.sha256(open(os.path.join(ROOT, "agent", "memclean.ps1"), "rb").read()).digest()
+        return a != b
+    except OSError:
+        return False
 
 
 def _mem():
@@ -767,10 +792,12 @@ def mem_full():
     t0 = time.time()
     subprocess.run(["schtasks", "/Run", "/TN", MEMCLEAN_TASK], capture_output=True, creationflags=NO_WINDOW)
     res = None
+    path = MEMCLEAN_LEGACY if memclean_outdated() else MEMCLEAN_JSON     # старый скрипт пишет по-старому
     while time.time() - t0 < 45:
         time.sleep(1)
         try:
-            d = json.load(open(MEMCLEAN_JSON, encoding="utf-8-sig"))
+            with open(path, encoding="utf-8-sig") as f:
+                d = json.load(f)
             if d.get("t", 0) >= int(t0) - 1:
                 res = d
                 break

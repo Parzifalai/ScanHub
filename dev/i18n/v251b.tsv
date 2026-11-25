@@ -1,0 +1,20 @@
+[ScanHub] программа не закончила за	[ScanHub] the program didn't finish within
+В Windows включён прокси	A proxy is turned on in Windows
+В Windows включён прокси:	A proxy is turned on in Windows:
+Есть новая версия агента датчиков: его файлы теперь в защищённой папке, куда не может писать чужая программа. Обновление один раз попросит UAC.	A new version of the sensor agent is available: its files now live in a protected folder that other programs can't write to. Updating asks for UAC once.
+Кабель или порт работают на	The cable or port runs at
+Кабель или порт работают на 100 Мбит/с	The cable or port runs at 100 Mbit/s
+Сетевая карта и роутер почти всегда умеют гигабит. Скорость 100 Мбит/с — признак плохого или старого кабеля (нужна витая пара категории 5e/6 с четырьмя парами), разболтавшегося разъёма или старого порта роутера. Попробуй другой кабель и другой порт роутера.	Network cards and routers almost always support gigabit. 100 Mbit/s points to a bad or old cable (you need a Cat 5e/6 twisted pair with all four pairs), a loose connector or an old router port. Try another cable and another router port.
+Через него идёт весь трафик браузеров. Если ты не настраивал его сам, а VPN или «ускоритель» уже выключен, прокси забыт и тормозит или ломает сайты: «Параметры → Сеть и Интернет → Прокси» → выключить.	All browser traffic goes through it. If you didn't set it up yourself and the VPN or "booster" is already off, the proxy was left behind and slows down or breaks websites: Settings → Network & internet → Proxy → turn it off.
+копия в карантине повреждена — восстанавливать не стал	the quarantined copy is damaged — not restored
+мин — остановлена	min — stopped
+ничего не трогаю, обнови список	leaving it alone, refresh the list
+новый процесс) — ничего не трогаю, обнови список	is a new process) — leaving it alone, refresh the list
+обновить полную очистку (один раз UAC)	update full cleanup (UAC once)
+под номером	PID
+ставится тот же установщик, что проверен:	installing the same installer that was checked:
+уже другая программа	is now a different program
+уже перезапустилась (номер	has already restarted (PID
+файл изменился во время переноса — попробуй ещё раз	the file changed while being moved — try again
+файл карантина пропал с диска	the quarantine file is missing from the disk
+Новая версия хранит файлы в защищённой папке, куда не может писать чужая программа	The new version keeps its files in a protected folder that other programs can't write to

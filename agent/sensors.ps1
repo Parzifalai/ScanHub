@@ -1,13 +1,19 @@
 # ScanHub — агент датчиков Lenovo (температуры и вентиляторы).
 # Запускается задачей планировщика «ScanHub\Датчики» с правами администратора, потому что
 # WMI-классы Lenovo (LENOVO_GAMEZONE_DATA, LENOVO_FAN_METHOD) недоступны обычному пользователю.
-# Только ЧИТАЕТ датчики и пишет числа в %ProgramData%\ScanHub\sensors.json.
+# Только ЧИТАЕТ датчики и пишет числа в %ProgramFiles%\ScanHub\data\sensors.json.
 # Сам завершается, если ScanHub не обновлял файл «want» дольше 45 секунд (окно закрыто).
+# 2.5.1: папка данных — в Program Files (пишет только администратор), а не в общей ProgramData: туда мог писать
+# любой пользователь и подменить файл ссылкой на системный, который этот скрипт с правами администратора перезаписал бы.
 $ErrorActionPreference = 'SilentlyContinue'
-$dir  = Join-Path $env:ProgramData 'ScanHub'
+$dir  = Join-Path $env:ProgramFiles 'ScanHub\data'
 $out  = Join-Path $dir 'sensors.json'
 $want = Join-Path $dir 'want'
-New-Item -ItemType Directory -Force -Path $dir | Out-Null
+# папку создаёт ScanHub при включении датчиков; сами её не создаём, а если это ссылка или папка чужая — не пишем ничего
+$di = Get-Item -LiteralPath $dir -Force
+if (-not $di -or ($di.Attributes -band [IO.FileAttributes]::ReparsePoint)) { exit 1 }
+$own = (Get-Acl -LiteralPath $dir).GetOwner([Security.Principal.SecurityIdentifier]).Value
+if ($own -notin 'S-1-5-32-544', 'S-1-5-18', 'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464') { exit 1 }
 
 $gz = Get-CimInstance -Namespace root\WMI -ClassName LENOVO_GAMEZONE_DATA | Select-Object -First 1
 $fm = Get-CimInstance -Namespace root\WMI -ClassName LENOVO_FAN_METHOD | Select-Object -First 1

@@ -72,7 +72,7 @@ function procActions(p, simple){
   return `${p.exe ? `<a data-scan-exe="${esc(p.exe)}">${simple ? "Проверить файл" : "проверить"}</a>` : ""}
     ${p.exe ? `<a data-open="${esc(p.exe)}">${simple ? "Открыть папку" : "папка"}</a>` : ""}
     ${!simple && witr ? `<a data-why="${p.pid}">почему?</a>` : ""}
-    ${!simple ? `<a data-kill="${p.pid}" data-name="${esc(p.name)}" style="color:var(--bad)">завершить</a>` : ""}`;
+    ${!simple ? `<a data-kill="${p.pid}" data-name="${esc(p.name)}" data-started="${p.started || ""}" style="color:var(--bad)">завершить</a>` : ""}`;
 }
 function alertHtml(sus, simple){
   if (!sus?.length) return "";
@@ -106,7 +106,7 @@ function drawResInner(){
   if (!onTab("speed", "res")) { if (onTab("speed", "memory")) redrawPanels(); return }
   const sensBusy = TASK.sensors_set?.status === "running";
   const sensCard = M.sensors_on && M.sensors_outdated
-    ? `<div class="note info" style="margin-bottom:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:240px">Есть новая версия агента датчиков: научился читать обороты вентиляторов на Lenovo LOQ / новых Legion. Обновление один раз попросит UAC.</span>
+    ? `<div class="note info" style="margin-bottom:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:240px">Есть новая версия агента датчиков: его файлы теперь в защищённой папке, куда не может писать чужая программа. Обновление один раз попросит UAC.</span>
        <button class="primary small" data-task-run="sensors_set" data-args='{"enable":true}' ${sensBusy ? "disabled" : ""}>${sensBusy ? "Жду подтверждения UAC…" : "Обновить агента датчиков"}</button></div>`
     : !M.sensors_on && !M.static?.lenovo_wmi ? `<div class="note info" style="margin-bottom:12px">Температура процессора и обороты вентиляторов: на этом устройстве нет датчиков производителя, которые умеет читать ScanHub (пока поддерживаются Lenovo Legion / LOQ / IdeaPad Gaming). Видеокарта NVIDIA, нагрузка и всё остальное работают.</div>`
     : M.sensors_on ? (M.sensors ? "" : M.sensors_stuck
@@ -189,6 +189,7 @@ function memLine(){
     ${r ? `<span>Освобождено <b>${fmtB(r.freed)}</b> · занято ${Math.round(r.before.percent)}% → ${Math.round(r.after.percent)}%${r.mode === "quick" ? ` · сжато программ: ${r.processes}` : " · полная очистка"}</span>`
         : `<span>${M?.memclean_on ? "полная очистка — как в Mem Reduct" : "быстрая очистка: сжимает память программ"}</span>`}
     ${M && M.memclean_on === false ? `<a data-task-run="memclean_set" data-args='{"enable":true}'>${setup ? "жду подтверждения UAC…" : "включить полную очистку, как в Mem Reduct (один раз UAC)"}</a>` : ""}
+    ${M?.memclean_on && M.memclean_outdated ? `<a data-task-run="memclean_set" data-args='{"enable":true}' title="Новая версия хранит файлы в защищённой папке, куда не может писать чужая программа">${setup ? "жду подтверждения UAC…" : "обновить полную очистку (один раз UAC)"}</a>` : ""}
     ${err ? `<span style="color:var(--bad)">${esc(err)}</span>` : ""}
   </div>`;
 }
@@ -314,7 +315,7 @@ document.addEventListener("click", async e => {
   if (a.dataset.why) { run("witr", "pid", a.dataset.why); return }
   if (a.dataset.kill) {
     if (!await ask(`Завершить ${a.dataset.name} (PID ${a.dataset.kill})? Несохранённые данные в этой программе пропадут.`)) return;
-    try { await api("/api/kill", {pid: +a.dataset.kill}); toast(`${a.dataset.name} завершён`, `PID ${a.dataset.kill}`) }
+    try { await api("/api/kill", {pid: +a.dataset.kill, name: a.dataset.name, started: +a.dataset.started || null}); toast(`${a.dataset.name} завершён`, `PID ${a.dataset.kill}`) }
     catch (err) { toast("Не получилось завершить процесс", err.message, "err") }
     return pollMetrics();
   }

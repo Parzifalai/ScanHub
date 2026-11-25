@@ -72,9 +72,37 @@ def sha256(path):
 
 def manifest_info(text):
     """Нужные поля из манифеста winget (YAML без библиотек: значения простые)."""
-    get = lambda k: (re.search(rf"^\s*{k}:\s*(.+?)\s*$", text, re.M) or [None, None])[1]
+    # «- Architecture: x64» — первое поле элемента списка установщиков начинается с дефиса
+    get = lambda k: (re.search(rf"^[\s-]*{k}:\s*(.+?)\s*$", text, re.M) or [None, None])[1]
     return {"sha": (get("InstallerSha256") or "").lower(), "scope": (get("Scope") or "").lower(), "type": (get("InstallerType") or "").lower(),
-            "elevation": (get("ElevationRequirement") or "").lower(), "publisher": get("Publisher") or "", "url": get("InstallerUrl") or ""}
+            "elevation": (get("ElevationRequirement") or "").lower(), "publisher": get("Publisher") or "", "url": get("InstallerUrl") or "",
+            "arch": (get("Architecture") or "").lower(), "locale": get("InstallerLocale") or ""}
+
+
+_FLAGS = {}
+
+
+def upgrade_flags():
+    """Какие уточнения установщика понимает этот winget (старые версии не знают --installer-type)."""
+    if "help" not in _FLAGS:
+        try:
+            r = subprocess.run([winget_exe(), "upgrade", "--help"], capture_output=True, timeout=30, creationflags=NO_WINDOW)
+            _FLAGS["help"] = deepscan.system_decode(r.stdout or b"")
+        except Exception:
+            _FLAGS["help"] = ""
+    return {f for f in ("--architecture", "--scope", "--installer-type", "--locale") if f in _FLAGS["help"]}
+
+
+def pin_args(info, have):
+    """3.4 (2.5.1): ставить тот же установщик, что скачали и проверили. Без уточнений winget при «upgrade» выбирает
+    установщик заново и мог взять другой (другая архитектура, «для всех» вместо «для тебя», MSI вместо EXE).
+    Поля — из манифеста, который winget записал при скачивании выбранного установщика; winget сам сверит SHA-256."""
+    out = []
+    for flag, key in (("--architecture", "arch"), ("--scope", "scope"), ("--installer-type", "type"), ("--locale", "locale")):
+        v = (info.get(key) or "").strip().strip("'\"")
+        if v and flag in have and re.fullmatch(r"[\w\-]+", v):
+            out += [flag, v]
+    return out
 
 
 UAC_NOTE = "в нём будет «Python» — это ScanHub, он написан на Python"
@@ -117,18 +145,23 @@ class Updater:
         """Команда с выводом в консоль ScanHub; её можно прервать «Пропустить»/«Остановить»."""
         self.emit("  $ " + " ".join(cmd[:6]) + (" …" if len(cmd) > 6 else ""))
         self.proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, creationflags=NO_WINDOW)
-        t0, out = time.time(), []
-        for raw in self.proc.stdout:
+        out = []
+
+        def on_raw(raw):
             line = deepscan.system_decode(raw)
             line = next((x for x in reversed(line.split("\r")) if x.strip()), "").rstrip()
             if line and not NOISE.search(line):
                 out.append(line)
                 self.emit("    " + line[:300])
-            if time.time() - t0 > timeout:
-                self.proc.kill()
-                out.append("время вышло")
-                break
-        code = self.proc.wait()
+
+        # время и «Пропустить»/«Остановить» проверяются, даже если winget замолчал
+        why = deepscan.pump(self.proc, on_raw, lambda: self.job.get("stop") or self.job.get("skip"), timeout)
+        if why == "timeout":
+            out.append("время вышло")
+        try:
+            code = self.proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            code = -1
         self.proc = None
         return code, out
 
@@ -182,7 +215,13 @@ class Updater:
         folder = os.path.join(UPD, re.sub(r"[^\w.\-]", "_", a["id"]))
         shutil.rmtree(folder, ignore_errors=True)
         self.set(a, "download")
-        code, out = self.run_cmd([winget_exe(), "download", "--id", a["id"], "-e", "--version", a["available"], "-d", folder] + COMMON, 3600)
+        dl = [winget_exe(), "download", "--id", a["id"], "-e", "--version", a["available"], "-d", folder]
+        # скачать установщик для той же области, где программа уже стоит: «upgrade» ищет именно его (3.4)
+        known = self.installed_scope(a["name"], guess=False)
+        code, out = self.run_cmd(dl + (["--scope", known] if known and "--scope" in upgrade_flags() else []) + COMMON, 3600)
+        if code != 0 and known and not (self.job.get("skip") or self.stopped()):
+            shutil.rmtree(folder, ignore_errors=True)        # у пакета нет установщика с такой областью — как раньше
+            code, out = self.run_cmd(dl + COMMON, 3600)
         if self.job.get("skip") or self.stopped():
             return
         files = [f for f in glob.glob(os.path.join(folder, "*")) if not f.lower().endswith((".yaml", ".yml"))]
@@ -193,7 +232,9 @@ class Updater:
         f = max(files, key=os.path.getsize)
         info = manifest_info(open(man, encoding="utf-8", errors="replace").read()) if man else {}
         a.update(file=f, size=os.path.getsize(f), scope=info.get("scope") or ("machine" if "_machine_" in os.path.basename(f).lower() else None),
-                 type=info.get("type"))
+                 type=info.get("type"), pin=pin_args(info, upgrade_flags()))
+        if a["pin"]:
+            a["notes"].append("ставится тот же установщик, что проверен: " + " ".join(a["pin"][1::2]))
         if info.get("elevation") in ("elevationrequired", "elevatesself"):
             a["scope"] = "machine"
         if not a["scope"]:                       # манифест не говорит — смотрим, где программа записана: HKCU — «для тебя»
@@ -239,7 +280,7 @@ class Updater:
             a["notes"].append("VirusTotal не подключён (⚙ Настройки) — проверено только Defender и подписью")
         self.set(a, "ready", "проверено — " + ("ставится вместе с другими «для всех» (одно окно UAC)" if a["scope"] == "machine" else "ставится без прав администратора"))
 
-    def installed_scope(self, name):
+    def installed_scope(self, name, guess=True):
         if not hasattr(self, "_progs"):
             try:
                 import uninstall
@@ -247,10 +288,12 @@ class Updater:
             except Exception:
                 self._progs = {}
         key = self._progs.get(name.lower(), "")
+        if not guess:                                                # только точное знание: для выбора установщика
+            return "user" if key.startswith("HKCU") else "machine" if key.startswith("HKLM") else None
         return "user" if key.startswith("HKCU") else "machine"      # неизвестно — безопаснее ставить с правами (одно окно на все)
 
     def upgrade_cmd(self, a):
-        return [winget_exe(), "upgrade", "--id", a["id"], "-e", "--version", a["available"], "--silent"] + COMMON
+        return [winget_exe(), "upgrade", "--id", a["id"], "-e", "--version", a["available"], "--silent"] + (a.get("pin") or []) + COMMON
 
     def install_user(self, a):
         self.set(a, "install", "ставится (без прав администратора)")

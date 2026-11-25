@@ -1,11 +1,15 @@
 # ScanHub — полная очистка оперативной памяти (как Mem Reduct).
 # Запускается задачей планировщика «ScanHub\MemClean» с правами администратора, делает одну очистку и выходит.
-# Результат пишет в %ProgramData%\ScanHub\memclean.json.
+# Результат пишет в %ProgramFiles%\ScanHub\data\memclean.json (2.5.1: не в общую ProgramData — см. sensors.ps1).
 param([switch]$Standby)            # -Standby: дополнительно очистить весь кэш standby (агрессивнее)
 $ErrorActionPreference = 'SilentlyContinue'
-$dir = Join-Path $env:ProgramData 'ScanHub'
+$dir = Join-Path $env:ProgramFiles 'ScanHub\data'
 $out = Join-Path $dir 'memclean.json'
-New-Item -ItemType Directory -Force -Path $dir | Out-Null
+# папку создаёт ScanHub при включении; ссылку или чужую папку не трогаем
+$di = Get-Item -LiteralPath $dir -Force
+if (-not $di -or ($di.Attributes -band [IO.FileAttributes]::ReparsePoint)) { exit 1 }
+$own = (Get-Acl -LiteralPath $dir).GetOwner([Security.Principal.SecurityIdentifier]).Value
+if ($own -notin 'S-1-5-32-544', 'S-1-5-18', 'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464') { exit 1 }
 
 Add-Type -TypeDefinition @"
 using System;

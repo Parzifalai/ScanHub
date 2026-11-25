@@ -79,9 +79,19 @@ _MODES = {"961cc777-2547-4f9d-8174-7d86181b8a7a": ("efficiency", "Лучшая �
           "ded574b5-45a0-4f42-8737-46345c09c238": ("performance", "Максимальная производительность")}
 
 
-SENSORS_DIR = os.path.join(os.environ.get("ProgramData", r"C:\ProgramData"), "ScanHub")
-SENSORS_JSON = os.path.join(SENSORS_DIR, "sensors.json")
-SENSORS_WANT = os.path.join(SENSORS_DIR, "want")
+# 2.5.1: данные агентов (датчики, полная очистка памяти) — в Program Files\ScanHub\data: туда пишет только администратор.
+# Раньше были в ProgramData\ScanHub, куда может писать любой пользователь, а задачи с правами администратора писали
+# туда файлы — подменой файла на ссылку можно было заставить их перезаписать чужой системный файл.
+# Обычному пользователю открыт на запись один файл — «want» (метка «окно ScanHub открыто»), без права удалить или заменить.
+AGENT_DATA = os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "ScanHub", "data")
+LEGACY_DATA = os.path.join(os.environ.get("ProgramData", r"C:\ProgramData"), "ScanHub")   # агенты до 2.5.1
+
+
+def agent_data():
+    """Где лежат файлы агентов: новое место, если его уже создали при включении, иначе старое (агент ещё не обновлён)."""
+    return AGENT_DATA if os.path.isdir(AGENT_DATA) else LEGACY_DATA
+
+
 SENSORS_TASK = r"ScanHub\Sensors"
 # пока MinerSearch ищет майнеры, датчики выключены: скрытая консоль с PowerShell (conhost --headless) для него выглядит
 # как «сторожевой процесс» майнера — каждая проверка находила «1 угрозу», и это был сам ScanHub
@@ -141,6 +151,11 @@ def sensors_outdated():
         return False
 
 
+def _memclean_outdated():
+    import system
+    return system.memclean_outdated()
+
+
 def _num(v, lo, hi):
     try:
         v = float(v)
@@ -152,7 +167,7 @@ def _num(v, lo, hi):
 def sensors_read(max_age=10):
     """Показания агента: температура процессора, вентиляторы, режим. None — агент не работает."""
     try:
-        with open(SENSORS_JSON, encoding="utf-8-sig") as f:
+        with open(os.path.join(agent_data(), "sensors.json"), encoding="utf-8-sig") as f:
             d = json.load(f)
     except (OSError, ValueError):
         return None
@@ -443,10 +458,17 @@ class Metrics:
         if not self.sensors_on:
             self.sensors = None
             return
+        # метка «окно открыто»: только обновить время файла, папку не создавать — её создаёт администратор при включении
+        # (созданная обычным пользователем папка и была дырой 3.8)
+        want = os.path.join(agent_data(), "want")
         try:
-            os.makedirs(SENSORS_DIR, exist_ok=True)
-            with open(SENSORS_WANT, "w") as f:
-                f.write(str(int(now)))
+            os.utime(want)
+        except FileNotFoundError:
+            if agent_data() == LEGACY_DATA and os.path.isdir(LEGACY_DATA):   # старый агент: файл создавали сами
+                try:
+                    open(want, "w").close()
+                except OSError:
+                    pass
         except OSError:
             pass
         self.sensors = sensors_read()
@@ -482,7 +504,7 @@ class Metrics:
             except OSError:
                 continue
             out.append({"mount": p.mountpoint.rstrip("\\"), "fs": p.fstype, "total": u.total, "used": u.used,
-                        "percent": u.percent})
+                        "percent": u.percent, "removable": "removable" in p.opts})
         b = psutil.sensors_battery()
         with self.lock:
             self.now["disks"] = out
@@ -1052,6 +1074,7 @@ while ($true) {
                     "sensors_on": self.sensors_on,
                     "memclean_on": self.memclean_on,
                     "sensors_outdated": bool(self.sensors_on and sensors_outdated()),
+                    "memclean_outdated": bool(self.memclean_on and _memclean_outdated()),
                     "sensors_stuck": bool(self.sensors_on and self.sensors is None and self.sensors_wait
                                           and time.time() - self.sensors_wait > 25)}
 
@@ -1059,8 +1082,14 @@ while ($true) {
 METRICS = Metrics()
 
 
-def kill(pid):
+def kill(pid, name=None, started=None):
+    """Завершить процесс из таблицы «Нагрузка». 2.5.1: сверяем имя и время запуска с тем, что видел пользователь —
+    пока он читал вопрос «Завершить?», процесс мог закрыться, а его номер достаться другой программе."""
     p = psutil.Process(pid)
+    if name and p.name().lower() != str(name).lower():
+        raise RuntimeError(f"под номером {pid} уже другая программа ({p.name()}) — ничего не трогаю, обнови список")
+    if started and abs(p.create_time() - float(started)) > 2:
+        raise RuntimeError(f"{p.name()} уже перезапустилась (номер {pid} — новый процесс) — ничего не трогаю, обнови список")
     name = p.name()
     p.terminate()
     try:

@@ -389,6 +389,7 @@ const starNote = (small = false) => `<div class="star-note${small ? " small" : "
 function toast(title, text = "", kind = "ok", ms = 5000, onclick = null){
   const box = $("#toasts");
   if (!box || !title) return;
+  if (kind === "bad" || kind === "error") kind = "err";     // в стилях есть только ok/err/warn/info
   const el = document.createElement("div");
   el.className = "toast " + (kind === "ok" ? "" : kind);
   el.innerHTML = `<span class="ti">${{ok: "✓", err: "!", warn: "!", info: "i"}[kind] || "✓"}</span><span><b>${esc(title)}</b>${text ? `<span class="sub">${esc(text)}</span>` : ""}</span>`;

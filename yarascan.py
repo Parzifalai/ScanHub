@@ -256,24 +256,67 @@ def _q_save(items):
     os.replace(QINDEX + ".tmp", QINDEX)
 
 
+def _xor_copy(src, dst):
+    """Потоковое копирование с XOR кусками по 1 МБ (2.5.1: раньше файл читался в память целиком — на гигабайтном
+    файле ScanHub мог упасть). Пишет во временный файл, сбрасывает на диск и только потом переименовывает.
+    Возвращает (размер, sha256 исходных байтов)."""
+    h, size, part = hashlib.sha256(), 0, dst + ".part"
+    try:
+        with open(src, "rb") as fi, open(part, "wb") as fo:
+            for chunk in iter(lambda: fi.read(1 << 20), b""):
+                h.update(chunk)
+                size += len(chunk)
+                fo.write(_xor(chunk))
+            fo.flush()
+            os.fsync(fo.fileno())
+        os.replace(part, dst)
+    except BaseException:
+        try:
+            os.remove(part)
+        except OSError:
+            pass
+        raise
+    return size, h.hexdigest()
+
+
+def _file_sha(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
 def quarantine(path, threat="", engine=""):
+    """Порядок (2.5.1): копия в карантин → запись в список → удаление оригинала. На любом сбое — откат,
+    оригинал остаётся на месте. Раньше список писался после удаления: при сбое файл пропадал бесследно."""
     if not os.path.isfile(path):
         raise RuntimeError("файл не найден")
     os.makedirs(QDIR, exist_ok=True)
-    data = open(path, "rb").read()
     qid = uuid.uuid4().hex[:12]
-    with open(os.path.join(QDIR, qid + ".bin"), "wb") as f:
-        f.write(_xor(data))
+    binp = os.path.join(QDIR, qid + ".bin")
+    size, sha = _xor_copy(path, binp)
+    # пока копировали, файл могли изменить — тогда в карантине не то, что мы удаляем
+    if os.path.getsize(path) != size or _file_sha(path) != sha:
+        os.remove(binp)
+        raise RuntimeError("файл изменился во время переноса — попробуй ещё раз")
+    entry = {"id": qid, "path": path, "name": threat, "engine": engine, "size": size, "sha256": sha,
+             "date": datetime.now().isoformat(timespec="seconds")}
+    items = q_list()
+    try:
+        _q_save([entry] + items)
+    except BaseException:
+        os.remove(binp)
+        raise
     try:
         os.remove(path)
     except OSError:
-        os.remove(os.path.join(QDIR, qid + ".bin"))
+        try:                                   # оригинал удалить не вышло (занят, нет прав) — карантин отменяем
+            _q_save(items)
+        finally:
+            os.remove(binp)
         raise
-    items = q_list()
-    items.insert(0, {"id": qid, "path": path, "name": threat, "engine": engine, "size": len(data),
-                     "sha256": hashlib.sha256(data).hexdigest(), "date": datetime.now().isoformat(timespec="seconds")})
-    _q_save(items)
-    return items[0]
+    return entry
 
 
 def q_restore(qid):
@@ -281,15 +324,24 @@ def q_restore(qid):
     it = next((i for i in items if i["id"] == qid), None)
     if not it:
         raise RuntimeError("нет такого файла в карантине")
+    binp = os.path.join(QDIR, qid + ".bin")
+    if not os.path.isfile(binp):
+        raise RuntimeError("файл карантина пропал с диска")
     dst = it["path"]
     if os.path.exists(dst):
         root, ext = os.path.splitext(dst)
         dst = f"{root} (восстановлен){ext}"
     os.makedirs(os.path.dirname(dst), exist_ok=True)
-    with open(dst, "wb") as f:
-        f.write(_xor(open(os.path.join(QDIR, qid + ".bin"), "rb").read()))
-    os.remove(os.path.join(QDIR, qid + ".bin"))
-    _q_save([i for i in items if i["id"] != qid])
+    _xor_copy(binp, dst + ".restore")
+    if it.get("sha256") and _file_sha(dst + ".restore") != it["sha256"]:
+        os.remove(dst + ".restore")
+        raise RuntimeError("копия в карантине повреждена — восстанавливать не стал")
+    os.replace(dst + ".restore", dst)
+    _q_save([i for i in items if i["id"] != qid])    # сначала список, потом копия: лишний .bin безвреднее пропавшего
+    try:
+        os.remove(binp)
+    except OSError:
+        pass
     return dst
 
 

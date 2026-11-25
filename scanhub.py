@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "2.5.0"
+VERSION = "2.5.1"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -992,10 +992,18 @@ def start_job(tid, mode_id, target, batch=None):
                              stdin=subprocess.DEVNULL, creationflags=NO_WINDOW,
                              env={**os.environ, "NO_COLOR": "1", "PYTHONIOENCODING": "utf-8"})
         job["pid"] = p.pid
-        for raw in p.stdout:
-            line = ANSI.sub("", decode(raw).rstrip("\r\n"))
-            job["lines"].append(line)
-        return p.wait()
+        # «Стоп» срабатывает и когда программа ничего не пишет; вышедшая программа, чей вывод держит
+        # дочерний процесс, тоже не подвешивает задачу
+        on_raw = lambda raw: job["lines"].append(ANSI.sub("", decode(raw).rstrip("\r\n")))
+        if deepscan:
+            deepscan.pump(p, on_raw, lambda: job.get("stop"))
+        else:                                  # без psutil модуль не загрузился — по-старому
+            for raw in p.stdout:
+                on_raw(raw)
+        try:
+            return p.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            return -1
 
     def work():
         try:
@@ -1527,20 +1535,42 @@ def _hosts_set(enable):
     return system.hosts_status()
 
 
+def _agent_data_ops():
+    """Папка данных агентов (3.8, 2.5.1): Program Files\\ScanHub\\data — владелец «Администраторы», обычный пользователь
+    только читает. Писать ему можно лишь в файл «want» (время «окно ScanHub открыто»): без права удалить, заменить
+    ссылкой или поменять права. Старая общая папка ProgramData\\ScanHub больше не нужна — удаляется (ссылки внутри
+    rmtree удаляет как ссылки, не заходя в них)."""
+    d = metrics.AGENT_DATA
+    q = lambda s: "'" + s.replace("'", "''") + "'"
+    ps = (f"$d = {q(d)}; $w = Join-Path $d 'want'; "
+          "if (-not (Test-Path -LiteralPath $w)) { New-Item -ItemType File -Path $w -Force | Out-Null }; "
+          "icacls $d /setowner '*S-1-5-32-544' | Out-Null; icacls $w /setowner '*S-1-5-32-544' | Out-Null; "
+          "icacls $w /grant '*S-1-5-32-545:(W)' | Out-Null; if ($LASTEXITCODE) { exit $LASTEXITCODE }")
+    ops = [{"type": "mkdir", "path": d},
+           {"type": "run", "cmd": ["powershell", "-NoProfile", "-Command", ps], "timeout": 60}]
+    # второй агент, если он уже стоит, обновляем заодно — иначе старая версия продолжила бы писать в общую папку
+    if metrics.sensors_installed():
+        ops += [{"type": "run", "cmd": ["powershell", "-NoProfile", "-Command", _SENSORS_KILL], "timeout": 30},
+                {"type": "copy", "src": os.path.join(ROOT, "agent", "sensors.ps1"), "dst": metrics.SENSORS_SCRIPT}]
+    if system.memclean_installed():
+        ops.append({"type": "copy", "src": os.path.join(ROOT, "agent", "memclean.ps1"), "dst": system.MEMCLEAN_SCRIPT})
+    return ops + [{"type": "rmtree", "path": metrics.LEGACY_DATA}]
+
+
+# завершить уже запущенного агента датчиков (иначе продолжит работать старая версия скрипта)
+_SENSORS_KILL = ("Get-CimInstance Win32_Process -Filter \"Name='powershell.exe'\" | Where-Object { $_.CommandLine -like "
+                 "'*ScanHub\\sensors.ps1*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }")
+
+
 def _sensors_set(enable):
     pf_dir = os.path.dirname(metrics.SENSORS_SCRIPT)
     if enable:
         tr = ('conhost.exe --headless powershell.exe -NoProfile -ExecutionPolicy Bypass -File '
               f'"{metrics.SENSORS_SCRIPT}"')
-        # завершить уже запущенного агента (иначе продолжит работать старая версия скрипта)
-        kill_old = ("Get-CimInstance Win32_Process -Filter \"Name='powershell.exe'\" | Where-Object { $_.CommandLine -like "
-                    "'*ScanHub\\sensors.ps1*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }")
-        ops = [{"type": "run", "cmd": ["powershell", "-NoProfile", "-Command", kill_old], "timeout": 30},
+        ops = [{"type": "run", "cmd": ["powershell", "-NoProfile", "-Command", _SENSORS_KILL], "timeout": 30},
                {"type": "mkdir", "path": pf_dir},
                {"type": "copy", "src": os.path.join(ROOT, "agent", "sensors.ps1"), "dst": metrics.SENSORS_SCRIPT},
-               {"type": "mkdir", "path": metrics.SENSORS_DIR},
-               # папка данных: пользователь может писать (файл «want»), скрипт агента лежит отдельно в Program Files
-               {"type": "run", "cmd": ["icacls", metrics.SENSORS_DIR, "/grant", "*S-1-5-32-545:(OI)(CI)M"], "timeout": 30},
+               *_agent_data_ops(),
                {"type": "run", "cmd": ["schtasks", "/End", "/TN", metrics.SENSORS_TASK], "timeout": 30},
                {"type": "run", "cmd": ["schtasks", "/Create", "/TN", metrics.SENSORS_TASK, "/TR", tr, "/SC", "ONCE",
                                        "/ST", "00:00", "/RL", "HIGHEST", "/F"], "timeout": 60},
@@ -1553,7 +1583,11 @@ def _sensors_set(enable):
     else:
         ops = [{"type": "run", "cmd": ["schtasks", "/End", "/TN", metrics.SENSORS_TASK], "timeout": 30},
                {"type": "run", "cmd": ["schtasks", "/Delete", "/TN", metrics.SENSORS_TASK, "/F"], "timeout": 30},
-               {"type": "rmtree", "path": pf_dir}]
+               # только своё: раньше удалялась вся папка Program Files\ScanHub — вместе со скриптом полной очистки памяти
+               {"type": "remove", "path": metrics.SENSORS_SCRIPT},
+               {"type": "remove", "path": os.path.join(metrics.AGENT_DATA, "sensors.json")}]
+        if not system.memclean_installed():
+            ops.append({"type": "rmtree", "path": pf_dir})
     res = deepscan.run_elevated(ops, timeout=300)
     metrics.METRICS.sensors_on = None          # перепроверить при следующем такте
     if enable:
@@ -1582,9 +1616,7 @@ def _memclean_set(enable):
               f'"{system.MEMCLEAN_SCRIPT}"')
         ops = [{"type": "mkdir", "path": pf_dir},
                {"type": "copy", "src": os.path.join(ROOT, "agent", "memclean.ps1"), "dst": system.MEMCLEAN_SCRIPT},
-               {"type": "mkdir", "path": os.path.dirname(system.MEMCLEAN_JSON)},
-               {"type": "run", "cmd": ["icacls", os.path.dirname(system.MEMCLEAN_JSON), "/grant", "*S-1-5-32-545:(OI)(CI)M"],
-                "timeout": 30},
+               *_agent_data_ops(),
                {"type": "run", "cmd": ["schtasks", "/Create", "/TN", system.MEMCLEAN_TASK, "/TR", tr, "/SC", "ONCE",
                                        "/ST", "00:00", "/RL", "HIGHEST", "/F"], "timeout": 60},
                {"type": "run", "cmd": ["powershell", "-NoProfile", "-Command",
@@ -1594,7 +1626,8 @@ def _memclean_set(enable):
                 "timeout": 60}]
     else:
         ops = [{"type": "run", "cmd": ["schtasks", "/Delete", "/TN", system.MEMCLEAN_TASK, "/F"], "timeout": 30},
-               {"type": "remove", "path": system.MEMCLEAN_SCRIPT}]
+               {"type": "remove", "path": system.MEMCLEAN_SCRIPT},
+               {"type": "remove", "path": system.MEMCLEAN_JSON}]
     deepscan.run_elevated(ops, timeout=300)
     if metrics:
         metrics.METRICS.memclean_on = None
@@ -3394,7 +3427,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if p == "/api/deep":
                 return self.send(200, {"id": start_deep()["id"]})
             if p == "/api/kill":
-                return self.send(200, {"name": metrics.kill(int(body["pid"]))})
+                return self.send(200, {"name": metrics.kill(int(body["pid"]), body.get("name"), body.get("started"))})
             if p == "/api/stop":
                 stop_job(body["id"])
                 return self.send(200, {"ok": True})

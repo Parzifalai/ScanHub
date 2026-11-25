@@ -700,6 +700,62 @@ def _exec_ops(ops, prog=None, ctl=None):
     return results
 
 
+def kill_tree(p):
+    """Завершить программу вместе с её дочерними процессами (сканеры часто запускают свои)."""
+    try:
+        subprocess.run(["taskkill", "/PID", str(p.pid), "/T", "/F"], capture_output=True, creationflags=NO_WINDOW, timeout=15)
+    except Exception:
+        pass
+    try:
+        p.kill()
+    except Exception:
+        pass
+
+
+def pump(p, on_raw, should_stop=None, timeout=None):
+    """Читать вывод программы в отдельном потоке, а «Стоп» и время ожидания проверять раз в полсекунды —
+    даже когда программа замолчала (раньше зависшая без вывода программа держала проверку бесконечно).
+    on_raw(bytes) — на каждую строку. Возвращает None (сама завершилась), "stop" или "timeout"."""
+    import queue
+    import threading
+    q = queue.Queue()
+
+    def reader():
+        try:
+            for raw in p.stdout:
+                q.put(raw)
+        except Exception:
+            pass
+        q.put(None)
+
+    threading.Thread(target=reader, daemon=True).start()
+    t0, exited, why = time.time(), None, None
+    try:
+        while True:
+            try:
+                raw = q.get(timeout=0.5)
+                if raw is None:
+                    break
+                on_raw(raw)
+            except queue.Empty:
+                # программа вышла, а вывод держит открытым её «потомок» — не ждём его вечно
+                if p.poll() is not None:
+                    exited = exited or time.time()
+                    if time.time() - exited > 3:
+                        break
+            if should_stop and should_stop():
+                why = "stop"
+            elif timeout and time.time() - t0 > timeout:
+                why = "timeout"
+            if why:
+                kill_tree(p)
+                break
+    except BaseException:
+        kill_tree(p)
+        raise
+    return why
+
+
 def system_decode(b):
     # sfc и некоторые утилиты пишут в UTF-16LE: почти каждый второй байт — 0x00 (латиница) или 0x04 (кириллица)
     odd = b[1::2]
@@ -1063,19 +1119,24 @@ class DeepScan:
         p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                              creationflags=NO_WINDOW, env={**os.environ, "NO_COLOR": "1", "TERM": "dumb"})
         self.job["pid"] = p.pid
-        lines, t0 = [], time.time()
-        for raw in p.stdout:
+        lines = []
+
+        def on_raw(raw):
             line = ANSI.sub("", system_decode(raw))
             line = next((seg for seg in reversed(line.split("\r")) if seg.strip()), "").rstrip()
             if not line:
-                continue
+                return
             lines.append(line)
             if show and len(line) < 600:
                 self.emit("    " + line)
-            if self.stopped() or time.time() - t0 > timeout:
-                p.kill()
-                break
-        code = p.wait()
+
+        why = pump(p, on_raw, self.stopped, timeout)
+        if why == "timeout":
+            self.emit(f"    [ScanHub] программа не закончила за {timeout // 60} мин — остановлена")
+        try:
+            code = p.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            code = -1
         self.job["pid"] = None
         return code, lines
 
