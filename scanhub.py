@@ -908,7 +908,7 @@ def start_job(tid, mode_id, target, batch=None):
                 # raw_cmdline: аргументы передаются как написаны (a2cmd ждёт /f="путь с пробелами", а не "/f=путь с пробелами")
                 main = (subprocess.list2cmdline(cmd[:1]) + " " + " ".join(cmd[1:])) if mode.get("raw_cmdline") else cmd
                 ops.append({"type": "run", "cmd": main, "cwd": os.path.dirname(exe), "timeout": int(mode.get("timeout", 900)), "label": "проверка",
-                            "console": bool(mode.get("console"))})   # своя скрытая консоль (MinerSearch без неё падает)
+                            "console": bool(mode.get("console")), "answers": mode.get("answers")})   # своя скрытая консоль (MinerSearch без неё падает)
                 rep_dir = os.path.join(DATA, "reports", job["id"])
                 if mode.get("elevated_log"):
                     ops.append({"type": "copy_glob", "src_dir": os.path.dirname(exe), "pattern": mode["elevated_log"], "dst_dir": rep_dir,

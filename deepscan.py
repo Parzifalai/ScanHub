@@ -517,6 +517,43 @@ def _hidden_console():
             "stdin": None, "stdout": None, "stderr": None}
 
 
+def _console_start(op):
+    """Запуск в скрытой консоли. answers — что ответить на вопросы программы (MinerSearch спрашивает «обновиться? Yes/No»,
+    отключить этот вопрос ключом нельзя). Программа может сама показать своё окно (MinerSearch так делает и ставит
+    случайный заголовок) — пока она работает, раз в полсекунды прячем все её окна."""
+    p = subprocess.Popen(op["cmd"], cwd=op.get("cwd"), **_hidden_console())
+    if op.get("answers"):
+        # ответы «печатаем» прямо в его консоль (contype.py): перенаправленный ввод ломает .NET-программам размер консоли
+        try:
+            subprocess.Popen([sys.executable, "-I", os.path.join(os.path.dirname(os.path.abspath(__file__)), "contype.py"),
+                              str(p.pid), "\n".join(op["answers"])], creationflags=0x00000008)   # DETACHED_PROCESS
+        except OSError:
+            pass
+    import threading
+    threading.Thread(target=_keep_hidden, args=(p,), daemon=True).start()
+    return p
+
+
+def _keep_hidden(p):
+    import ctypes
+    from ctypes import wintypes
+    u = ctypes.windll.user32
+    proto = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    def cb(hwnd, _):
+        pid = wintypes.DWORD()
+        u.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        if pid.value == p.pid and u.IsWindowVisible(hwnd):
+            u.ShowWindow(hwnd, 0)                       # SW_HIDE
+        return True
+    f = proto(cb)
+    while p.poll() is None:
+        try:
+            u.EnumWindows(f, 0)
+        except Exception:
+            return
+        time.sleep(0.5)
+
+
 def _exec_ops(ops, prog=None, ctl=None):
     """Выполнить операции (уже в процессе с правами администратора) и вернуть результаты по каждой."""
     in_data = _in_data
@@ -542,7 +579,7 @@ def _exec_ops(ops, prog=None, ctl=None):
                 alive = op.get("alive") if in_data(op.get("alive")) else None
                 fh = open(outf, "wb") if outf and not op.get("console") else None
                 if op.get("console"):
-                    p = subprocess.Popen(op["cmd"], cwd=op.get("cwd"), **_hidden_console())
+                    p = _console_start(op)
                 else:
                     p = subprocess.Popen(op["cmd"], stdout=fh or subprocess.PIPE, stderr=subprocess.DEVNULL if fh else subprocess.STDOUT,
                                          cwd=op.get("cwd"), creationflags=NO_WINDOW)
@@ -609,8 +646,13 @@ def _exec_ops(ops, prog=None, ctl=None):
                         got.append(d)
                 results.append({"ok": True, "files": got})
             elif op["type"] == "run" and op.get("console"):
-                r = subprocess.run(op["cmd"], timeout=op.get("timeout", 1200), cwd=op.get("cwd"), **_hidden_console())
-                results.append({"ok": True, "code": r.returncode, "out": ""})
+                p = _console_start(op)
+                try:
+                    p.wait(timeout=op.get("timeout", 1200))
+                except subprocess.TimeoutExpired:
+                    subprocess.run(["taskkill", "/PID", str(p.pid), "/T", "/F"], capture_output=True, creationflags=NO_WINDOW)
+                    p.wait()
+                results.append({"ok": True, "code": p.returncode, "out": ""})
             elif op["type"] == "run":
                 r = subprocess.run(op["cmd"], capture_output=True, timeout=op.get("timeout", 1200),
                                    cwd=op.get("cwd"), creationflags=NO_WINDOW)
@@ -1112,7 +1154,7 @@ class DeepScan:
         self.ms_t0 = time.time()
         self.ms_dir = os.path.join(DATA_DIR, "reports", self.job["id"] + "-minersearch")
         return [{"type": "run", "cmd": [exe, "--accept-eula", "--console-mode", "--scan-only", "--no-review-interact"],
-                 "cwd": os.path.dirname(exe), "timeout": 1500, "console": True},
+                 "cwd": os.path.dirname(exe), "timeout": 1500, "console": True, "answers": ["No"] * 3},
                 {"type": "copy_glob", "src_dir": MS_LOGS, "pattern": "MinerSearch_*.log", "dst_dir": self.ms_dir,
                  "newer_than": self.ms_t0 - 5, "timeout": 60}]
 

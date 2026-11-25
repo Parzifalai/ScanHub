@@ -19,6 +19,7 @@
       "target": "none",
       "elevated": true,
       "console": true,
+      "answers": ["No", "No", "No"],
       "admin": true,
       "timeout": 1500,
       "started_text": "ищу майнеры — обычно 3–5 минут; окно MinerSearch не появится",
