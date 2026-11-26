@@ -20,6 +20,8 @@ jobs:
     env:
       SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
       SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+      PYTHONUTF8: "1"                  # скрипты сборки печатают по-русски, а консоль сервера — cp1252
+      PYTHONIOENCODING: utf-8
     steps:
       - uses: actions/checkout@v4
 
