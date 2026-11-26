@@ -65,6 +65,8 @@ Every release also has **SHA256SUMS.txt** with the checksums of both archives, s
 3. Run **ScanHub.exe**. ScanHub opens in its own dedicated window (or Microsoft Edge if WebView2 isn't available). The home screen has a “Create shortcut” button for the desktop and the Start menu.
 4. On the home screen click **“Prepare”**. ScanHub downloads the missing scanners and their databases from the official sites (about 1 GB, 5–15 minutes, once). Without this only Defender and the signature check work.
 
+**With [Scoop](https://scoop.sh):** `scoop bucket add parzifalai https://github.com/Parzifalai/scoop-bucket`, then `scoop install parzifalai/scanhub`. Settings, history and downloaded scanners are kept between updates.
+
 **If Windows says “Windows protected your PC”.** ScanHub.exe has no digital signature (it costs money; open source projects can get one for free through the SignPath Foundation, which is planned), so SmartScreen warns about any new program. Click **“More info” → “Run anyway”**; you only need to do it once. ScanHub.exe is a tiny launcher: its source is in [`launcher/ScanHub.cs`](launcher/ScanHub.cs), and all it does is open `scanhub.py` with the bundled Python.
 
 The archive contains the official Python build from python.org (signed by the Python Software Foundation) and the psutil and yara-x packages.
