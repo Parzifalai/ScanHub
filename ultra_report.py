@@ -9,6 +9,7 @@ import glob
 import html
 import json
 import os
+import pathlib
 import re
 import subprocess
 import tempfile
@@ -90,7 +91,9 @@ def _system_line():
 
 def build_html(view, version, cfg):
     from assistant import redact
-    e = html.escape
+    # имя пользователя, компьютер, почта, ключи — заменяются в каждом тексте ДО экранирования: по готовому HTML
+    # «<пользователь>» становился тегом и пропадал, а имя вроде Max портило CSS (max-width)
+    e = lambda s: html.escape(redact(str(s), cfg))
     st = view.get("stats") or {}
     when = (view.get("finished") or view.get("started") or "").replace("T", " ")[:16]
     cmp = compare(view)
@@ -137,7 +140,7 @@ td.lvl {{ width: 78px; font-weight: 600; font-size: 9pt; }}
     if cfg.get("lang") == "en":
         import i18n
         doc = i18n.tr_html(doc).replace('<html lang="ru">', '<html lang="en">')
-    return redact(doc, cfg)
+    return doc
 
 
 def make_pdf(view, version, cfg, edge, out_dir):
@@ -154,7 +157,7 @@ def make_pdf(view, version, cfg, edge, out_dir):
     out = os.path.join(out_dir, f"ScanHub — report {day}.pdf" if cfg.get("lang") == "en" else f"ScanHub — отчёт {day}.pdf")
     prof = os.path.join(tempfile.gettempdir(), "scanhub-pdf-profile")
     r = subprocess.run([edge, "--headless=new", "--disable-gpu", "--no-pdf-header-footer", "--no-first-run",
-                        f"--user-data-dir={prof}", f"--print-to-pdf={out}", "file:///" + src.replace("\\", "/")],
+                        f"--user-data-dir={prof}", f"--print-to-pdf={out}", pathlib.Path(src).resolve().as_uri()],   # «#» или «%» в пути не ломают адрес
                        capture_output=True, timeout=120, creationflags=0x08000000)
     if not os.path.exists(out):
         raise RuntimeError(f"Edge не сохранил PDF (код {r.returncode})")

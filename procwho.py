@@ -287,7 +287,9 @@ def start(res, cfg, assistant_mod):
 
 
 def _vt(path, cfg, assistant_mod):
-    r = assistant_mod._online(path, cfg).get("VirusTotal")
+    r = (assistant_mod._online(path, cfg) or {}).get("VirusTotal")
+    if not r:
+        return {"text": "VirusTotal не ответил", "level": "info"}
     if isinstance(r, str):
         return {"text": r if r != "файла нет в базе" else "VirusTotal этот файл ещё не видел (редкая или новая версия)",
                 "level": "info"}

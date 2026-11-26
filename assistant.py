@@ -667,7 +667,8 @@ def redact(text, cfg):
         if word and len(word) >= 3:
             text = re.sub(re.escape(word), repl, text, flags=re.I)
     text = EMAIL_RE.sub("<почта>", text)
-    for k in ("virustotal_key", "filescan_key", "metadefender_key", "hybrid_key", "gemini_key", "deepseek_key", "github_token"):
+    for k in ("virustotal_key", "filescan_key", "metadefender_key", "hybrid_key", "gemini_key", "deepseek_key", "github_token",
+              "anthropic_key", "openai_key", "openrouter_key"):            # как SECRET_KEYS в scanhub.py
         v = cfg.get(k)
         if v and len(v) >= 8:
             text = text.replace(v, "<ключ>")
@@ -1041,7 +1042,20 @@ def _path(p):
 
 
 def _blocked(path):
-    """Причина, если файл читать нельзя (личное или секретное)."""
+    """Причина, если файл читать нельзя (личное или секретное). Проверяется и путь, и то, куда он ведёт на самом деле:
+    ярлык-папка (junction) в «Загрузках» на профиль браузера или data ScanHub не должен открывать их."""
+    try:
+        real = os.path.realpath(path)
+    except (OSError, ValueError):
+        real = path
+    if os.path.normcase(real) != os.path.normcase(path):
+        why = _blocked_one(real)
+        if why:
+            return why
+    return _blocked_one(path)
+
+
+def _blocked_one(path):
     low = os.path.normcase(path)
     data = os.path.normcase(DATA)
     if low.startswith(data + os.sep) and not low.startswith(os.path.join(data, "logs") + os.sep):
@@ -1637,7 +1651,14 @@ WEB_TOOLS = {"web_search", "web_fetch", "official_site"}
 def _web_get(url, timeout=15, limit=1_500_000):
     import http.cookiejar
     req = urllib.request.Request(url, headers={"User-Agent": WEB_UA, "Accept-Language": "ru,en;q=0.8"})
-    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))   # сайты с переадресацией через cookie
+
+    class _Safe(urllib.request.HTTPRedirectHandler):
+        # каждую переадресацию проверяем ДО перехода: иначе сайт отправил бы запрос на 127.0.0.1 или роутер в домашней сети
+        def redirect_request(self, rq, fp, code, msg, headers, newurl):
+            if not _public_url(newurl):
+                raise urllib.error.URLError("страница перенаправила в локальную сеть — не открываю")
+            return super().redirect_request(rq, fp, code, msg, headers, newurl)
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()), _Safe)   # cookie: сайты с переадресацией через cookie
     with opener.open(req, timeout=timeout) as r:
         raw = r.read(limit)
         cs = r.headers.get_content_charset() or "utf-8"

@@ -19,6 +19,7 @@ INDEX = os.path.join(DIR, "index.json")
 MEMORY = os.path.join(DATA, "ai_memory.json")
 LOCK = threading.RLock()
 ID_RE = re.compile(r"^[0-9a-f]{12}$")
+IMG_RE = re.compile(r"^data:image/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$")   # только картинка: без кавычек и атрибутов
 MAX_MSGS = 400                 # сообщений в одном чате
 MAX_MSG = 60_000               # знаков в одном сообщении
 MAX_IMG = 2_500_000            # одна картинка (data:…) — большие не храним, остаётся пометка
@@ -88,7 +89,7 @@ def _clean_msg(m):
     out = {k: m[k] for k in ("role", "content", "show", "verdict", "act", "rv", "job", "cached", "finding", "mem") if k in m and m[k] not in (None, "")}
     out["content"] = str(out.get("content") or "")[:MAX_MSG]
     if isinstance(m.get("imgs"), list):
-        imgs = [s for s in m["imgs"] if isinstance(s, str) and s.startswith("data:image/") and len(s) <= MAX_IMG][:4]
+        imgs = [s for s in m["imgs"] if isinstance(s, str) and IMG_RE.match(s) and len(s) <= MAX_IMG][:4]
         if imgs:
             out["imgs"] = imgs
         elif m["imgs"]:

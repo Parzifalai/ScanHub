@@ -294,7 +294,7 @@ function devCard(t){
   }
   const notes = [];
   if (s.blocked) notes.push(`<div class="note bad"><b>Defender заблокировал загрузку:</b> ${esc(s.blocked)}.
-      Возможно ложное срабатывание, но решать тебе. Если доверяешь — добавь исключение для <code>D:\\ScanHub\\apps</code> в «Безопасность Windows» сам и нажми «Установить» снова. <a data-dismiss="${t.id}">скрыть</a></div>`);
+      Возможно ложное срабатывание, но решать тебе. Если доверяешь — добавь исключение для папки <code>apps</code> внутри папки ScanHub в «Безопасность Windows» сам и нажми «Установить» снова. <a data-dismiss="${t.id}">скрыть</a></div>`);
   if (s.error) notes.push(`<div class="note bad">${esc(s.error)} <a data-dismiss="${t.id}">скрыть</a></div>`);
   if (s.check_error) notes.push(`<div class="note warn">Не удалось проверить обновления: ${esc(s.check_error)}</div>`);
   if (t.missing) notes.push(...t.missing.map(m => `<div class="note warn">Нужен ${esc(m.label)}: <a data-link="${esc(m.url)}">скачать</a></div>`));

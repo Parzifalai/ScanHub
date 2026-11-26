@@ -701,7 +701,8 @@ def watch_once():
     for p in psutil.disk_partitions():
         try:
             u = psutil.disk_usage(p.mountpoint)
-            if "fixed" in p.opts and u.free < 5 * 2 ** 30:
+            # как в alerts.py: маленькие служебные разделы не в счёт, порог — 5 ГБ, но не больше 10 % диска
+            if "fixed" in p.opts and u.total >= 20 * 2 ** 30 and u.free < min(5 * 2 ** 30, u.total * 0.10):
                 found.append(f"на диске {p.mountpoint.rstrip(chr(92))} осталось {u.free / 2 ** 30:.1f} ГБ")
         except OSError:
             pass

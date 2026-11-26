@@ -928,8 +928,10 @@ def path_fix(remove, run_elevated):
         for e in raw.split(";"):
             if not e.strip():
                 continue
-            norm = os.path.normcase(os.path.expandvars(e.strip()).rstrip("\\"))
-            if e in drop or (norm in seen and any(d == e for d in drop)):
+            exp = os.path.expandvars(e.strip().strip('"'))       # как в path_scan
+            norm = os.path.normcase(exp.rstrip("\\"))
+            # повтор убираем, но первое вхождение живой папки оставляем: иначе пропадают обе записи (и git из терминала)
+            if e in drop and (norm in seen or not os.path.isdir(exp)):
                 continue
             seen.add(norm)
             kept.append(e)
@@ -1022,7 +1024,7 @@ def drivers_remove(oems, run_elevated):
 def media_type(path):
     """SSD или HDD для диска, на котором лежит путь."""
     letter = os.path.splitdrive(os.path.abspath(path))[0].rstrip(":")
-    if not letter:
+    if not re.fullmatch(r"[A-Za-z]", letter):           # сетевой путь \\сервер\папка — не буква диска, в PowerShell не пускаем
         return None
     r = system.ps(f"$d = Get-Partition -DriveLetter {letter} | Get-Disk; Get-PhysicalDisk | Where-Object DeviceId -eq \"$($d.Number)\" | "
                   "Select-Object -First 1 @{n='m';e={[string]$_.MediaType}}, @{n='b';e={[string]$_.BusType}} | ConvertTo-Json -Compress", timeout=60)

@@ -385,9 +385,13 @@ class Metrics:
     # ------------------------------------------------------------ жизненный цикл
     light = False          # лёгкий режим для «Сторожа»: без постоянного опроса видеокарты по процессам (Get-Counter — дорогой)
 
+    _start_lock = threading.Lock()
+
     def touch(self):
         self.last_request = time.time()
-        if not self.running:
+        with self._start_lock:                         # несколько запросов окна при старте не запускают сборщики дважды
+            if self.running:
+                return
             self.running = True
             threading.Thread(target=self._loop, daemon=True).start()
             threading.Thread(target=self._gpu_loop, daemon=True).start()

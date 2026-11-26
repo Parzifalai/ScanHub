@@ -342,7 +342,7 @@ const AI_SUGGEST = ["Что с моим компьютером не так?", "�
 function aiChatHtml(){
   const j = AI.job;
   const msgs = AI.msgs.map(m => m.role === "user"
-    ? `<div class="ai-msg ai-u">${m.imgs?.length ? `<div class="ai-u-imgs">${m.imgs.map(s => `<img src="${s}" alt="картинка к вопросу">`).join("")}</div>` : ""}${esc(m.show || m.content)}</div>`
+    ? `<div class="ai-msg ai-u">${m.imgs?.length ? `<div class="ai-u-imgs">${m.imgs.map(s => `<img src="${esc(s)}" alt="картинка к вопросу">`).join("")}</div>` : ""}${esc(m.show || m.content)}</div>`
     : m.role === "error" ? `<div class="ai-msg ai-err">${esc(m.content)} <a data-ai-gear>Настройки агента</a></div>`
     : `<div class="ai-msg ai-a">${aiMd(m.content)}${!m.act && aiPlan(m.content).length ? `<div class="ai-do"><button class="primary small" data-ai-do="${AI.msgs.indexOf(m)}" title="Агент сам выполнит эти действия по очереди и проверит результат">✦ Сделай сам</button><span class="sub">${aiPlan(m.content).length > 1 ? `выполнит ${aiPlan(m.content).length} действия по очереди и проверит` : "выполнит и проверит"}; системные — с окном UAC</span></div>` : ""}${aiActions(m.content) || aiButtons(m.content) ? `<div class="row-tools ai-btns">${m.act ? "" : aiActions(m.content)}${aiButtons(m.content)}</div>` : ""}${m.finding ? `<div class="sub"><a data-ai-more="${esc(JSON.stringify(m.finding))}">Подробнее — что это и насколько серьёзно</a></div>` : ""}${m.cached ? `<div class="sub">ответ из памяти · <a data-ai-fresh="${esc(m.cached)}">спросить заново</a></div>` : ""}${m.mem?.length ? `<div class="ai-memnote" title="Заметки агента — их видно и можно удалить в ⚙ → «Память агента»">✦ ${m.mem.map(t => esc(/^забыл: /.test(t) ? "Забыл: " + t.slice(7) : "Запомнил: " + t)).join(" · ")}</div>` : ""}</div>`).join("");
   // пока агент отвечает — видно, что именно он сейчас смотрит (интернет, журналы, страницы)
@@ -487,7 +487,7 @@ function aiThumbs(){
   const box = $("#aiThumbs");
   if (!box) return;
   box.hidden = !AI.imgs.length;
-  box.innerHTML = AI.imgs.map((src, i) => `<span class="ai-thumb"><img src="${src}" alt=""><button type="button" data-ai-img-del="${i}" title="Убрать" aria-label="Убрать картинку">✕</button></span>`).join("");
+  box.innerHTML = AI.imgs.map((src, i) => `<span class="ai-thumb"><img src="${esc(src)}" alt=""><button type="button" data-ai-img-del="${i}" title="Убрать" aria-label="Убрать картинку">✕</button></span>`).join("");
 }
 function aiAddImage(file){
   if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) return;

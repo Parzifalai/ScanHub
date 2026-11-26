@@ -6,7 +6,7 @@
 import ctypes
 import sys
 
-VERSION = "2.5.1"
+VERSION = "2.5.2"
 # репозиторий на GitHub (владелец/имя), где выходят новые версии ScanHub; пусто — проверка обновлений ScanHub выключена
 UPDATE_REPO = "Parzifalai/ScanHub"
 
@@ -35,6 +35,7 @@ if sys.version_info < MIN_PY or sys.platform != "win32":
 import fnmatch
 import glob
 import hashlib
+import hmac
 import http.server
 import json
 import os
@@ -226,7 +227,8 @@ def now():
 def http_get(url, accept="application/vnd.github+json"):
     headers = {"User-Agent": "ScanHub", "Accept": accept}
     tok = config().get("github_token")
-    if tok and "api.github.com" in url:
+    pu = urllib.parse.urlparse(url)
+    if tok and pu.scheme == "https" and pu.hostname == "api.github.com":    # токен — только самому GitHub
         headers["Authorization"] = f"Bearer {tok}"
     req = urllib.request.Request(url, headers=headers)
     return urllib.request.urlopen(req, timeout=60)
@@ -292,9 +294,15 @@ def latest(m):
 
 
 def authenticode(path):
-    """Цифровая подпись exe: (статус, владелец сертификата)."""
-    ps = ("$s = Get-AuthenticodeSignature -LiteralPath $env:SCANHUB_ARG; "
-          "[pscustomobject]@{status=[string]$s.Status; signer=[string]$s.SignerCertificate.Subject} "
+    """Цифровая подпись exe: (статус, владелец сертификата — CN и O).
+    UnknownError бывает и у настоящих подписей без интернета (не проверить отзыв), и у самодельных сертификатов.
+    Поэтому при UnknownError цепочка строится заново без проверки отзыва: дошла до доверенного корня — «ValidOffline»,
+    нет (самоподписанный «CN=Doctor Web» и т. п.) — «Untrusted»."""
+    ps = ("$s = Get-AuthenticodeSignature -LiteralPath $env:SCANHUB_ARG; $c = $s.SignerCertificate; $st = [string]$s.Status; "
+          "if ($st -eq 'UnknownError' -and $c) { $ch = New-Object Security.Cryptography.X509Certificates.X509Chain; "
+          "$ch.ChainPolicy.RevocationMode = 'NoCheck'; $st = if ($ch.Build($c)) { 'ValidOffline' } else { 'Untrusted' } }; "
+          "$o = if ($c -and $c.Subject -match '(?:^|,\\s*)O=(\"[^\"]*\"|[^,]*)') { $matches[1].Trim('\"') } else { '' }; "
+          "[pscustomobject]@{status=$st; signer=$(if ($c) { $c.GetNameInfo('SimpleName', $false) + ' / ' + $o } else { '' })} "
           "| ConvertTo-Json -Compress")
     try:
         out = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True,
@@ -313,9 +321,9 @@ def check_signer(m, path):
     status, signer = authenticode(path)
     if want.lower() not in signer.lower():
         raise RuntimeError(f"файл подписан не тем, кем нужно: «{signer or 'без подписи'}» ({status})")
-    if status not in ("Valid", "UnknownError"):
+    if status not in ("Valid", "ValidOffline"):
         raise RuntimeError(f"подпись {want} недействительна: {status}")
-    return f"подпись {want}: {'действительна' if status == 'Valid' else 'есть, цепочку Windows не проверила'}"
+    return f"подпись {want}: {'действительна' if status == 'Valid' else 'действительна, отзыв сертификата не проверен (нет связи)'}"
 
 
 def locate(tid):
@@ -336,7 +344,7 @@ def locate(tid):
             if best and mt <= best[0]:
                 continue
             status, signer = authenticode(p)
-            if f["signer"].lower() in signer.lower() and status in ("Valid", "UnknownError"):
+            if f["signer"].lower() in signer.lower() and status in ("Valid", "ValidOffline"):
                 best = (mt, p, status)
     if not best:
         raise RuntimeError("не нашёл скачанный файл в " + ", ".join(dirs))
@@ -347,7 +355,7 @@ def locate(tid):
         ts.update(installed=datetime.fromtimestamp(mt).strftime("%Y-%m-%d %H:%M"), exe=p, path=os.path.dirname(p),
                   installed_at=datetime.fromtimestamp(mt).isoformat(timespec="seconds"), error=None,
                   verified=f"подпись {f['signer']}: " + ("действительна" if status == "Valid"
-                                                         else "есть, цепочку Windows не проверила"))
+                                                         else "действительна, отзыв сертификата не проверен (нет связи)"))
         save_json(STATE_FILE, st)
     return p
 
@@ -1529,7 +1537,7 @@ _last_notify = 0
 
 def _hosts_set(enable):
     new = system.hosts_prepare(enable)
-    deepscan.run_elevated([{"type": "copy", "src": new, "dst": system.HOSTS},
+    deepscan.run_elevated([{"type": "copy", "src": new, "dst": system.HOSTS, "sha256": sha256(new)},
                            {"type": "run", "cmd": ["ipconfig", "/flushdns"], "timeout": 60}])
     os.remove(new)
     return system.hosts_status()
@@ -2998,7 +3006,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if self.path.startswith("/api/agent/"):
             return True                                # ключ ответа агента проверяется в самом обработчике
         if self.path.startswith("/api/") and self.path not in ("/api/hello", "/api/version") \
-                and self.headers.get("X-Token") != TOKEN:
+                and not hmac.compare_digest(self.headers.get("X-Token") or "", TOKEN):
             self.send(403, {"error": "bad token"})
             return False
         return True
@@ -3161,7 +3169,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if not self.guard():
             return
         last_ping = time.time()
-        n = int(self.headers.get("Content-Length") or 0)
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            n = -1
+        if n < 0:                                      # отрицательная длина = read(-1) читал бы до конца соединения
+            return self.send(400, {"error": "неверная длина запроса"})
         u = urllib.parse.urlparse(self.path)
         if u.path == "/api/drop/upload":            # содержимое перетащенного файла — пишется на диск кусками, не в память
             q = dict(urllib.parse.parse_qsl(u.query))
@@ -3891,7 +3904,8 @@ def uninstall_self(delete_folder):
     if "memclean" in found:
         ops += [{"type": "run", "cmd": ["schtasks", "/Delete", "/TN", system.MEMCLEAN_TASK, "/F"], "timeout": 30}]
     if "hosts" in found:
-        ops += [{"type": "copy", "src": system.hosts_prepare(False), "dst": system.HOSTS},
+        hn = system.hosts_prepare(False)
+        ops += [{"type": "copy", "src": hn, "dst": system.HOSTS, "sha256": sha256(hn)},
                 {"type": "run", "cmd": ["ipconfig", "/flushdns"], "timeout": 60}]
     if found & {"sensors", "memclean", "pf"}:
         ops += [{"type": "rmtree", "path": os.path.dirname(metrics.SENSORS_SCRIPT)},
@@ -4048,6 +4062,11 @@ def _stop_helpers():
             sys.modules["phone"].stop_server()
         except Exception:
             pass
+    try:
+        if deepscan:
+            deepscan.broker_stop()                     # помощник ультра проверки с правами администратора — сразу, не по тайм-ауту
+    except Exception:
+        pass
 
 
 def idle_watch():

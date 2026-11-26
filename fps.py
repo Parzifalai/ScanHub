@@ -8,6 +8,7 @@
 * После выключения — итог по каждой игре: средний FPS, «1% худших» (насколько сильные просадки), заметные подлагивания,
   температура и мощность видеокарты. Хранятся последние 30 в data\\fps\\sessions.json.
 """
+import array
 import csv
 import ctypes
 import ctypes.wintypes as wt
@@ -83,7 +84,8 @@ def _pct(vals, p):
 class App:
     """Кадры одной игры за сеанс: все времена кадров (мс) и что было с видеокартой."""
     def __init__(self, name):
-        self.name, self.ft, self.recent, self.first, self.last = name, [], [], time.time(), time.time()
+        # array: 4 байта на кадр вместо ~32 у списка float — часы игры на 144 FPS не раздувают ScanHub на сотни МБ
+        self.name, self.ft, self.recent, self.first, self.last = name, array.array("f"), [], time.time(), time.time()
         self.gpu_t, self.gpu_w, self.cpu_t = [], [], []
 
     def add(self, ms, now):

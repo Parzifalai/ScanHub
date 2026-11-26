@@ -16,6 +16,7 @@ import io
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import threading
@@ -412,7 +413,7 @@ def scan(serial=None, prog=lambda s: None, vt_key=None):
             base = next((x[8:] for x in path if x.startswith("package:") and x.endswith("base.apk")), path[0][8:] if path else "")
             if not base:
                 continue
-            h = sh(serial, f"sha256sum '{base}' 2>/dev/null").split()
+            h = sh(serial, f"sha256sum {shlex.quote(base)} 2>/dev/null").split()     # путь с кавычкой не ломает команду
             if h and re.fullmatch(r"[0-9a-f]{64}", h[0]):
                 a["sha256"] = h[0]
                 try:

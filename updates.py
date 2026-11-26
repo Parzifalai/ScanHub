@@ -122,19 +122,19 @@ class Updater:
     def stopped(self):
         return bool(self.job.get("stop"))
 
-    def skip_current(self):
+    def skip_current(self, word="skip"):
         """Пропустить программу, которая сейчас скачивается/проверяется/ставится."""
         self.job["skip"] = True
         if self.proc and self.proc.poll() is None:
             subprocess.run(["taskkill", "/PID", str(self.proc.pid), "/T", "/F"], capture_output=True, creationflags=NO_WINDOW)
         if self.job.get("phase") == "elevated":
-            open(self.ctl, "w").write("skip")
+            with open(self.ctl, "w") as f:
+                f.write(word)
 
     def stop(self):
+        # сразу «stop»: раньше писалось «skip», а потом «stop» — помощник успевал прочитать «skip» и ставил остальное
         self.job["stop"] = True
-        self.skip_current()
-        if self.job.get("phase") == "elevated":
-            open(self.ctl, "w").write("stop")
+        self.skip_current("stop")
 
     def set(self, a, state, label=None):
         a["state"] = state
@@ -243,7 +243,8 @@ class Updater:
         self.set(a, "scan")
         if info.get("sha") and sha256(f) != info["sha"]:
             return self.set(a, "held", "контрольная сумма не совпала с манифестом — файл подменён или повреждён")
-        sig = system.signatures([f]).get(f.lower()) or system.signatures([f]).get(f) or {}
+        sigs = {k.lower(): v for k, v in (system.signatures([f]) or {}).items()}     # один запуск PowerShell, а не два
+        sig = sigs.get(f.lower()) or {}
         if sig.get("status") == "Valid":
             a["notes"].append(f"подписан: {sig['signer']}")
             a["signer"] = sig["signer"]

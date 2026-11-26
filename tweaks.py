@@ -4,6 +4,7 @@
 Правило: перед изменением исходное значение сохраняется в data\\backups\\tweaks.json — «Вернуть как было» восстанавливает его точно.
 Значения в HKCU меняются напрямую, в HKLM и службы — через одного помощника с правами администратора (один UAC).
 """
+import base64
 import ctypes
 import json
 import os
@@ -235,8 +236,9 @@ def _restore_ops(tag):
 def driver_disable(service, run_elevated):
     """Уязвимый драйвер: не загружать при старте Windows (Start=4). Исходное значение — в резервной копии, «Включить обратно» вернёт."""
     ops = [{"service": service, "start": 4}]
+    before = set(load(TWEAK_BAK, {}))
     _backup_ops("drv:" + service, ops)
-    apply_ops(ops, run_elevated)
+    _apply_or_forget(before, ops, run_elevated)
     return {"service": service, "start": 4}
 
 
@@ -255,13 +257,28 @@ def driver_disabled(service):
     return "drv:" + service in load(TWEAK_BAK, {})
 
 
+def _apply_or_forget(before, ops, run_elevated):
+    """Применить; если не вышло (отменили UAC, ошибка) — убрать только что сохранённые копии,
+    иначе в «Что изменил ScanHub» висит «можно откатить» то, что не менялось."""
+    try:
+        apply_ops(ops, run_elevated)
+    except Exception:
+        bak = load(TWEAK_BAK, {})
+        new = [k for k in bak if k not in before]
+        if new:
+            for k in new:
+                bak.pop(k, None)
+            save(TWEAK_BAK, bak)
+        raise
+
+
 def privacy_apply(ids, run_elevated):
-    ops = []
+    ops, before = [], set(load(TWEAK_BAK, {}))
     for t in PRIVACY:
         if t["id"] in ids:
             _backup_ops("privacy:" + t["id"], t["ops"])
             ops += t["ops"]
-    apply_ops(ops, run_elevated)
+    _apply_or_forget(before, ops, run_elevated)
     return privacy_status()
 
 
@@ -402,6 +419,7 @@ def security_status():
 
 def security_apply(ids, run_elevated):
     ops, bak = [], load(TWEAK_BAK, {})
+    before = set(bak)
     for t in SECURITY:
         if t["id"] not in ids:
             continue
@@ -412,7 +430,7 @@ def security_apply(ids, run_elevated):
             ops.append({"ps": t["ps"]})
             if t.get("ps_revert") and ("security:" + t["id"]) not in bak:
                 bak["security:" + t["id"]] = {"ps": t["ps_revert"], "when": datetime.now().isoformat(timespec="seconds")}
-    apply_ops(ops, run_elevated)
+    _apply_or_forget(before, ops, run_elevated)
     if bak:
         cur = load(TWEAK_BAK, {})
         cur.update({k: v for k, v in bak.items() if k.startswith("security:") and k not in cur})
@@ -917,16 +935,23 @@ Get-NetFirewallRule -Direction Inbound -Action Allow | ForEach-Object {
             "warn": sum(1 for r in mine if r["level"] == "warn"), "enabled": sum(1 for r in mine if r["enabled"])}
 
 
+def _ps_list(items):
+    """Список строк для кода PowerShell без экранирования: base64 из UTF-8 JSON (в нём только буквы, цифры, + / =).
+    Экранировать «'» мало: PowerShell 5.1 считает кавычками и ‘ ’ ‚ ‛, а имя правила брандмауэра содержит путь к программе."""
+    b = base64.b64encode(json.dumps(list(items), ensure_ascii=False).encode("utf-8")).decode("ascii")
+    return f"@([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{b}')) | ConvertFrom-Json | ForEach-Object {{ $_ }})"   # % — PS 5.1 отдаёт массив одним объектом
+
+
 def firewall_set(rule_ids, enable, run_elevated):
     ids = [rule_ids] if isinstance(rule_ids, str) else list(rule_ids)
     # у правил, которые Windows создаёт сама («TCP Query User{…}C:\users\…\zoom.exe»), в имени есть путь, «\» и «!».
-    # Поэтому имя — строка PowerShell в одинарных кавычках (подстановок в ней нет, кавычка удваивается), а правило
+    # Поэтому имена передаются в PowerShell через base64 (_ps_list), а правило
     # ищется точным сравнением: -Name понимает [ ] * ? как шаблон. Какие правила можно менять, проверяет сервер (_only_found).
     if not ids or not all(isinstance(i, str) and i and "\n" not in i and "\r" not in i and len(i) < 600 for i in ids):
         raise RuntimeError("неверный идентификатор правила")
-    lit = ",".join("'" + i.replace("'", "''") + "'" for i in ids)
+    lit = _ps_list(ids)
     verb = "Enable-NetFirewallRule" if enable else "Disable-NetFirewallRule"
-    ps = (f"$ids = @({lit}); $r = @(Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object {{ $ids -ccontains $_.Name }}); "
+    ps = (f"$ids = {lit}; $r = @(Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object {{ $ids -ccontains $_.Name }}); "
           f"if ($r.Count) {{ $r | {verb} -ErrorAction Stop }}; 'FOUND=' + $r.Count")
     res = run_elevated([{"type": "run", "cmd": ["powershell", "-NoProfile", "-Command", ps], "timeout": 180}])
     out = res[0].get("out") or res[0].get("error") or ""
@@ -948,8 +973,8 @@ def firewall_remove(rule_ids, run_elevated):
     ids = list(rule_ids or [])
     if not ids or not all(isinstance(i, str) and i and "\n" not in i and "\r" not in i and len(i) < 600 for i in ids):
         raise RuntimeError("неверный идентификатор правила")
-    lit = ",".join("'" + i.replace("'", "''") + "'" for i in ids)
-    ps = (f"$ids = @({lit}); $r = @(Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object {{ $ids -ccontains $_.Name }}); "
+    lit = _ps_list(ids)
+    ps = (f"$ids = {lit}; $r = @(Get-NetFirewallRule -ErrorAction SilentlyContinue | Where-Object {{ $ids -ccontains $_.Name }}); "
           f"if ($r.Count) {{ $r | Remove-NetFirewallRule -ErrorAction Stop }}; 'FOUND=' + $r.Count")
     try:
         audit = {r["id"]: r for r in firewall_audit()["rules"]}

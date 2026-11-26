@@ -209,7 +209,11 @@ GBIT = re.compile(r"(?i)gigabit|\bgbe\b|2\.5g|5g?base|10g|i21\d|i22\d|rtl81(1|6)
 def _run(cmd, timeout=20):
     try:
         r = subprocess.run(cmd, capture_output=True, timeout=timeout, creationflags=NO_WINDOW)
-        return r.stdout.decode("utf-8", "replace") if r.returncode == 0 else r.stdout.decode("cp866", "replace")
+        # netsh и powercfg на русской Windows пишут в cp866 и при успехе — utf-8 тут только у nvidia-smi
+        try:
+            return r.stdout.decode("utf-8")
+        except UnicodeDecodeError:
+            return r.stdout.decode("cp866", "replace")
     except (OSError, subprocess.SubprocessError):
         return ""
 

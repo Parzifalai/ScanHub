@@ -285,7 +285,7 @@ class Plan:
         if bad:
             self.card("path", "Приватность и защита", "info", f"Убрать лишние записи из PATH: {len(bad)}",
                       "PATH — список папок, где Windows ищет программы для команд в терминале. Записи на удалённые папки и повторы не нужны. "
-                      "Старое значение сохраняется в D:\\ScanHub\\data\\backups.", "choice",
+                      "Старое значение сохраняется в " + os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "backups") + ".", "choice",
                       items=[{"id": e["scope"] + "|" + e["entry"], "label": e["entry"], "sub": ("повтор записи выше" if e["problem"] == "повтор" else "этой папки нет") +
                               (" · для всех пользователей" if e["scope"] == "system" else " · для тебя"), "on": True,
                               "value": {"scope": e["scope"], "entry": e["entry"]}, "admin": e["scope"] == "system"} for e in bad],

@@ -4,6 +4,28 @@
 
 The text of the newest version's section goes into the GitHub release description, and ScanHub shows it in the “Update ScanHub” window.
 
+## 2.5.2
+
+**Security**
+- The signature of a downloaded antivirus is checked more strictly. A file with a home-made certificate in the publisher's name (say, “Doctor Web”) dropped into Downloads used to pass. Now the certificate must chain to a trusted authority. Without internet a genuine signature is still accepted, marked “revocation not checked”.
+- Full memory cleanup builds its code in ScanHub's protected folder instead of the user's temp folder. There malware could swap it and get administrator rights without a UAC prompt. If cleanup is on, “update” appears under “Load” (one UAC prompt).
+- Disabling and removing firewall rules: a rule name with a “curly” quote in the program's path can no longer run a command as administrator.
+- The ultra scan helper (one UAC prompt for the whole scan) only does what the scan needs: it deletes shortcuts only from the shared Start menu and desktop, copies reports only from scanner folders, and runs winget only with the options ScanHub itself sets.
+- The hosts file is checked against what ScanHub prepared before it's written, so it can't be swapped while the UAC prompt is open.
+- The AI agent no longer follows a site's redirect into the home network (router, 127.0.0.1). Claude, ChatGPT and OpenRouter keys are hidden before sending to the cloud, like the others. A folder link in Downloads no longer opens protected folders to the agent.
+- Also: images in chat history are checked more strictly, quarantine deletion only works for entries in the list, the GitHub token is sent only to GitHub itself.
+
+**Fixes**
+- The ultra scan asks for administrator rights once again. In 2.5.1 pausing the sensors for MinerSearch caused a second UAC prompt.
+- “Remove extra PATH entries” removes only the repeat when one folder is listed twice. Both entries used to disappear, and a program (git, say) stopped working from the terminal.
+- The Wi-Fi check in “Hardware” works on Russian Windows. The signal wasn't found because of the text encoding.
+- Ultra scan PDF report: “<user>”, “<computer>” and “<email>” no longer vanish from the text, and a user name like Max no longer breaks the layout.
+- “Stop” in app updates stops everything, not just the current program.
+- Cancelling the UAC prompt for a privacy, protection or driver setting no longer leaves a “can be undone” entry in “What ScanHub changed” for something that didn't change.
+- The Watcher no longer warns about low space on small service partitions (same as the in-window alert since 2.5.1).
+- The “Update” button in “Crashes and errors” opens the Updates tab, not Uninstall. Hints no longer show someone else's D:\ScanHub path.
+- The FPS counter no longer bloats memory over a long game. On exit the ultra scan helper closes right away. “What is this?” no longer fails when VirusTotal doesn't answer.
+
 ## 2.5.1
 
 **New**

@@ -10,6 +10,14 @@ $di = Get-Item -LiteralPath $dir -Force
 if (-not $di -or ($di.Attributes -band [IO.FileAttributes]::ReparsePoint)) { exit 1 }
 $own = (Get-Acl -LiteralPath $dir).GetOwner([Security.Principal.SecurityIdentifier]).Value
 if ($own -notin 'S-1-5-32-544', 'S-1-5-18', 'S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464') { exit 1 }
+# Add-Type компилирует C# во временную папку и загружает оттуда DLL. Обычная %TEMP% доступна на запись без прав
+# администратора, а задачу можно запустить без UAC — подмена DLL дала бы код с правами администратора.
+# Поэтому компиляция — только в папке под защищённой data (запись — только у администраторов).
+$tmpd = Join-Path $dir 'tmp'
+if (-not (Test-Path -LiteralPath $tmpd)) { New-Item -ItemType Directory -Path $tmpd -Force | Out-Null }
+$ti = Get-Item -LiteralPath $tmpd -Force
+if (-not $ti -or ($ti.Attributes -band [IO.FileAttributes]::ReparsePoint)) { exit 1 }
+$env:TMP = $tmpd; $env:TEMP = $tmpd
 
 Add-Type -TypeDefinition @"
 using System;

@@ -347,6 +347,8 @@ def q_restore(qid):
 
 def q_delete(qid):
     items = q_list()
+    if not any(i["id"] == qid for i in items):       # только запись из списка: «..\..\файл» в id удалил бы чужой файл
+        raise RuntimeError("такой записи в карантине нет")
     try:
         os.remove(os.path.join(QDIR, qid + ".bin"))
     except OSError:

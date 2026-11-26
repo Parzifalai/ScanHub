@@ -191,6 +191,8 @@ def broker_allowed(op):
             return cmd[1:] == ["/Online", "/Cleanup-Image", "/CheckHealth"]
         if name in ("sfc", "sfc.exe"):
             return cmd[1:] == ["/verifyonly"]
+        if name in ("schtasks", "schtasks.exe"):        # пауза датчиков ScanHub на время MinerSearch
+            return cmd[1:] == ["/End", "/TN", r"ScanHub\Sensors"]
         if name in ("powershell", "powershell.exe"):
             return len(cmd) == 4 and cmd[1:3] == ["-NoProfile", "-Command"] and _ps_allowed(cmd[3])
         if _inside(exe, APPS) and name.endswith(".exe"):                  # сканеры, которые скачал ScanHub
@@ -199,14 +201,15 @@ def broker_allowed(op):
             return True                                # Dr.Web CureIt!: Dr.Web даёт файлу случайное имя — узнаём по подписи
         if name == "winget.exe" or exe == "winget":
             import updates
-            return os.path.normcase(exe) == os.path.normcase(updates.winget_exe()) and cmd[1:2] == ["upgrade"]
+            return os.path.normcase(exe) == os.path.normcase(updates.winget_exe()) and _winget_ok(cmd[1:])
         return False
     if t == "clean":
         junk = _admin_junk_paths()
         return bool(op.get("paths")) and all(os.path.normcase(p) in junk for p in op["paths"])
     if t == "remove":
         p = op.get("path") or ""
-        return p.lower().endswith(".lnk") or _inside(p, ROOT) or \
+        # ярлыки — только из общих «Пуска» и рабочего стола (битые ярлыки для всех пользователей), а не любой .lnk на диске
+        return (p.lower().endswith(".lnk") and any(_inside(p, d) for d in _LNK_DIRS)) or _inside(p, ROOT) or \
             os.path.normcase(p) == os.path.normcase(os.path.join(WINDIR, "debug", "msert.log"))
     if t == "rmtree":
         p = op.get("path") or ""
@@ -214,9 +217,33 @@ def broker_allowed(op):
             bool(re.fullmatch(r"c:\\kvrt[^\\]*_data", os.path.normcase(p)))
     if t == "mkdir":
         return _inside(op.get("path") or "", ROOT)
-    if t == "copy_glob":
-        return _inside(op.get("dst_dir") or "", DATA)
+    if t == "copy_glob":                               # отчёты сканеров, закрытые от пользователя, — только из их папок
+        src = os.path.normcase(os.path.abspath(op.get("src_dir") or "x:\\"))
+        return _inside(op.get("dst_dir") or "", DATA) and \
+            any(src == os.path.normcase(d) for d in (MS_LOGS, os.path.join(WINDIR, "debug"), r"C:\AdwCleaner\Logs"))
     return False
+
+
+_LNK_DIRS = (os.path.join(os.environ.get("ProgramData", r"C:\ProgramData"), r"Microsoft\Windows\Start Menu"),
+             os.path.join(os.environ.get("PUBLIC", r"C:\Users\Public"), "Desktop"))
+_WINGET_VAL = {"--id", "--version", "--architecture", "--scope", "--installer-type", "--locale"}
+_WINGET_SW = {"-e", "--exact", "--silent", "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity"}
+
+
+def _winget_ok(args):
+    """winget upgrade только с флагами, которые ставит сам ScanHub (updates.upgrade_cmd): без --override, --custom, --location…"""
+    import re
+    if args[:1] != ["upgrade"]:
+        return False
+    i, a = 1, args
+    while i < len(a):
+        if a[i] in _WINGET_SW:
+            i += 1
+        elif a[i] in _WINGET_VAL and i + 1 < len(a) and re.fullmatch(r"[\w.+\-]+", a[i + 1]):
+            i += 2
+        else:
+            return False
+    return "--id" in a
 
 
 def _mac(key, payload):
@@ -629,8 +656,17 @@ def _exec_ops(ops, prog=None, ctl=None):
                 shutil.rmtree(op["path"], ignore_errors=True)
                 results.append({"ok": True})
             elif op["type"] == "copy":
-                import shutil
-                shutil.copyfile(op["src"], op["dst"])
+                if op.get("sha256"):
+                    # файл готовили до окна UAC в папке data — сверяем, что это он, и пишем из памяти (без второго чтения)
+                    import hashlib
+                    raw = open(op["src"], "rb").read()
+                    if hashlib.sha256(raw).hexdigest() != op["sha256"]:
+                        raise RuntimeError("файл изменился после подготовки — не копирую")
+                    with open(op["dst"], "wb") as f:
+                        f.write(raw)
+                else:
+                    import shutil
+                    shutil.copyfile(op["src"], op["dst"])
                 results.append({"ok": True})
             elif op["type"] == "copy_glob":
                 # отчёт, который программа с правами администратора закрыла от обычного пользователя (HiJackThis):

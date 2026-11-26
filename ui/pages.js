@@ -753,7 +753,7 @@ function pShortcuts(dev){
   const RV = "Битые ярлыки";
   const rvBtn = r ? aiReviewBtn(RV, r.broken.slice(0, 60).map(b => ({id: b.path, label: b.name, path: b.path, note: `${b.where}; ведёт на ${b.target} — этого файла нет`}))) : "";
   return pnl(`${head("Битые ярлыки", r ? `проверено ярлыков: ${r.total}, битых: ${r.broken.length}` : "Ярлыки в меню «Пуск», на рабочем столе и в панели задач, которые ведут в никуда", btn + rvBtn)}${aiReviewBox(RV)}
-    ${explain("Ярлык — это ссылка на программу. Когда программу удаляют или переносят, ярлык остаётся и при запуске выдаёт ошибку. Ярлыки на отключённые флешки и диски не считаются битыми. Перед удалением ScanHub сохраняет копии ярлыков в <code>D:\\ScanHub\\data\\backups\\shortcuts</code>.")}
+    ${explain("Ярлык — это ссылка на программу. Когда программу удаляют или переносят, ярлык остаётся и при запуске выдаёт ошибку. Ярлыки на отключённые флешки и диски не считаются битыми. Перед удалением ScanHub сохраняет копии ярлыков в папке ScanHub: <code>data\\backups\\shortcuts</code>.")}
     ${busyErr("shortcuts", "Проверяю ярлыки…")}${busyErr("shortcuts_remove", "Удаляю…")}
     ${rm ? `<div class="note info">Удалено ярлыков: ${rm.removed}. Копии — в <code>${esc(rm.backup)}</code>.${rm.errors?.length ? "<br>" + rm.errors.map(esc).join("<br>") : ""}</div>` : ""}
     ${r ? (r.broken.length ? `<div class="rows">${r.broken.map(b => `<label class="crow">${cb("lnk", b.path, S.has(b.path))}
@@ -1316,7 +1316,7 @@ function pRestore(dev){
   const t = TASK.restore, r = t?.result, c = TASK.restore_create?.result, en = TASK.restore_enable?.result;
   const cfree = (M?.now?.disks || []).find(x => x.mount === "C:");
   return pnl(`${head("Точки восстановления", r ? (r.enabled ? "защита системы включена" : "защита системы выключена") : "")}
-    ${explain("<b>Точка восстановления</b> — снимок системных файлов, драйверов и реестра. Если после обновления, драйвера или настройки Windows начнёт сбоить, можно вернуться к точке — личные файлы при этом не меняются. ScanHub создаёт точку перед своими изменениями (галочка в каждом разделе), а свои настройки умеет откатить и без неё: исходные значения хранятся в <code>D:\\ScanHub\\data\\backups</code>.")}
+    ${explain("<b>Точка восстановления</b> — снимок системных файлов, драйверов и реестра. Если после обновления, драйвера или настройки Windows начнёт сбоить, можно вернуться к точке — личные файлы при этом не меняются. ScanHub создаёт точку перед своими изменениями (галочка в каждом разделе), а свои настройки умеет откатить и без неё: исходные значения хранятся в папке ScanHub: <code>data\\backups</code>.")}
     ${busyErr("restore", "Проверяю…")}${busyErr("restore_create", "Создаю точку… подтверди UAC, это 10–60 секунд")}${busyErr("restore_enable", "Включаю защиту… подтверди UAC")}
     ${c ? `<div class="note ${c.status === "ok" ? "info" : "warn"}">${c.status === "ok" ? "✓ Точка восстановления создана" : c.status === "skip" ? "Windows разрешает одну точку в сутки — сегодняшняя уже есть" : "Не получилось: " + esc(c.text)}</div>` : ""}
     ${r ? (r.enabled ? `<div class="row-tools"><button class="primary" data-task-run="restore_create">Создать точку сейчас</button><button data-launch="rstrui">Открыть восстановление системы</button><button data-launch="sysprotect">Настройки защиты</button></div>
@@ -2296,7 +2296,7 @@ document.addEventListener("click", async e => {
     setTimeout(() => document.querySelectorAll("[data-fixopt]").forEach(b => b.onclick = async () => {
       const o = r.options[+b.dataset.fixopt];
       document.querySelector(".mdl-back [data-mdl='1']")?.click();
-      if (o.kind === "update") { try { await api("/api/updates", {ids: o.ids}); go("apps", "updates"); toast("Обновление запущено", "ScanHub проверит установщик на вирусы и поставит") } catch (err) { toast("Не получилось", err.message, "bad") } }
+      if (o.kind === "update") { try { await api("/api/updates", {ids: o.ids}); go("apps", "winget"); toast("Обновление запущено", "ScanHub проверит установщик на вирусы и поставит") } catch (err) { toast("Не получилось", err.message, "bad") } }
       else if (o.kind === "go") { const [p, sub] = o.page.split(":"); go(p, sub) }
       else if (o.kind === "launch") api("/api/launch", {what: o.what}).catch(err => toast("Не удалось открыть", err.message, "bad"));
     }), 50);
